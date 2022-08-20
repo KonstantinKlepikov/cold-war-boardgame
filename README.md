@@ -39,4 +39,4 @@ ADMINPASSWORD=<this>
 - [frontend](http://localhost:8501/)
 - [backand swagger docs](http://localhost:8000/docs/)
 - [backand redoc](http://localhost:8000/redoc/)
-- [mongoDB admin panel]((http://localhost:8081/))
+- [mongoDB admin panel]((http://localhost:8081/)

@@ -37,6 +37,6 @@ ADMINPASSWORD=<this>
 ### Use local resources to watch project
 
 - [frontend](http://localhost:8501/)
-- [backand swagger docs](http://localhost:8000/docs/)
-- [backand redoc](http://localhost:8000/redoc/)
-- [mongoDB admin panel]((http://localhost:8081/)
+- [backend swagger docs](http://localhost:8000/docs/)
+- [backend redoc](http://localhost:8000/redoc/)
+- [mongoDB admin panel](http://localhost:8081/)

@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+
+  mongo-dev:
+    image: mongo
+    container_name: mongo-dev
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${DEV_ROOT_USERNAME?Variable not set}
+      MONGO_INITDB_ROOT_PASSWORD: ${DEV_ROOT_PASSWORD?Variable not set}
+    volumes:
+      - mongo-dev-data:/data/db
+    networks:
+      - dev-network
+
+  mongo-express-dev:
+    image: mongo-express
+    container_name: mongo-express
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8081:8081"
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: ${ADMINUSERNAME?Variable not set}
+      ME_CONFIG_MONGODB_ADMINPASSWORD: ${ADMINPASSWORD?Variable not set}
+      ME_CONFIG_MONGODB_URL: mongodb://${DEV_ROOT_USERNAME?Variable not set}:${DEV_ROOT_PASSWORD?Variable not set}@mongo-dev:27017/
+    networks:
+      - dev-network
+
+  mongo-test:
+    image: mongo
+    container_name: mongo-test
+    restart: always
+    command: mongod --port 27021
+    env_file:
+      - .env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${TEST_ROOT_USERNAME?Variable not set}
+      MONGO_INITDB_ROOT_PASSWORD: ${TEST_ROOT_PASSWORD?Variable not set}
+    networks:
+      - dev-network
+
+  backend:
+    image: cold-war-back-0.0.1
+    container_name: cold-war-back
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    build:
+      context: ./backend
+      dockerfile: backend.dockerfile
+    depends_on:
+      - mongo-dev
+      - mongo-test
+    volumes:
+      - ./backend/app:/app
+    networks:
+      - dev-network
+
+  frontend:
+    image: cold-war-front-0.0.1
+    container_name: cold-war-front
+    ports:
+      - "8501:8501"
+    build:
+      context: ./frontend
+      dockerfile: frontend.dockerfile
+    volumes:
+      - ./frontend/app:/app
+    networks:
+      - dev-network
+
+volumes:
+  backend:
+  frontend:
+  mongo-dev-data:
+    driver: local
+
+networks:
+  dev-network:

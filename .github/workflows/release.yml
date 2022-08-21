@@ -48,3 +48,35 @@ jobs:
           body: ${{ steps.generate_release_changelog.outputs.changelog }}
           draft: false
           prerelease: false
+
+  deploy-to-heroku:
+
+    needs: create-build-push
+
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      # https://github.com/AkhileshNS/heroku-deploy
+      - name: Push backend to heroku
+        uses: akhileshns/heroku-deploy@v3.12.12
+        with:
+          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+          heroku_app_name: "cold-war-api-stage"
+          heroku_email: ${{secrets.HEROKU_EMAIL}}
+          appdir: "backend/app"
+          healthcheck: "https://cold-war-api-stage.herokuapp.com/health"
+          delay: 5
+
+      - name: Push frontend to heroku
+        uses: akhileshns/heroku-deploy@v3.12.12
+        with:
+          heroku_api_key: ${{secrets.HEROKU_API_KEY}}
+          heroku_app_name: "cold-war-web-stage"
+          heroku_email: ${{secrets.HEROKU_EMAIL}}
+          appdir: "frontend/app"
+          healthcheck: "https://cold-war-web-stage.herokuapp.com/health"
+          delay: 5

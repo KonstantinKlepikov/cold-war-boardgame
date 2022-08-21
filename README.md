@@ -43,3 +43,7 @@ ADMINPASSWORD=<this>
 - [backend swagger docs](http://localhost:8000/docs/)
 - [backend redoc](http://localhost:8000/redoc/)
 - [mongoDB admin panel](http://localhost:8081/)
+
+## More
+
+Problem with heroku-22 stack and poetry buildpack

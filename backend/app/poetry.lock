@@ -92,10 +92,7 @@ mypy-extensions = ">=0.4.3"
 pathspec = ">=0.9.0,<1"
 platformdirs = ">=2"
 tomli = ">=0.2.6,<2.0.0"
-typing-extensions = [
-    {version = "!=3.10.0.1", markers = "python_version >= \"3.10\""},
-    {version = ">=3.10.0.0", markers = "python_version < \"3.10\""},
-]
+typing-extensions = ">=3.10.0.0"
 
 [package.extras]
 uvloop = ["uvloop (>=0.15.2)"]
@@ -291,8 +288,8 @@ python-versions = ">=3.6"
 parso = ">=0.8.0,<0.9.0"
 
 [package.extras]
-qa = ["flake8 (==3.8.3)", "mypy (==0.782)"]
-testing = ["Django (<3.1)", "colorama", "docopt", "pytest (<7.0.0)"]
+testing = ["pytest (<7.0.0)", "docopt", "colorama", "Django (<3.1)"]
+qa = ["mypy (==0.782)", "flake8 (==3.8.3)"]
 
 [[package]]
 name = "matplotlib-inline"
@@ -747,8 +744,8 @@ python-versions = ">=3.7"
 
 [metadata]
 lock-version = "1.1"
-python-versions = "^3.8.12"
-content-hash = "47b71a14fc57ab94c8a50b1237667ed0057f38f9cece5b523b7280a6e91fa73b"
+python-versions = "3.8.12"
+content-hash = "a84b0e793380c4279154454be2a7b24d2df5e8c6434a3ba86d6bbfa36ff1b293"
 
 [metadata.files]
 anyio = [

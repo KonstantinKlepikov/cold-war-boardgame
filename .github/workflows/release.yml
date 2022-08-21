@@ -29,7 +29,7 @@ jobs:
       # https://github.com/heinrichreimer/action-github-changelog-generator
       - name: Generate release changelog
         id: generate_release_changelog
-        uses: ./
+        uses: heinrichreimer/github-changelog-generator-action@v2.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           onlyLastTag: "true"

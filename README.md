@@ -1,6 +1,6 @@
 # Cold-war-boardgame
 
-Pet project:
+This is pet project:
 
 - learning curve for project-manager
 - learn rest-api by game development
@@ -14,9 +14,12 @@ Pet project:
 - [WEB app prod](https://cold-war-web.herokuapp.com/)
 - [docs](https://drive.google.com/drive/folders/1MoP2Ba2yzKSFf3X8XwieKKc8cv_cEhCU?usp=sharing)
 - [project tasks board](https://github.com/users/KonstantinKlepikov/projects/4/views/5)
+
+Other stuff:
+
 - [bordgame geek source](https://boardgamegeek.com/boardgame/24742/cold-war-cia-vs-kgb)
 
-## Run project
+## Run project local
 
 ### Add .env file to root with some variables
 

@@ -17,7 +17,7 @@ jobs:
 
       - name: Generate full changelog
         id: generate_full_changelog
-        uses: ./
+        uses: heinrichreimer/github-changelog-generator-action@v2.3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           headerLabel: "# 📑 Changelog"

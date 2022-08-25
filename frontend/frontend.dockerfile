@@ -11,5 +11,7 @@ WORKDIR /app/
 
 RUN pip install -r requirements.txt
 
+ENV API_ROOT='http://backend:8000'
+
 ENTRYPOINT ["streamlit", "run"]
 CMD ["app.py"]

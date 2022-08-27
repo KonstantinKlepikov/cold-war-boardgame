@@ -49,13 +49,10 @@ jobs:
           author: true
           unreleased: true
           compareLink: true
-          stripGeneratorNotice: true
-          onlyLastTag: true
-          stripHeaders: true
           verbose: true
 
       - name: Print changelog to console
-        run: cat CHANGELOG.md
+        run: cat ${{ steps.generate_release_changelog.outputs.changelog }}
 
       # https://github.com/softprops/action-gh-release
       - name: Create Release

@@ -51,6 +51,7 @@ jobs:
           compareLink: true
           verbose: true
           onlyLastTag: true
+          stripGeneratorNotice: true
 
       - name: Print changelog to console
         run: cat CHANGELOG.md

@@ -50,6 +50,7 @@ jobs:
           unreleased: true
           compareLink: true
           verbose: true
+          onlyLastTag: true
 
       - name: Print changelog to console
         run: cat CHANGELOG.md

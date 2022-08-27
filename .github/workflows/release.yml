@@ -52,7 +52,7 @@ jobs:
           verbose: true
 
       - name: Print changelog to console
-        run: cat ${{ steps.generate_release_changelog.outputs.changelog }}
+        run: cat CHANGELOG.md
 
       # https://github.com/softprops/action-gh-release
       - name: Create Release

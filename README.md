@@ -44,6 +44,10 @@ ADMINPASSWORD=<this>
 - [backend redoc](http://localhost:8000/redoc/)
 - [mongoDB admin panel](http://localhost:8081/)
 
+### Test inside backend container
+
+`pytest -v -s`
+
 ## More
 
 Problem with heroku-22 stack and poetry buildpack

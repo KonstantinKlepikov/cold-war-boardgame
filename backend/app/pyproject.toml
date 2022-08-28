@@ -9,9 +9,10 @@ python = "3.8.12"
 click = "^8.0.3"
 python-dotenv = "^0.19.2"
 poethepoet = "^0.13.1"
-pymongo= "^4.1.1"
+pymongo = {extras = ["srv"], version = "^4.2.0"}
 fastapi = "^0.79.1"
 uvicorn = {extras = ["standard"], version = "^0.18.2"}
+mongoengine = "^0.24.2"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=4.6"
@@ -29,5 +30,5 @@ Faker = "^13.2.0"
 [tool.pytest.ini_options]
 minversion = "6.0"
 testpaths = [
-    "app/app/tests",
+    "tests",
 ]

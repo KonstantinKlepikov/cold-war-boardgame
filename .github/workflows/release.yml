@@ -47,7 +47,7 @@ jobs:
           pullRequests: true
           prWoLabels: true
           author: true
-          unreleased: true
+          unreleased: false
           compareLink: true
           verbose: true
           onlyLastTag: true

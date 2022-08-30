@@ -7,9 +7,13 @@ all:
 help:
 	egrep "^# target:" [Mm]akefile
 
-# target: dev - run docker-compose-dev
+# target: dev - run docker-compose
 serve:
 	sh ./scripts/dev.sh
+
+# target: dev - run docker-compose and update poetry.lock without upgrade
+serve-update:
+	sh ./scripts/dev-update.sh
 
 # target: down - stop and down docker stack
 down:

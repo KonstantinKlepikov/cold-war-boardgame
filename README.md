@@ -35,6 +35,7 @@ ADMINPASSWORD=<this>
 ### Run or stop stack from root
 
 - `make serve` to run
+- `make serve-update` to run an update poetry.loc from pyproject without upgrade
 - `make down` to stop
 
 to update dependencies attache shell to backend container, change pyproject.toml and use `poetry lock --no-update` TODO: move this operation to makefile

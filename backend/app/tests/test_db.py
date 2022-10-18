@@ -1,17 +1,40 @@
-import os
 import pymongo
+import mongomock
+from mongoengine import get_connection, get_db, disconnect
+from app.db.collection import get_collection
+from app.models.user import User
 
 
 class TestDB:
-    """Db tests
+    """Db connections tests
     """
 
-    def test_external_db_connection(self):
-        """Test external db ia available
+    def test_dev_db_connection(self) -> None:
+        """Test dev db is available
         """
-        MONGODB_URL = os.environ.get('MONGODB_URL')
-        client = pymongo.MongoClient(MONGODB_URL)
-        db = client.test
+        get_collection()
+
+        conn = get_connection()
+        assert isinstance(conn, pymongo.mongo_client.MongoClient), \
+            'wrong type of connection'
+
+        db = get_db()
         assert isinstance(db, pymongo.database.Database), \
-            'External db isnt available'
-        assert db.connect != True, 'External db not connected'
+            'wrong type of db'
+        assert db.name == "dev-db", 'wrong db name'
+
+        disconnect()
+
+
+    def test_test_db_connection(self, collection) -> None:
+        """Test test db is available
+        """
+        conn = get_connection()
+        assert isinstance(conn, mongomock.mongo_client.MongoClient), \
+            'wrong type of connection'
+
+        db = get_db()
+        assert isinstance(db, mongomock.database.Database), \
+            'wrong type of db'
+        assert db.name == "test-db", 'wrong db name'
+        assert User.objects().count() == 2, 'wrong count of test users'

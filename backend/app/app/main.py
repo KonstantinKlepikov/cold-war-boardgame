@@ -1,8 +1,8 @@
 from fastapi import FastAPI
-import app.models as models
-import app.schemas as schemas
+from app.db.collection import get_collection
 
 
+get_collection()
 app = FastAPI()
 
 

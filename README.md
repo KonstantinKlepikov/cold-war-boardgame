@@ -30,6 +30,16 @@ TEST_ROOT_USERNAME=<this>
 TEST_ROOT_PASSWORD=<this>
 ADMINUSERNAME=<this>
 ADMINPASSWORD=<this>
+
+# dev mongodb
+MONGODB_URL=mongodb://${DEV_ROOT_USERNAME}:${DEV_ROOT_PASSWORD}@mongo-dev:27017/
+DB_NAME=dev-db
+
+# test_mongodb
+TEST_MONGODB_URL=mongomock://${DEV_ROOT_USERNAME}:${DEV_ROOT_PASSWORD}@mongo-test:27021/
+
+# JWT secret key
+SECRET_KEY=<this>
 ```
 
 ### Run or stop stack from root
@@ -47,7 +57,7 @@ ADMINPASSWORD=<this>
 
 ### Test inside backend container
 
-`pytest -v -s`
+`pytest -v -s -x`
 
 ## More
 

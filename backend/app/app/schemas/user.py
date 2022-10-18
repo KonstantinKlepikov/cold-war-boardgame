@@ -26,7 +26,7 @@ class TokenData(BaseModel):
 
 class UserBase(BaseModel):
     login: str
-    is_active = True
+    is_active: Optional[bool] = True
 
     @validator('login')
     def passwords_must_have_eight_or_more_characters(cls, v):
@@ -60,7 +60,7 @@ class UserPassword(BaseModel):
         }
 
 
-class UserCreate(UserBase, UserPassword):
+class UserCreateUpdate(UserBase, UserPassword):
 
     class Config:
         schema_extra = {
@@ -72,15 +72,39 @@ class UserCreate(UserBase, UserPassword):
         }
 
 
-class User(UserBase):
-    user_id: int
-    is_active: bool
+class UserInDBBase(UserBase):
+    id: Optional[int] = None
 
     class Config:
         schema_extra = {
             "example": {
-                "userId": 1,
+                "id": 12345,
+                "login": "DonaldTrump",
                 "is_active": True,
+            }
+        }
 
+
+class User(UserInDBBase):
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "id": 12345,
+                "login": "DonaldTrump",
+                "is_active": True,
+            }
+        }
+
+class UserInDB(UserInDBBase):
+    hashed_password: str
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "id": 12345,
+                "login": "DonaldTrump",
+                "is_active": True,
+                "hashed_password": "$2b$12$sifRrf5m7GM0hhFAF7BQ0.dIokOEZkfYOawlal8Jp/GeWh/4zn8la",
             }
         }

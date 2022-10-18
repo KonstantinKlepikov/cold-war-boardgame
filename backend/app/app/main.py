@@ -1,4 +1,7 @@
 from fastapi import FastAPI
+import app.models as models
+import app.schemas as schemas
+
 
 app = FastAPI()
 

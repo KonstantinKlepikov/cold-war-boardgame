@@ -9,7 +9,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 ALGORITHM = "HS256"
 
 
-# TODO: test me
 def create_access_token(
     subject: Union[str, Any], expires_delta: timedelta = None
     ) -> str:
@@ -17,7 +16,8 @@ def create_access_token(
 
     Args:
         subject (Union[str, Any]): subject data
-        expires_delta (timedelta, optional): how long token leave. Defaults to None.
+        expires_delta (timedelta, optional): how long token leave.
+                                             Defaults to None.
 
     Returns:
         str: JWT token

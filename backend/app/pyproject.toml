@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "cold-war-back"
-version = "0.0.1"
-description = ""
+version = "0.0.2"
+description = "ColdWar API backend"
 authors = ["Konstantin Klepikov <oformleno@gmail.com>"]
 
 [tool.poetry.dependencies]
@@ -16,6 +16,8 @@ mongoengine = "^0.24.2"
 bgameb = ">=0.0.4"
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 passlib = "^1.7.4"
+toml = "^0.10.2"
+requests = "^2.28.1"
 
 [tool.poetry.dev-dependencies]
 pytest = ">=4.6"

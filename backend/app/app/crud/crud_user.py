@@ -1,6 +1,6 @@
 from typing import Optional
 from app.crud.crud_base import CRUDBase
-from app.models.user import User
+from app.models.model_user import User
 from app.schemas.user import UserCreateUpdate
 
 

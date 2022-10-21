@@ -11,7 +11,7 @@ ALGORITHM = "HS256"
 
 def create_access_token(
     subject: Union[str, Any], expires_delta: timedelta = None
-    ) -> str:
+        ) -> str:
     """Create access token with defined expiration time
 
     Args:
@@ -46,7 +46,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
         hashed_password (str): -
 
     Returns:
-        bool: result of checl
+        bool: result of check
     """
     return pwd_context.verify(plain_password, hashed_password)
 

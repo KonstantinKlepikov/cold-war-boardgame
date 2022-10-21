@@ -59,6 +59,4 @@ SECRET_KEY=<this>
 
 `pytest -v -s -x`
 
-## More
-
-Problem with heroku-22 stack and poetry buildpack
+use `python -m IPython` to check code

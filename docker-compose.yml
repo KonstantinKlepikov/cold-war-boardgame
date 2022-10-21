@@ -78,8 +78,6 @@ services:
       - dev-network
 
 volumes:
-  backend:
-  frontend:
   mongo-dev-data:
     driver: local
 

@@ -9,6 +9,6 @@ class HttpErrorMessage(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "message": "Some information about error",
+                "detail": "Some information about error",
             }
         }

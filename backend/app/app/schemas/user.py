@@ -8,7 +8,8 @@ class Token(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "access_token": "$2b$12$sifRrf5m7GM0hhFAF7BQ0.dIokOEZkfYOawlal8Jp/GeWh/4zn8la",
+                "access_token":
+                    "$2b$12$sifRrf5m7GM0hhFAF7BQ0.dIokOEZkfYOawlal8Jp/GeWh/4zn8la",
             }
         }
 
@@ -94,6 +95,7 @@ class User(UserInDBBase):
             }
         }
 
+
 class UserInDB(UserInDBBase):
     hashed_password: str
 
@@ -103,6 +105,7 @@ class UserInDB(UserInDBBase):
                 "id": 12345,
                 "login": "DonaldTrump",
                 "is_active": True,
-                "hashed_password": "$2b$12$sifRrf5m7GM0hhFAF7BQ0.dIokOEZkfYOawlal8Jp/GeWh/4zn8la",
+                "hashed_password":
+                    "$2b$12$sifRrf5m7GM0hhFAF7BQ0.dIokOEZkfYOawlal8Jp/GeWh/4zn8la",
             }
         }

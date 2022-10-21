@@ -1,5 +1,5 @@
 import pytest
-from typing import Generator, Dict, List
+from typing import Generator, Dict
 from mongoengine import disconnect, connect
 from mongoengine.context_managers import switch_db
 from app.config import settings
@@ -13,8 +13,10 @@ def users_data() -> Dict[str, str]:
     return {
         'login': 'DonaldTrump',
         'password': '12345678',
-        'hashed_password': '$2b$12$Xy29A6zl6XdtEJICAzrt3eEzMlVQf6NJgG4nM2Ak4UFk8/AwpZU4q'
+        'hashed_password':
+            '$2b$12$Xy29A6zl6XdtEJICAzrt3eEzMlVQf6NJgG4nM2Ak4UFk8/AwpZU4q'
             }
+
 
 @pytest.fixture(scope="session")
 def db_user(users_data: Dict[str, str]) -> Dict[str, str]:
@@ -24,6 +26,7 @@ def db_user(users_data: Dict[str, str]) -> Dict[str, str]:
         'login': users_data['login'],
         'hashed_password': users_data['hashed_password']
             }
+
 
 @pytest.fixture(scope="function")
 def connection(db_user: Dict[str, str]) -> Generator:

@@ -20,16 +20,17 @@ app = FastAPI(
     openapi_tags=settings.openapi_tags
         )
 
+
 @app.post(
     "/user/login",
     response_model=Token,
     status_code=status.HTTP_200_OK,
     responses=settings.AUTHENTICATE_RESPONSE_ERRORS,
-    tags=['user',],
+    tags=['user', ],
     summary='Authenticate user',
     response_description="""
     Created. As response you recieve access token,
-    that must be used for all secureted operation
+    that must be used for all secured operation
     """
         )
 def login(
@@ -45,7 +46,9 @@ def login(
     if not db_user or not verify_password(
         user.password, db_user.hashed_password
             ):
-        raise HTTPException(status_code=400, detail='Wrong login or password')
+        raise HTTPException(
+            status_code=400, detail='Wrong login or password'
+                )
 
     else:
         return {'access_token': create_access_token(user.login)}

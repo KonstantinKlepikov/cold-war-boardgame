@@ -11,7 +11,7 @@ ALGORITHM = "HS256"
 
 def create_access_token(
     subject: Union[str, Any], expires_delta: timedelta = None
-    ) -> str:
+        ) -> str:
     """Create access token with defined expiration time
 
     Args:

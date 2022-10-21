@@ -21,7 +21,6 @@ class TestDB:
             'wrong type of db'
         assert db.name == "dev-db", 'wrong db name'
 
-
     def test_test_db_connection(
         self,
         connection: Generator

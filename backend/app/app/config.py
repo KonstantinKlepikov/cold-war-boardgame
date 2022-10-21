@@ -32,7 +32,7 @@ class Settings(BaseSettings):
 
     # open-api errors
     AUTHENTICATE_RESPONSE_ERRORS: Dict = {
-        code: {'model': HttpErrorMessage} for code in [400,]
+        code: {'model': HttpErrorMessage} for code in [400, ]
         }
 
 

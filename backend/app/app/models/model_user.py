@@ -9,5 +9,5 @@ class User(Document):
     is_active = BooleanField(default=True)
 
     meta = {
-        'indexes': ['login',],
+        'indexes': ['login', ],
         }

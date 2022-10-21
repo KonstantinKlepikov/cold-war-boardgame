@@ -54,7 +54,7 @@ class UserPassword(BaseModel):
     class Config:
         schema_extra = {
             "example": {
-                "password": "1jkR3Zt8",
+                "password": "greatagain",
             }
         }
 
@@ -65,7 +65,7 @@ class UserCreateUpdate(UserBase, UserPassword):
         schema_extra = {
             "example": {
                 "login": "DonaldTrump",
-                "password": "1jkR3Zt8",
+                "password": "greatagain",
             }
         }
 

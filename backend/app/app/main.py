@@ -1,5 +1,6 @@
 from typing import Dict
 from fastapi import FastAPI, status, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from app.schemas.user import Token, UserCreateUpdate
 from app.crud import crud_user
 from app.core.security import verify_password, create_access_token
@@ -19,6 +20,15 @@ app = FastAPI(
     version=settings.version,
     openapi_tags=settings.openapi_tags
         )
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.post(

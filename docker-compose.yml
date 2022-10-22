@@ -11,6 +11,7 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${DEV_ROOT_USERNAME?Variable not set}
       MONGO_INITDB_ROOT_PASSWORD: ${DEV_ROOT_PASSWORD?Variable not set}
+      MONGO_INITDB_DATABASE: dev-db
     volumes:
       - mongo-dev-data:/data/db
     networks:
@@ -41,11 +42,12 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${TEST_ROOT_USERNAME?Variable not set}
       MONGO_INITDB_ROOT_PASSWORD: ${TEST_ROOT_PASSWORD?Variable not set}
+      MONGO_INITDB_DATABASE: test-db
     networks:
       - dev-network
 
   backend:
-    image: cold-war-back-0.0.1
+    image: cold-war-back
     container_name: cold-war-back
     ports:
       - "8000:8000"
@@ -63,7 +65,7 @@ services:
       - dev-network
 
   frontend:
-    image: cold-war-front-0.0.1
+    image: cold-war-front
     container_name: cold-war-front
     ports:
       - "8501:8501"
@@ -76,8 +78,6 @@ services:
       - dev-network
 
 volumes:
-  backend:
-  frontend:
   mongo-dev-data:
     driver: local
 

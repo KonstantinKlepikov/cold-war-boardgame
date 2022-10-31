@@ -39,8 +39,8 @@ app.add_middleware(
     tags=['user', ],
     summary='Authenticate user',
     response_description="""
-    Created. As response you recieve access token,
-    that must be used for all secured operation
+    OK. As response you recieve access token,
+    that must be used for all secured operations.
     """
         )
 def login(

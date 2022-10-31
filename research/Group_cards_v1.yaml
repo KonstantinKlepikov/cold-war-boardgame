@@ -1,0 +1,121 @@
+---
+-
+    Name: Guerilla
+    Influence: 1
+    Faction: Military
+    Power: 'Send any other group card, whether ready or mobilized, to the discard pile'
+-
+    Name: Militia
+    Influence: 2
+    Faction: Military
+    Power: 'Send any other group card, whether ready or mobilized, to the discard pile'
+-
+    Name: Mercenaries
+    Influence: 3
+    Faction: Military
+    Power: 'Send any other group card, whether ready or mobilized, to the discard pile'
+-
+    Name: Police
+    Influence: 4
+    Faction: Military
+    Power: 'Send any other group card, whether ready or mobilized, to the discard pile'
+-
+    Name: Infantry
+    Influence: 5
+    Faction: Military
+    Power: 'Send any other group card, whether ready or mobilized, to the discard pile'
+-
+    Name: Generals
+    Influence: 6
+    Faction: Military
+    Power: 'Send any other group card, whether ready or mobilized, to the discard pile'
+-
+    Name: Workers
+    Influence: 1
+    Faction: Economic
+    Power: 'Mobilize any ready group or ready any mobilized group. You may not affect an economic card with this power'
+-
+    Name: Mafia
+    Influence: 2
+    Faction: Economic
+    Power: 'Mobilize any ready group or ready any mobilized group. You may not affect an economic card with this power'
+-
+    Name: Food companies
+    Influence: 3
+    Faction: Economic
+    Power: 'Mobilize any ready group or ready any mobilized group. You may not affect an economic card with this power'
+-
+    Name: Industry
+    Influence: 4
+    Faction: Economic
+    Power: 'Mobilize any ready group or ready any mobilized group. You may not affect an economic card with this power'
+-
+    Name: Oil Tycoons
+    Influence: 5
+    Faction: Economic
+    Power: 'Mobilize any ready group or ready any mobilized group. You may not affect an economic card with this power'
+-
+    Name: Bankers
+    Influence: 6
+    Faction: Economic
+    Power: 'Mobilize any ready group or ready any mobilized group. You may not affect an economic card with this power'
+-
+    Name: Students
+    Influence: 1
+    Faction: Political
+    Power: 'Steal a group your opponent or give him one of yours. You may not make either player exceed the objective''s population limit, nor make your opponent exceed the objective''s Stability'
+-
+    Name: Trade Union
+    Influence: 2
+    Faction: Political
+    Power: 'Steal a group your opponent or give him one of yours. You may not make either player exceed the objective''s population limit, nor make your opponent exceed the objective''s Stability'
+-
+    Name: Nationalists
+    Influence: 3
+    Faction: Political
+    Power: 'Steal a group your opponent or give him one of yours. You may not make either player exceed the objective''s population limit, nor make your opponent exceed the objective''s Stability'
+-
+    Name: Fundamentalists
+    Influence: 4
+    Faction: Political
+    Power: 'Steal a group your opponent or give him one of yours. You may not make either player exceed the objective''s population limit, nor make your opponent exceed the objective''s Stability'
+-
+    Name: Opposition
+    Influence: 5
+    Faction: Political
+    Power: 'Steal a group your opponent or give him one of yours. You may not make either player exceed the objective''s population limit, nor make your opponent exceed the objective''s Stability'
+-
+    Name: Government
+    Influence: 6
+    Faction: Political
+    Power: 'Steal a group your opponent or give him one of yours. You may not make either player exceed the objective''s population limit, nor make your opponent exceed the objective''s Stability'
+-
+    Name: Artists
+    Influence: 1
+    Faction: Media
+    Power: 'Look at the top card on the group deck, then recruit it, discard it, or leave it where it was'
+-
+    Name: NGOs
+    Influence: 2
+    Faction: Media
+    Power: 'Look at the top card on the group deck, then recruit it, discard it, or leave it where it was'
+-
+    Name: Phone company
+    Influence: 3
+    Faction: Media
+    Power: 'Look at the top card on the group deck, then recruit it, discard it, or leave it where it was'
+-
+    Name: Newspapers
+    Influence: 4
+    Faction: Media
+    Power: 'Look at the top card on the group deck, then recruit it, discard it, or leave it where it was'
+-
+    Name: Radio
+    Influence: 5
+    Faction: Media
+    Power: 'Look at the top card on the group deck, then recruit it, discard it, or leave it where it was'
+-
+    Name: Television
+    Influence: 6
+    Faction: Media
+    Power: 'Look at the top card on the group deck, then recruit it, discard it, or leave it where it was'

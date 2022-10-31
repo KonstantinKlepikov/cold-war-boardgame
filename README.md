@@ -8,9 +8,9 @@ This is pet project:
 
 ## Project resources
 
-- [API stage](https://cold-war-api-stage.herokuapp.com/)
-- [API prod](https://cold-war-api.herokuapp.com/)
-- [WEB app stage](https://cold-war-api.herokuapp.com/)
+- [API stage](https://cold-war-api-stage.herokuapp.com/docs)
+- [API prod](https://cold-war-api.herokuapp.com/docs)
+- [WEB app stage](https://cold-war-web-stage.herokuapp.com/)
 - [WEB app prod](https://cold-war-web.herokuapp.com/)
 - [docs](https://drive.google.com/drive/folders/1MoP2Ba2yzKSFf3X8XwieKKc8cv_cEhCU?usp=sharing)
 - [project tasks board](https://github.com/users/KonstantinKlepikov/projects/4/views/5)
@@ -36,7 +36,7 @@ MONGODB_URL=mongodb://${DEV_ROOT_USERNAME}:${DEV_ROOT_PASSWORD}@mongo-dev:27017/
 DB_NAME=dev-db
 
 # test_mongodb
-TEST_MONGODB_URL=mongomock://${DEV_ROOT_USERNAME}:${DEV_ROOT_PASSWORD}@mongo-test:27021/
+TEST_MONGODB_URL=mongodb://${DEV_ROOT_USERNAME}:${DEV_ROOT_PASSWORD}@mongo-test:27021/
 
 # JWT secret key
 SECRET_KEY=<this>

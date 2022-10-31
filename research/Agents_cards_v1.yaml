@@ -1,0 +1,31 @@
+---
+-
+    Name: Master Spy
+    Initiative: 1
+    Agenda (Win): 'Your opponent claims the objective immediately'
+    Agenda (Lose): 'You claim the objective immediately'
+-
+    Name: Deputy Director
+    Initiative: 2
+    Agenda (Win): 'No effect. This agent can''t be terminated and never goes on leave (return him to your headquarters instead).'
+    Agenda (Lose): 'No effect. This agent can''t be terminated and never goes on leave (return him to your headquarters instead).'
+-
+    Name: Double Agent
+    Initiative: 3
+    Agenda (Win): 'Choose one of the agents at your opponent''s headquarters and send him immediately on leave, or, in next turn''s Planning phase, force your opponent to reveal his Agent X''s identity before you choose your own Agent X.'
+    Agenda (Lose): 'Choose one of the agents at your opponent''s headquarters and send him immediately on leave, or, in next turn''s Planning phase, force your opponent to reveal his Agent X''s identity before you choose your own Agent X.'
+-
+    Name: Analyst
+    Initiative: 4
+    Agenda (Win): 'A the end of next turn''s Briefing phase, look at the top three cards of the group deck and replace them in any order you choose.'
+    Agenda (Lose): 'A the end of next turn''s Briefing phase, look at the top three cards of the group deck and replace them in any order you choose.'
+-
+    Name: Assassin
+    Initiative: 5
+    Agenda (Win): 'Terminate your opponent''s Agent X and put the objective facedown on the bottom of the objective deck.'
+    Agenda (Lose): 'No effect.'
+-
+    Name: Director
+    Initiative: 6
+    Agenda (Win): 'Immediately claim the objective on the bottom of the objective deck.'
+    Agenda (Lose): 'No effect.'

@@ -6,6 +6,7 @@ from app.crud import crud_user
 from app.core.security import verify_password, create_access_token
 from app.config import settings
 from mongoengine import connect
+from app.db.init_db import check_db_init, init_db
 
 
 connect(
@@ -13,6 +14,10 @@ connect(
     name=settings.db_name,
     alias='default',
     )
+
+if not check_db_init('default'):
+    init_db('default')
+
 
 app = FastAPI(
     title=settings.title,

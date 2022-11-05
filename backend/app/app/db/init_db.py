@@ -20,9 +20,9 @@ def init_db(alias: str = 'default') -> None:
     """
     cards = get_yaml('app/db/data/converted.yaml')
 
-    with switch_db(model_cards.AgentsCards, alias) as AgentsCards:
-        for card in cards['agents_cards']:
-            data = AgentsCards(**card)
+    with switch_db(model_cards.AgentCards, alias) as AgentCards:
+        for card in cards['agent_cards']:
+            data = AgentCards(**card)
             data.save()
 
     with switch_db(model_cards.GroupCards, alias) as GroupCards:
@@ -39,8 +39,8 @@ def init_db(alias: str = 'default') -> None:
 def check_db_init(alias: str = 'default') -> bool:
     """Check is db initializes
     """
-    with switch_db(model_cards.AgentsCards, alias) as AgentsCards:
-        count = AgentsCards.objects().count()
+    with switch_db(model_cards.AgentCards, alias) as AgentCards:
+        count = AgentCards.objects().count()
         if count == 6:
             return True
         return False

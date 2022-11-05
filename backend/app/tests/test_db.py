@@ -44,8 +44,8 @@ class TestDB:
             ) -> None:
         """Test init_db() cards initialisation
         """
-        with switch_db(model_cards.AgentsCards, 'test-db-alias') as AgentsCards:
-            assert AgentsCards.objects().count() == 6, \
+        with switch_db(model_cards.AgentCards, 'test-db-alias') as AgentCards:
+            assert AgentCards.objects().count() == 6, \
                 'wrong count of test agents cards'
         with switch_db(model_cards.GroupCards, 'test-db-alias') as GroupCards:
             assert GroupCards.objects().count() == 24, \

@@ -192,7 +192,7 @@ objective_cards:
 - bias_icons:
   - Media
   - Military
-  - Econmic
+  - Economic
   - Political
   name: Space Race
   population: 1
@@ -263,7 +263,7 @@ objective_cards:
   stability: 9
   victory_points: 10
 - bias_icons:
-  - Ecnomic
+  - Economic
   - Political
   - Military
   - Media
@@ -305,7 +305,7 @@ objective_cards:
 - bias_icons:
   - Political
   - Media
-  - Ecnomic
+  - Economic
   - Military
   name: Turkey
   population: 3

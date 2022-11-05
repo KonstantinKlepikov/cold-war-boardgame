@@ -1,7 +1,7 @@
 from mongoengine import Document, StringField, IntField, ListField
 
 
-class AgentsCards(Document):
+class AgentCards(Document):
     """Collection of agents cards
     """
 

@@ -1,40 +1,24 @@
 import json
-from typing import Union
+from typing import Union, Dict, List
 from app.crud.crud_base import CRUDBaseRead
-from app.models.model_cards import AgentsCards, GroupCards, ObjectiveCards
-from app.schemas import cards
+from app.models import model_cards
+from app.schemas.cards import GameCards
 
 
-class CRUDCards(CRUDBaseRead[
-    Union[AgentsCards, GroupCards, ObjectiveCards],
-    cards.GameCards
-
-    ]):
-    """_summary_
-
-    Args:
-        CRUDBase (_type_): _description_
+class CRUDCards(CRUDBaseRead[Union[
+    model_cards.AgentCards,
+    model_cards.GroupCards,
+    model_cards.ObjectiveCards
+        ], GameCards]):
+    """Crud for game cards document
     """
 
-    def get_all_cards(self):
-        """_summary_
+    def get_all_cards(self) -> Dict[str, List[Dict[str, Union[str, int]]]]:
+        """Get all cards data
 
         Returns:
-            _type_: _description_
+            Dict[str, List[Dict[str, Union[str, int]]]]: game cards data
         """
-        # db_cards = {}
-        # db_cards['agent_cards'] = [
-        #     self.schemas[0].parse_raw(j.to_json()) for j in self.models[0].objects
-        #     ]
-        # db_cards['group_cards'] = [
-        #     self.schemas[1].parse_raw(j.to_json()) for j in self.models[1].objects
-        #     ]
-        # db_cards['objective_cards'] = [
-        #     self.schemas[2].parse_raw(j.to_json()) for j in self.models[2].objects
-        #     ]
-        # db_cards = f"'agent_cards':{self.models[0].objects.to_json()}" \
-        #            f"'group_cards':{self.models[1].objects.to_json()}" \
-        #            f"'objective_cards':{self.models[2].objects.to_json()}"
 
         db_cards = {
             'agent_cards': json.loads(self.models[0].objects.to_json()),
@@ -42,18 +26,12 @@ class CRUDCards(CRUDBaseRead[
             'objective_cards': json.loads(self.models[2].objects.to_json()),
         }
 
-
-        # db_cards['agent_cards'] = self.models[0].objects.to_json()
-        # db_cards['group_cards'] = self.models[1].objects.to_json()
-        # db_cards['objective_cards'] = self.models[2].objects.to_json()
-
-        # result = self.schema.parse_raw(db_cards)
         result = self.schema.parse_obj(db_cards)
 
         return result
 
 
 cards = CRUDCards(
-    [AgentsCards, GroupCards, ObjectiveCards],
-    cards.GameCards
+    [model_cards.AgentCards, model_cards.GroupCards, model_cards.ObjectiveCards],
+    GameCards
     )

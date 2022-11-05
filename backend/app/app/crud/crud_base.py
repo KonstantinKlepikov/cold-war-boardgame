@@ -12,7 +12,7 @@ class CRUDBase(Generic[ModelType, CreateUpdateSchemaType]):
 
     def __init__(self, model: Type[ModelType]):
         """
-        CRUD object with default methods to Create, Read, Update, Delete (CRUD).
+        CRUD object with default methods to Create, Read, Update, Delete ysers.
 
         **Parameters**
 
@@ -23,13 +23,14 @@ class CRUDBase(Generic[ModelType, CreateUpdateSchemaType]):
 
 class CRUDBaseRead(Generic[ModelType, ReadSchemaType]):
 
-    def __init__(self, models: List[Type[ModelType]], schema: Type[ModelType]):
+    def __init__(self, models: List[Type[ModelType]], schema: Type[ReadSchemaType]):
         """
-        CRUD object with default methods to Create, Read, Update, Delete (CRUD).
+        CRUD object with default methods to Read cards.
 
         **Parameters**
 
         * `models`: A MongoDB models classes
+        * `schema`: A pydantic schema of classes
         """
         self.models = models
         self.schema = schema

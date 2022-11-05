@@ -1,4 +1,4 @@
-from typing import Dict, Union
+from typing import Dict, Union, List
 from fastapi import FastAPI, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from app.schemas.user import Token, UserCreateUpdate
@@ -81,6 +81,8 @@ def login(
     be used in game interfaces.
     """
         )
-def get_static_data_of_cards() -> Dict[str, Union[str, int]]:
+def get_static_data() -> Dict[str, List[Dict[str, Union[str, int]]]]:
+    """Get all static game data (currently cards data)
+    """
     db_cards = crud_card.cards.get_all_cards()
     return db_cards

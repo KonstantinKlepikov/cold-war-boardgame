@@ -15,7 +15,7 @@ class Card(BaseModel):
             }
 
 
-class AgentsCard(Card):
+class AgentCard(Card):
     """Agent card schema
     """
     agenda_lose: str
@@ -48,7 +48,8 @@ class GroupCard(Card):
                 "name": "Guerilla",
                 "faction": "Military",
                 "influence": 1,
-                "power": "Send any other group card, whether ready or mobilized, to the discard pile",
+                "power": "Send any other group card, whether "
+                         "ready or mobilized, to the discard pile",
                 }
             }
 
@@ -86,6 +87,6 @@ class ObjectiveCard(Card):
 class GameCards(BaseModel):
     """Agents, group and objective cards schema
     """
-    agent_cards: List[AgentsCard]
+    agent_cards: List[AgentCard]
     group_cards: List[GroupCard]
     objective_cards: List[ObjectiveCard]

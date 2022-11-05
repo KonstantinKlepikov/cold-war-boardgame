@@ -38,3 +38,6 @@ minversion = "6.0"
 testpaths = [
     "tests",
 ]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+]

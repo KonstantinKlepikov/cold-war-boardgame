@@ -1,14 +1,16 @@
+import yaml
 from typing import Dict, Callable
 from fastapi.testclient import TestClient
-from app.main import app, crud_user
+from app.main import app, crud_user,crud_card
 from app.models import model_user
+from app.schemas.cards import GameCards
 
 
 client = TestClient(app)
 
 
-class TestLogin:
-    """Test login resource
+class TestUserLogin:
+    """Test user/login
     """
 
     def test_login_return_200(
@@ -84,3 +86,31 @@ class TestLogin:
         assert response.status_code == 400, 'not a error'
         assert response.json()['detail'] == 'Wrong login or password', \
             'wrong error message'
+
+
+class TestGameDataStatic:
+    """Test game/data/static
+    """
+
+    def test_game_data_static_return_200(
+        self,
+        monkeypatch,
+        ):
+        """Test game data static return correct data
+        """
+
+        def mockreturn(*args, **kwargs) -> Callable:
+            with open('app/db/data/converted.yaml', "r") as stream:
+                try:
+                    y = yaml.safe_load(stream)
+                    return GameCards.parse_obj(y)
+                except yaml.YAMLError as exc:
+                    print(exc)
+
+        monkeypatch.setattr(crud_card.cards, "get_all_cards", mockreturn)
+        response = client.get("/game/data/static")
+
+        assert response.status_code == 200, 'wrong status'
+        assert response.json()["agent_cards"], 'no agent_cards'
+        assert response.json()["group_cards"], 'no group_cards'
+        assert response.json()["objective_cards"], 'objective_cards'

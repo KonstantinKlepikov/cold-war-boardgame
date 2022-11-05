@@ -1,4 +1,4 @@
-agents_cards:
+agent_cards:
 - agenda_lose: You claim the objective immediately
   agenda_win: Your opponent claims the objective immediately
   initiative: 1

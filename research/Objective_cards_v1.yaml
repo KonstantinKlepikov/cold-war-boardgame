@@ -1,0 +1,148 @@
+---
+-
+    Name: Nobel Peace Prize
+    Bias icons: Media, Political, Economic, Military
+    Population: 1
+    Stability: 6
+    Special ability: 'Cease-fire: Upon cansing civil disorder, discard this objective to prevent your Agent X from being terminated. He goes on leave instead.'
+    Victory points: 5
+-
+    Name: Live Benefit
+    Bias icons: Media, Economic, Political, Military
+    Population: 1
+    Stability: 6
+    Special ability: 'Influence Struggle: Instead of recruiting a group normally, activating a group, or passing, discard this objective to recruit the group on top of the group discard pile.'
+    Victory points: 5
+-
+    Name: Nuclear Escalation
+    Bias icons: Media, Military, Political, Economic
+    Population: 1
+    Stability: 6
+    Special ability: 'Influence Struggle: Instead of recruiting a group normally, activating a group, or passing, discard this objective to send all military cards in play to the group deck discard pile.'
+    Victory points: 5
+-
+    Name: Space Race
+    Bias icons: Media, Military, Econmic, Political
+    Population: 1
+    Stability: 6
+    Special ability: 'Detente: Discard this objective to look at the next three cards on the objective deck and then replace them in any order you choose.'
+    Victory points: 5
+-
+    Name: Olympic Games
+    Bias icons: Media, Economic, Military, Political
+    Population: 1
+    Stability: 6
+    Special ability: 'Detente: Discard this objective to return a terminated agent to the game. It reurns on leave (i.e., not at headquarters).'
+    Victory points: 5
+-
+    Name: Summit Meeting
+    Bias icons: Media, Political, Military, Economic
+    Population: 1
+    Stability: 6
+    Special ability: 'Influence Struggle: Discard this objective to force your opponent to reveal his Agent X''s identity.'
+    Victory points: 5
+-
+    Name: Egypt
+    Bias icons: Political, Economic, Media, Military
+    Population: 4
+    Stability: 11
+    Special ability: None
+    Victory points: 20
+-
+    Name: Vietnam
+    Bias icons: Economic, Political, Media, Military
+    Population: 5
+    Stability: 9
+    Special ability: None
+    Victory points: 20
+-
+    Name: Panama
+    Bias icons: Economic, Military, Media, Political
+    Population: 5
+    Stability: 9
+    Special ability: None
+    Victory points: 15
+-
+    Name: Angola
+    Bias icons: Military, Political, Media, Economic
+    Population: 5
+    Stability: 9
+    Special ability: None
+    Victory points: 10
+-
+    Name: Afghanistan
+    Bias icons: Ecnomic, Political, Military, Media
+    Population: 5
+    Stability: 9
+    Special ability: None
+    Victory points: 15
+-
+    Name: Houndaras
+    Bias icons: Military, Economic, Media, Political
+    Population: 5
+    Stability: 9
+    Special ability: None
+    Victory points: 10
+-
+    Name: Libya
+    Bias icons: Military, Political, Economic, Media
+    Population: 4
+    Stability: 11
+    Special ability: 
+    Victory points: 15
+-
+    Name: Greece
+    Bias icons: Political, Military, Media, Economic
+    Population: 3
+    Stability: 13
+    Special ability: 
+    Victory points: 10
+-
+    Name: Turkey
+    Bias icons: Political, Media, Ecnomic, Military
+    Population: 3
+    Stability: 13
+    Special ability: 
+    Victory points: 15
+-
+    Name: Iran
+    Bias icons: Political, Military, Economic, Media
+    Population: 4
+    Stability: 11
+    Special ability: 
+    Victory points: 15
+-
+    Name: Cuba
+    Bias icons: Economic, Military, Political, Media
+    Population: 5
+    Stability: 9
+    Special ability: 
+    Victory points: 10
+-
+    Name: Congo
+    Bias icons: Military, Economic, Political, Media
+    Population: 5
+    Stability: 9
+    Special ability: 
+    Victory points: 10
+-
+    Name: Czechoslovakia
+    Bias icons: Political, Media, Military, Economic
+    Population: 3
+    Stability: 13
+    Special ability: 
+    Victory points: 20
+-
+    Name: Chile
+    Bias icons: Political, Economic, Military, Media
+    Population: 4
+    Stability: 11
+    Special ability: 
+    Victory points: 10
+-
+    Name: Korea
+    Bias icons: Military, Media, Political, Economic
+    Population: 4
+    Stability: 11
+    Special ability: 
+    Victory points: 10

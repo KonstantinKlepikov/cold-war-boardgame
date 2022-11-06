@@ -4,6 +4,7 @@ from mongoengine import disconnect, connect
 from mongoengine.context_managers import switch_db
 from app.config import settings
 from app.models import model_user
+from app.db.init_db import init_db
 
 
 @pytest.fixture(scope="session")
@@ -38,10 +39,13 @@ def connection(db_user: Dict[str, str]) -> Generator:
             name='test-db',
             alias='test-db-alias'
             )
+        conn.drop_database('test-db')
         with switch_db(model_user.User, 'test-db-alias') as User:
-            User.drop_collection()
             user = User(**db_user)
             user.save()
+        # init constant data
+        init_db('test-db-alias')
         yield conn
     finally:
+        conn.drop_database('test-db')
         disconnect(alias='test-db-alias')

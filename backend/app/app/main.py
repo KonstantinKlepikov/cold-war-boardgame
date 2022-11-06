@@ -1,11 +1,13 @@
-from typing import Dict
+from typing import Dict, Union, List
 from fastapi import FastAPI, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from app.schemas.user import Token, UserCreateUpdate
-from app.crud import crud_user
+from app.schemas.cards import GameCards
+from app.crud import crud_user, crud_card
 from app.core.security import verify_password, create_access_token
 from app.config import settings
 from mongoengine import connect
+from app.db.init_db import check_db_init, init_db
 
 
 connect(
@@ -13,6 +15,10 @@ connect(
     name=settings.db_name,
     alias='default',
     )
+
+if not check_db_init('default'):
+    init_db('default')
+
 
 app = FastAPI(
     title=settings.title,
@@ -39,8 +45,8 @@ app.add_middleware(
     tags=['user', ],
     summary='Authenticate user',
     response_description="""
-    Created. As response you recieve access token,
-    that must be used for all secured operation
+    OK. As response you recieve access token,
+    that must be used for all secured operations.
     """
         )
 def login(
@@ -62,3 +68,21 @@ def login(
 
     else:
         return {'access_token': create_access_token(user.login)}
+
+
+@app.get(
+    "/game/data/static",
+    response_model=GameCards,
+    status_code=status.HTTP_200_OK,
+    tags=['game', ],
+    summary='Static cards data',
+    response_description="""
+    OK. As response you recieve static data, that can
+    be used in game interfaces.
+    """
+        )
+def get_static_data() -> Dict[str, List[Dict[str, Union[str, int]]]]:
+    """Get all static game data (currently cards data)
+    """
+    db_cards = crud_card.cards.get_all_cards()
+    return db_cards

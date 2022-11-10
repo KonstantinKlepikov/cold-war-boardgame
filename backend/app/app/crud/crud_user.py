@@ -1,10 +1,10 @@
 from typing import Optional
 from app.crud.crud_base import CRUDBase
 from app.models.model_user import User
-from app.schemas.user import UserCreateUpdate
+from app.schemas import schema_user
 
 
-class CRUDUser(CRUDBase[User, UserCreateUpdate]):
+class CRUDUser(CRUDBase[User, schema_user.UserCreateUpdate]):
     """CRUD for User docunent
     """
 

@@ -2,7 +2,7 @@ from typing import List, Literal, Set, Optional
 from pydantic import BaseModel, PositiveInt, NonNegativeInt
 
 
-class Card(BaseModel):
+class CardName(BaseModel):
     """Base schema for cards
     """
     name: str
@@ -15,7 +15,7 @@ class Card(BaseModel):
             }
 
 
-class AgentCard(Card):
+class AgentCard(CardName):
     """Agent card schema
     """
     agenda_lose: str
@@ -33,7 +33,7 @@ class AgentCard(Card):
             }
 
 
-class GroupCard(Card):
+class GroupCard(CardName):
     """Group card schema
     """
     faction: Literal[
@@ -54,7 +54,7 @@ class GroupCard(Card):
             }
 
 
-class ObjectiveCard(Card):
+class ObjectiveCard(CardName):
     """Objective card schema
     """
 

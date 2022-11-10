@@ -1,7 +1,7 @@
 from mongoengine import Document, StringField, IntField, ListField
 
 
-class AgentCards(Document):
+class AgentCard(Document):
     """Collection of agents cards
     """
 
@@ -14,7 +14,7 @@ class AgentCards(Document):
         }
 
 
-class GroupCards(Document):
+class GroupCard(Document):
     """Collection of group cards
     """
 
@@ -27,7 +27,7 @@ class GroupCards(Document):
         }
 
 
-class ObjectiveCards(Document):
+class ObjectiveCard(Document):
     """Collection of objective cards
     """
 

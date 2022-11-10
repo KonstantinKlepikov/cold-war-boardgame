@@ -1,8 +1,7 @@
 from typing import Dict, Union, List
 from fastapi import FastAPI, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from app.schemas.user import Token, UserCreateUpdate
-from app.schemas.cards import GameCards
+from app.schemas import schema_cards, schema_user
 from app.crud import crud_user, crud_card
 from app.core.security import verify_password, create_access_token
 from app.config import settings
@@ -39,7 +38,7 @@ app.add_middleware(
 
 @app.post(
     "/user/login",
-    response_model=Token,
+    response_model=schema_user.Token,
     status_code=status.HTTP_200_OK,
     responses=settings.AUTHENTICATE_RESPONSE_ERRORS,
     tags=['user', ],
@@ -50,7 +49,7 @@ app.add_middleware(
     """
         )
 def login(
-    user: UserCreateUpdate,
+    user: schema_user.UserCreateUpdate,
         ) -> Dict[str, str]:
     """Autorizate user. Send for autorization:
 
@@ -72,7 +71,7 @@ def login(
 
 @app.get(
     "/game/data/static",
-    response_model=GameCards,
+    response_model=schema_cards.GameCards,
     status_code=status.HTTP_200_OK,
     tags=['game', ],
     summary='Static cards data',

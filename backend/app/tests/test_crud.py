@@ -2,14 +2,15 @@ from typing import Dict, Generator
 from mongoengine.context_managers import switch_db
 from app.crud.crud_user import CRUDUser
 from app.crud.crud_card import CRUDCards
-from app.models import model_user, model_cards
-from app.schemas.cards import (
+from app.crud.crud_game import CRUDGame
+from app.models import model_user, model_cards, model_game
+from app.schemas.schema_cards import (
     GameCards, AgentCard, GroupCard, ObjectiveCard
     )
 
 
 class TestCRUDUser:
-    """Test CRUDUser
+    """Test CRUDUser class
     """
 
     def test_get_user_by_login_from_db(
@@ -32,16 +33,16 @@ class TestCRUDUser:
 
 
 class TestCRUDCards:
-    """Test CRUDCards
+    """Test CRUDCards class
     """
 
     def test_get_all_cards(
         self,
         connection: Generator,
             ) -> None:
-        with switch_db(model_cards.AgentCards, 'test-db-alias') as AgentCards, \
-            switch_db(model_cards.GroupCards, 'test-db-alias') as GroupCards, \
-            switch_db(model_cards.ObjectiveCards, 'test-db-alias') as ObjectiveCards:
+        with switch_db(model_cards.AgentCard, 'test-db-alias') as AgentCards, \
+            switch_db(model_cards.GroupCard, 'test-db-alias') as GroupCards, \
+            switch_db(model_cards.ObjectiveCard, 'test-db-alias') as ObjectiveCards:
                 crud_cards = CRUDCards(
                     [AgentCards, GroupCards, ObjectiveCards],
                     GameCards
@@ -58,3 +59,17 @@ class TestCRUDCards:
                 assert len(cards.objective_cards) == 21, 'wrong group len'
                 assert isinstance(cards.objective_cards[0], ObjectiveCard), \
                     'wrong objective type'
+
+
+class TestCRUDGame:
+    """Test CRUDGame class
+    """
+
+    def test_get_current_game_data_return_nothing_from_empty_base(
+        self,
+        connection: Generator,
+            ) -> None:
+        with switch_db(model_game.CurrentGameData, 'test-db-alias') as CurrentGameData:
+            game = CRUDGame(CurrentGameData)
+            state = game.get_current_game_data()
+            assert not state, 'nonempty state'

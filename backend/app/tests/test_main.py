@@ -1,9 +1,9 @@
 import yaml
 from typing import Dict, Callable
 from fastapi.testclient import TestClient
-from app.main import app, crud_user,crud_card
+from app.main import app, crud_user, crud_card
 from app.models import model_user
-from app.schemas.cards import GameCards
+from app.schemas import schema_cards
 
 
 client = TestClient(app)
@@ -103,7 +103,7 @@ class TestGameDataStatic:
             with open('app/db/data/converted.yaml', "r") as stream:
                 try:
                     y = yaml.safe_load(stream)
-                    return GameCards.parse_obj(y)
+                    return schema_cards.GameCards.parse_obj(y)
                 except yaml.YAMLError as exc:
                     print(exc)
 

@@ -4,15 +4,15 @@ from mongoengine import Document
 
 
 ModelType = TypeVar("ModelType", bound=Document)
-CreateUpdateSchemaType = TypeVar("CreateUpdateSchemaType", bound=BaseModel)
 ReadSchemaType = TypeVar("ReadSchemaType", bound=BaseModel)
+CRUDType = TypeVar("CRUDType", bound=BaseModel)
 
 
-class CRUDBase(Generic[ModelType, CreateUpdateSchemaType]):
+class CRUDBase(Generic[ModelType, CRUDType]):
 
     def __init__(self, model: Type[ModelType]):
         """
-        CRUD object with default methods to Create, Read, Update, Delete ysers.
+        CRUD object with default methods to Create, Update, Delete and Read objects.
 
         **Parameters**
 

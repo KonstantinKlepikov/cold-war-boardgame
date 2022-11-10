@@ -2,14 +2,14 @@ import json
 from typing import Union, Dict, List
 from app.crud.crud_base import CRUDBaseRead
 from app.models import model_cards
-from app.schemas.cards import GameCards
+from app.schemas import schema_cards
 
 
 class CRUDCards(CRUDBaseRead[Union[
-    model_cards.AgentCards,
-    model_cards.GroupCards,
-    model_cards.ObjectiveCards
-        ], GameCards]):
+    model_cards.AgentCard,
+    model_cards.GroupCard,
+    model_cards.ObjectiveCard
+        ], schema_cards.GameCards]):
     """Crud for game cards document
     """
 
@@ -32,6 +32,6 @@ class CRUDCards(CRUDBaseRead[Union[
 
 
 cards = CRUDCards(
-    [model_cards.AgentCards, model_cards.GroupCards, model_cards.ObjectiveCards],
-    GameCards
+    [model_cards.AgentCard, model_cards.GroupCard, model_cards.ObjectiveCard],
+    schema_cards.GameCards
     )

@@ -4,13 +4,12 @@ from mongoengine import Document
 
 
 ModelType = TypeVar("ModelType", bound=Document)
-ReadSchemaType = TypeVar("ReadSchemaType", bound=BaseModel)
 CRUDType = TypeVar("CRUDType", bound=BaseModel)
 
 
 class CRUDBase(Generic[ModelType, CRUDType]):
 
-    def __init__(self, model: Type[ModelType]):
+    def __init__(self, model: Type[ModelType], schema: Type[CRUDType]):
         """
         CRUD object with default methods to Create, Update, Delete and Read objects.
 
@@ -19,11 +18,12 @@ class CRUDBase(Generic[ModelType, CRUDType]):
         * `model`: A MongoDB model class
         """
         self.model = model
+        self.schema = schema
 
 
-class CRUDBaseRead(Generic[ModelType, ReadSchemaType]):
+class CRUDBaseRead(Generic[ModelType, CRUDType]):
 
-    def __init__(self, models: List[Type[ModelType]], schema: Type[ReadSchemaType]):
+    def __init__(self, models: List[Type[ModelType]], schema: Type[CRUDType]):
         """
         CRUD object with default methods to Read cards.
 

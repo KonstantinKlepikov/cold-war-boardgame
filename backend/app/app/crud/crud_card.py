@@ -1,5 +1,6 @@
 import json
-from typing import Union, Dict, List
+from typing import Union
+from functools import lru_cache
 from app.crud.crud_base import CRUDBaseRead
 from app.models import model_cards
 from app.schemas import schema_cards
@@ -13,7 +14,8 @@ class CRUDCards(CRUDBaseRead[Union[
     """Crud for game cards document
     """
 
-    def get_all_cards(self) -> Dict[str, List[Dict[str, Union[str, int]]]]:
+    @lru_cache
+    def get_all_cards(self) -> schema_cards.GameCards:
         """Get all cards data
 
         Returns:
@@ -26,9 +28,7 @@ class CRUDCards(CRUDBaseRead[Union[
             'objective_cards': json.loads(self.models[2].objects.to_json()),
         }
 
-        result = self.schema.parse_obj(db_cards)
-
-        return result
+        return self.schema.parse_obj(db_cards)
 
 
 cards = CRUDCards(

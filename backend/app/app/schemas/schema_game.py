@@ -1,6 +1,6 @@
 from typing import Literal, Optional, List
 from pydantic import BaseModel, NonNegativeInt, conint
-from app.schemas import schema_cards
+from app.schemas import schema_cards, schema_user
 
 
 class GameSteps(BaseModel):
@@ -10,7 +10,7 @@ class GameSteps(BaseModel):
     turn_phase: Optional[Literal[
         'briefing', 'planning', 'influence_struggle',
         'ceasefire', 'debriefing', 'detente',
-    ]]
+    ]] = None
 
     class Config:
         schema_extra = {
@@ -19,6 +19,7 @@ class GameSteps(BaseModel):
                 "turn_phase": "briefing",
             }
         }
+
 
 class PlayerAgentCard(BaseModel):
     is_dead: bool = False
@@ -44,8 +45,8 @@ class PlayerCards(BaseModel):
     """Player cards schema
     """
     agent_cards: List[PlayerAgentCard]
-    group_cards: List[schema_cards.CardName]
-    objective_cards: List[schema_cards.CardName]
+    group_cards: List[schema_cards.CardName] = []
+    objective_cards: List[schema_cards.CardName] = []
 
 
 class GameDeck(BaseModel):
@@ -53,7 +54,7 @@ class GameDeck(BaseModel):
     """
     deck_len: NonNegativeInt = 0
     pile_len: NonNegativeInt = 0
-    pile: List[schema_cards.CardName]
+    pile: List[schema_cards.CardName] = []
 
     class Config:
         schema_extra = {
@@ -71,19 +72,19 @@ class GameDeck(BaseModel):
 class GameDecks(BaseModel):
     """Game cards of all decs
     """
-    group_deck: GameDeck
-    objective_deck: GameDeck
-    # TODO: check type
+    group_deck: GameDeck = GameDeck(deck_len=24)
+    objective_deck: GameDeck = GameDeck(deck_len=21)
 
 
 class Player(BaseModel):
     """Player current data schema
     """
-    has_priority: bool
-    is_bot: bool = False
+    has_priority: Optional[bool] = None
+    is_bot: Optional[bool] = None
     score: conint(ge=0, le=100) = 0
-    faction: Literal['kgb', 'cia']
+    faction: Optional[Literal['kgb', 'cia']] = None
     player_cards: PlayerCards
+    user: Optional[schema_user.UserBase] = None
 
     class Config:
         schema_extra = {
@@ -110,13 +111,16 @@ class Player(BaseModel):
                             },
                         ],
                     },
+                "user": {
+                    "login": "DonaldTrump",
+                    }
                 }
             }
 
 
-class CurrentGameData:
+class CurrentGameData(BaseModel):
     """Read or write current game data
     """
-    game_steps: GameSteps
+    game_steps: GameSteps = GameSteps()
     players: List[Player]
-    game_decks: GameDecks
+    game_decks: GameDecks = GameDecks()

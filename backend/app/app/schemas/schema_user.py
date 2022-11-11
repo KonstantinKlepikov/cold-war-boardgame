@@ -71,6 +71,7 @@ class UserCreateUpdate(UserBase, UserPassword):
 
 
 class UserInDBBase(UserBase):
+
     id: Optional[int] = None
     is_active: Optional[bool] = True
 

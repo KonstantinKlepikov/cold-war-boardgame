@@ -3,7 +3,7 @@ from mongoengine import (
     ReferenceField, StringField, BooleanField, IntField,
     GenericReferenceField, ValidationError, queryset_manager
         )
-from app.models import model_cards
+from app.models import model_cards, model_user
 
 
 class GameSteps(EmbeddedDocument):
@@ -40,6 +40,7 @@ class PlayerCards(EmbeddedDocument):
 class Player(EmbeddedDocument):
     """Player definition
     """
+    user = ReferenceField(model_user.User)
     has_priority = BooleanField()
     is_bot = BooleanField(default=False)
     score = IntField(min_value=0, max_value=100, default=0)

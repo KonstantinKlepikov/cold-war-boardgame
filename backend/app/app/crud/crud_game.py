@@ -1,5 +1,4 @@
 from typing import Optional, List
-# from functools import lru_cache
 from app.crud import crud_user, crud_base, crud_card
 from app.models import model_game
 from app.schemas import schema_game, schema_user, schema_cards
@@ -25,7 +24,7 @@ def make_user(
     else:
         return
 
-# @lru_cache
+
 def make_agents_cards() -> List[schema_game.PlayerAgentCard]:
     """Make agents cards list
 
@@ -38,6 +37,7 @@ def make_agents_cards() -> List[schema_game.PlayerAgentCard]:
             agent_card=schema_cards.CardName(name=card.name)
             ) for card in all_cards.agent_cards
         ]
+
 
 def make_player(
     login: Optional[str] = None
@@ -64,6 +64,7 @@ def make_player(
             player_cards=player_cards,
                 )
 
+
 def make_players(
     login: Optional[str] = None
         ) -> List[schema_game.Player]:
@@ -76,6 +77,7 @@ def make_players(
         List[Player]: lisat of players
     """
     return [make_player(login), make_player(), ]
+
 
 class CRUDGame(crud_base.CRUDBase[model_game.CurrentGameData, schema_game.CurrentGameData]):
     """Crud for game current state document
@@ -98,7 +100,7 @@ class CRUDGame(crud_base.CRUDBase[model_game.CurrentGameData, schema_game.Curren
         """Create new game
         """
         game = self.model(**self.make_new_game(login).dict())
-        game.save()
+        game.save(cascade=True)
 
 
 game = CRUDGame(model_game.CurrentGameData, schema_game.CurrentGameData)

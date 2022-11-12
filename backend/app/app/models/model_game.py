@@ -9,8 +9,8 @@ from app.models import model_cards, model_user
 class GameSteps(EmbeddedDocument):
     """Game steps definition
     """
-    game_turn = StringField(min_value=0, default=0)
-    turn_phase = StringField()
+    game_turn = IntField(min_value=0, default=0)
+    turn_phase = StringField(null=True)
 
 
 class PlayerAgentCard(EmbeddedDocument):
@@ -40,12 +40,12 @@ class PlayerCards(EmbeddedDocument):
 class Player(EmbeddedDocument):
     """Player definition
     """
-    user = ReferenceField(model_user.User)
-    has_priority = BooleanField()
-    is_bot = BooleanField(default=False)
+    has_priority = BooleanField(null=True)
+    is_bot = BooleanField(null=True)
     score = IntField(min_value=0, max_value=100, default=0)
-    faction = StringField()
+    faction = StringField(null=True)
     player_cards = EmbeddedDocumentField(PlayerCards)
+    user = ReferenceField(model_user.User)
 
 
 def check_cards_pile(pile_card) -> None:

@@ -1,8 +1,8 @@
 from typing import Dict, Union, List
 from fastapi import FastAPI, status, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from app.schemas import schema_cards, schema_user
-from app.crud import crud_user, crud_card
+from app.schemas import schema_cards, schema_user, schema_game
+from app.crud import crud_user, crud_card, crud_game
 from app.core.security import verify_password, create_access_token
 from app.config import settings
 from mongoengine import connect
@@ -76,12 +76,27 @@ def login(
     tags=['game', ],
     summary='Static cards data',
     response_description="""
-    OK. As response you recieve static data, that can
-    be used in game interfaces.
+    OK. As response you recieve static game data.
     """
         )
-def get_static_data() -> Dict[str, List[Dict[str, Union[str, int]]]]:
-    """Get all static game data (currently cards data)
+def get_static_data() -> schema_cards.GameCards:
+    """Get all static game data (cards data)
     """
-    db_cards = crud_card.cards.get_all_cards()
-    return db_cards
+    return crud_card.cards.get_all_cards()
+
+
+# TODO: token and test me
+@app.post(
+    "/game/data/current",
+    response_model=schema_game.CurrentGameData,
+    status_code=status.HTTP_200_OK,
+    tags=['game', ],
+    summary='Current game data',
+    response_description="""
+    OK. As response you recieve current game data.
+    """
+        )
+def get_static_data() -> schema_game.CurrentGameData:
+    """Get all current game data (game statement)
+    """
+    return crud_game.game.get_current_game_data()

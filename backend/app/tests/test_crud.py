@@ -195,3 +195,11 @@ class TestCRUDGame:
             game.create_new_game('DonaldTrump')
             state = game.get_current_game_data()
             assert state, 'empty state'
+
+    @pytest.mark.skip
+    def test_get_current_game_data_return_latest_game(
+        self,
+        connection: Generator,
+            ) -> None:
+        """Test get_current_game_data() return latest game data
+        """

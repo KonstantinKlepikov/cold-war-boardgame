@@ -13,7 +13,10 @@ class Settings(BaseSettings):
     db_name: str = 'prod-db'
     test_mongodb_url: Optional[str] = None
     access_token_expires_minites: Optional[int] = None
+
+    # JWT
     secret_key: str
+    algorithm: str
 
     # open-api settings
     title: str = poetry_data['name']
@@ -25,8 +28,12 @@ class Settings(BaseSettings):
             "description": "Users api",
         },
         {
+            "name": "game/data",
+            "description": "Game data api",
+        },
+        {
             "name": "game",
-            "description": "Game api",
+            "description": "Game processing api",
         },
     ]
 

@@ -1,7 +1,7 @@
 from mongoengine import (
-    Document, EmbeddedDocument, EmbeddedDocumentField, ListField,
-    ReferenceField, StringField, BooleanField, IntField,
-    GenericReferenceField, ValidationError, queryset_manager
+    Document, EmbeddedDocument, EmbeddedDocumentField, StringField,
+    BooleanField, IntField, ValidationError, EmbeddedDocumentListField,
+    queryset_manager,
         )
 from app.models import model_cards, model_user
 
@@ -20,21 +20,15 @@ class PlayerAgentCard(EmbeddedDocument):
     is_in_play = BooleanField(default=False)
     is_in_vacation = BooleanField(default=False)
     is_revealed = BooleanField(default=False)
-    agent_card = ReferenceField(model_cards.AgentCard)
+    agent_card = EmbeddedDocumentField(model_cards.CardName)
 
 
 class PlayerCards(EmbeddedDocument):
     """Array of player cards
     """
-    agent_cards = ListField(
-        EmbeddedDocumentField(PlayerAgentCard)
-            )
-    group_cards = ListField(
-        ReferenceField(model_cards.GroupCard)
-            )
-    objective_cards = ListField(
-        ReferenceField(model_cards.ObjectiveCard)
-            )
+    agent_cards = EmbeddedDocumentListField(PlayerAgentCard)
+    group_cards = EmbeddedDocumentListField(model_cards.CardName)
+    objective_cards = EmbeddedDocumentListField(model_cards.CardName)
 
 
 class Player(EmbeddedDocument):
@@ -45,7 +39,7 @@ class Player(EmbeddedDocument):
     score = IntField(min_value=0, max_value=100, default=0)
     faction = StringField(null=True)
     player_cards = EmbeddedDocumentField(PlayerCards)
-    user = ReferenceField(model_user.User)
+    user = EmbeddedDocumentField(model_user.UserName, null=True)
 
 
 def check_cards_pile(pile_card) -> None:
@@ -66,26 +60,30 @@ class GameDeck(EmbeddedDocument):
     """Deck in play difinition (except players cards)
     """
     deck_len = IntField(min_value=0)
-    pile_len = IntField(min_value=0)
-    pile = ListField(
-        GenericReferenceField(validation=check_cards_pile)
-            )
+    pile_len = IntField(min_value=0, default=0)
+    pile = EmbeddedDocumentListField(model_cards.CardName)
 
 
 class GameDecks(EmbeddedDocument):
     """Game cards definition (include game deck)
     """
-    group_deck = EmbeddedDocumentField(GameDeck)
-    objective_deck = EmbeddedDocumentField(GameDeck)
+    group_deck = EmbeddedDocumentField(
+        GameDeck, default=GameDeck(deck_len=24)
+        )
+    objective_deck = EmbeddedDocumentField(
+        GameDeck, default=GameDeck(deck_len=21)
+        )
 
 
 class CurrentGameData(Document):
     """Summary of game data
     """
-    game_steps = EmbeddedDocumentField(GameSteps)
-    players = ListField(EmbeddedDocumentField(Player))
-    game_decks = EmbeddedDocumentField(GameDecks)
+    game_steps = EmbeddedDocumentField(GameSteps, default=GameSteps())
+    players = EmbeddedDocumentListField(Player)
+    game_decks = EmbeddedDocumentField(GameDecks, default=GameDecks())
 
     @queryset_manager
     def objects(doc_cls, queryset):
-        return queryset.order_by('$natural')
+        """Return last added object from database
+        """
+        return queryset.order_by('-$natural')

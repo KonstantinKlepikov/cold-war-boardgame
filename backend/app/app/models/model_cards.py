@@ -1,4 +1,12 @@
-from mongoengine import Document, StringField, IntField, ListField
+from mongoengine import (
+    Document, StringField, IntField, ListField, EmbeddedDocument
+    )
+
+
+class CardName(EmbeddedDocument):
+    """Card name
+    """
+    name = StringField(required=True)
 
 
 class AgentCard(Document):

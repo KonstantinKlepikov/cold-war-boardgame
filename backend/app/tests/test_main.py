@@ -28,14 +28,15 @@ class TestUserLogin:
         monkeypatch.setattr(crud_user.user, "get_by_login", mockreturn)
         response = client.post(
             "/user/login",
-            json={
-                'login': users_data['login'],
+            data={
+                'username': users_data['login'],
                 'password': users_data['password']
-                }
+                },
             )
 
         assert response.status_code == 200, 'wrong status'
         assert response.json()["access_token"], 'no token'
+        assert response.json()["token_type"] == 'bearer', 'wrong type'
 
     def test_login_return_400_if_wrong_login(
         self,
@@ -52,8 +53,8 @@ class TestUserLogin:
         monkeypatch.setattr(crud_user.user, "get_by_login", mockreturn)
         response = client.post(
             "/user/login",
-            json={
-                'login': '111111',
+            data={
+                'username': '111111',
                 'password': users_data['password']
                 }
             )
@@ -77,8 +78,8 @@ class TestUserLogin:
         monkeypatch.setattr(crud_user.user, "get_by_login", mockreturn)
         response = client.post(
             "/user/login",
-            json={
-                'login': users_data['login'],
+            data={
+                'username': users_data['login'],
                 'password': '222222'
                 }
             )
@@ -114,3 +115,22 @@ class TestGameDataStatic:
         assert response.json()["agent_cards"], 'no agent_cards'
         assert response.json()["group_cards"], 'no group_cards'
         assert response.json()["objective_cards"], 'objective_cards'
+
+
+class TestCurrentData:
+    """Test game/data/current
+    """
+
+    def test_data_current_return_200(
+        self,
+        monkeypatch,
+        ):
+        """Test game data current return correct data
+        """
+        response = client.post(
+            "/game/data/current",
+            headers={
+                'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJEb25hbGRUcnVtcCJ9.88z5C7fb1gW2jVTs-ut1aRyp--Z3IrGJqIEKu6VVn50'
+            }
+            )
+        assert True

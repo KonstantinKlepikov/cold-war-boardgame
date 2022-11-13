@@ -1,5 +1,8 @@
 import datetime
-from app.core import security
+import pytest
+from fastapi import HTTPException
+from app.core import security, security_user
+from app.schemas import schema_user
 
 
 class TestSecurity:
@@ -31,3 +34,34 @@ class TestSecurity:
             data, expires_delta=datetime.timedelta(minutes=1)
                 )
         assert len(token) == 132, 'wrong len'
+
+
+class TestSecurityUser:
+    """Test security user functions
+    """
+
+    def test_get_current_user(self) -> None:
+        """Test get current user
+        """
+        user = security_user.get_current_user(
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJEb25hbGRUcnVtcCJ9.88z5C7fb1gW2jVTs-ut1aRyp--Z3IrGJqIEKu6VVn50'
+                )
+        assert user.login == 'DonaldTrump', 'wrong login'
+        assert user.is_active, 'wrong is_active'
+        with pytest.raises(
+            HTTPException,
+            ):
+            security_user.get_current_user('12345')
+
+    def test_get_current_active_user(self) -> None:
+        """Test get current active user
+        """
+        schema = schema_user.User(login='DonaldTrump')
+        user = security_user.get_current_active_user(schema)
+        assert user.login == 'DonaldTrump', 'wrong login'
+        assert user.is_active, 'wrong is_active'
+        with pytest.raises(
+            HTTPException,
+            ):
+            schema = schema_user.User(login='DonaldTrump', is_active=None)
+            security_user.get_current_active_user(schema)

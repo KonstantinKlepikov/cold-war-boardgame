@@ -4,12 +4,14 @@ from pydantic import BaseModel, validator
 
 class Token(BaseModel):
     access_token: str
+    token_type: str
 
     class Config:
         schema_extra = {
             "example": {
                 "access_token":
                     "$2b$12$sifRrf5m7GM0hhFAF7BQ0.dIokOEZkfYOawlal8Jp/GeWh/4zn8la",
+                    "token_type": "bearer",
             }
         }
 
@@ -31,7 +33,7 @@ class UserBase(BaseModel):
     @validator('login')
     def passwords_must_have_eight_or_more_characters(cls, v):
         if 50 < len(v) < 5:
-            raise ValueError('Yo long or to short login')
+            raise ValueError('To long or to short login')
         return v
 
     class Config:
@@ -72,13 +74,11 @@ class UserCreateUpdate(UserBase, UserPassword):
 
 class UserInDBBase(UserBase):
 
-    id: Optional[int] = None
     is_active: Optional[bool] = True
 
     class Config:
         schema_extra = {
             "example": {
-                "id": 12345,
                 "login": "DonaldTrump",
                 "is_active": True,
             }
@@ -90,7 +90,6 @@ class User(UserInDBBase):
     class Config:
         schema_extra = {
             "example": {
-                "id": 12345,
                 "login": "DonaldTrump",
                 "is_active": True,
             }
@@ -103,7 +102,6 @@ class UserInDB(UserInDBBase):
     class Config:
         schema_extra = {
             "example": {
-                "id": 12345,
                 "login": "DonaldTrump",
                 "is_active": True,
                 "hashed_password":

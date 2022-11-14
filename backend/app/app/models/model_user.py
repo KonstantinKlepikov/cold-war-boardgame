@@ -1,4 +1,12 @@
-from mongoengine import Document, StringField, BooleanField
+from mongoengine import (
+    Document, StringField, BooleanField, EmbeddedDocument,
+    )
+
+
+class UserName(EmbeddedDocument):
+    """User name
+    """
+    login = StringField()
 
 
 class User(Document):

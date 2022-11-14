@@ -1,5 +1,8 @@
 import datetime
-from app.core import security
+import pytest
+from fastapi import HTTPException
+from app.core import security, security_user, game_data
+from app.schemas import schema_user
 
 
 class TestSecurity:
@@ -31,3 +34,76 @@ class TestSecurity:
             data, expires_delta=datetime.timedelta(minutes=1)
                 )
         assert len(token) == 132, 'wrong len'
+
+
+class TestSecurityUser:
+    """Test security user functions
+    """
+
+    def test_get_current_user(self) -> None:
+        """Test get current user
+        """
+        user = security_user.get_current_user(
+            'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJEb25hbGRUcnVtcCJ9.88z5C7fb1gW2jVTs-ut1aRyp--Z3IrGJqIEKu6VVn50'
+                )
+        assert user.login == 'DonaldTrump', 'wrong login'
+        assert user.is_active, 'wrong is_active'
+        with pytest.raises(
+            HTTPException,
+            ):
+            security_user.get_current_user('12345')
+
+    def test_get_current_active_user(self) -> None:
+        """Test get current active user
+        """
+        schema = schema_user.User(login='DonaldTrump')
+        user = security_user.get_current_active_user(schema)
+        assert user.login == 'DonaldTrump', 'wrong login'
+        assert user.is_active, 'wrong is_active'
+        with pytest.raises(
+            HTTPException,
+            ):
+            schema = schema_user.User(login='DonaldTrump', is_active=None)
+            security_user.get_current_active_user(schema)
+
+
+class TestGameData:
+    """Test game data functions
+    """
+
+    def test_make_game_data(self) -> None:
+        """Test make_game_data()
+        """
+        data = game_data.make_game_data('DonaldTrump')
+
+        assert data, 'empty state'
+        assert data.game_steps.game_turn == 0, 'wrong game turn'
+        assert not data.game_steps.turn_phase, 'wrong turn phase'
+
+        assert data.players[0].user.login == 'DonaldTrump', 'wrong user'
+        assert not data.players[0].has_priority, 'wrong priority'
+        assert data.players[0].is_bot == False, 'wrong is_bot'
+        assert not data.players[0].faction, 'wrong faction'
+        assert data.players[0].score == 0, 'wrong score'
+        assert len(data.players[0].player_cards.agent_cards) == 6, 'hasnt cards'
+        assert data.players[0].player_cards.group_cards == [], 'hasnt cards'
+        assert data.players[0].player_cards.objective_cards == [], 'hasnt cards'
+
+        assert not data.players[1].user, 'wrong user'
+        assert not data.players[1].has_priority, 'wrong priority'
+        assert data.players[1].is_bot == True, 'wrong is_bot'
+        assert not data.players[1].faction, 'wrong faction'
+        assert data.players[1].score == 0, 'wrong score'
+        assert len(data.players[1].player_cards.agent_cards) == 6, 'hasnt cards'
+        assert data.players[1].player_cards.group_cards == [], 'hasnt cards'
+        assert data.players[1].player_cards.objective_cards == [], 'hasnt cards'
+
+        assert data.game_decks.group_deck.deck_len == 24, 'wrong group len'
+        assert data.game_decks.group_deck.pile_len == 0, 'wrong group pile len'
+        assert data.game_decks.group_deck.pile == [], 'wrong group pile'
+        assert data.game_decks.objective_deck.deck_len == 21, \
+            'wrong objective len'
+        assert data.game_decks.objective_deck.pile_len == 0, \
+            'wrong objective pile len'
+        assert data.game_decks.objective_deck.pile == [], \
+            'wrong objective pile'

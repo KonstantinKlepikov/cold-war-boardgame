@@ -12,10 +12,9 @@ def users_data() -> Dict[str, str]:
     """Get user data
     """
     return {
-        'login': 'DonaldTrump',
-        'password': '12345678',
-        'hashed_password':
-            '$2b$12$Xy29A6zl6XdtEJICAzrt3eEzMlVQf6NJgG4nM2Ak4UFk8/AwpZU4q' # TODO: remove
+        'login': settings.user0_login,
+        'password': settings.user0_password,
+        'hashed_password': settings.user0_hashed_password,
             }
 
 
@@ -30,7 +29,7 @@ def db_user(users_data: Dict[str, str]) -> Dict[str, str]:
 
 
 @pytest.fixture(scope="session")
-def db_game(users_data: Dict[str, str]) -> Dict[str, Union[str, bool]]:
+def db_game_data(users_data: Dict[str, str]) -> Dict[str, Union[str, bool]]:
     """Get game data
     """
     agent_cards = [
@@ -53,7 +52,7 @@ def db_game(users_data: Dict[str, str]) -> Dict[str, Union[str, bool]]:
                 {
                     'is_bot': True,
                     'player_cards': {'agent_cards': agent_cards},
-                    'user': {'login': None }
+                    'user': None
                 }
             ]
         }
@@ -62,7 +61,7 @@ def db_game(users_data: Dict[str, str]) -> Dict[str, Union[str, bool]]:
 @pytest.fixture(scope="function")
 def connection(
     db_user: Dict[str, str],
-    db_game: Dict[str, Union[str, bool]],
+    db_game_data: Dict[str, Union[str, bool]],
         ) -> Generator:
     """Get mock mongodb
     """
@@ -84,7 +83,7 @@ def connection(
 
         # init test user current game
         with switch_db(model_game.CurrentGameData, 'test-db-alias') as CurrentGameData:
-            game = CurrentGameData(**db_game)
+            game = CurrentGameData(**db_game_data)
             game.save()
 
         yield conn

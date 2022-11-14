@@ -102,12 +102,12 @@ class Player(BaseModel):
                     ],
                     "objective_cards": [
                         {
-                        "is_dead": False,
-                        "is_in_play": True,
-                        "is_in_vacation": False,
-                        "is_revealed": False,
-                        "agent_card":
-                            {"name": "Master Spy"},
+                            "is_dead": False,
+                            "is_in_play": True,
+                            "is_in_vacation": False,
+                            "is_revealed": False,
+                            "agent_card":
+                                {"name": "Master Spy"},
                             },
                         ],
                     },

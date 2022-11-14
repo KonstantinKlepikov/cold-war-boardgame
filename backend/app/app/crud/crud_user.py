@@ -20,4 +20,4 @@ class CRUDUser(CRUDBase[model_user.User, schema_user.UserCreateUpdate]):
         return self.model.objects(login=login).first()
 
 
-user = CRUDUser(model_user.User, schema_user.UserCreateUpdate)
+user = CRUDUser(model_user.User)

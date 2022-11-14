@@ -1,9 +1,10 @@
 import yaml
-from typing import Dict, Callable
+from typing import Dict, Callable, Generator
 from fastapi.testclient import TestClient
-from app.main import app, crud_user, crud_card
-from app.models import model_user
-from app.schemas import schema_cards
+from mongoengine.context_managers import switch_db
+from app.main import app, crud_user, crud_card, crud_game
+from app.models import model_user, model_game
+from app.config import settings
 
 
 client = TestClient(app)
@@ -40,7 +41,6 @@ class TestUserLogin:
 
     def test_login_return_400_if_wrong_login(
         self,
-        db_user: Dict[str, str],
         users_data: Dict[str, str],
         monkeypatch,
             ) -> None:
@@ -96,7 +96,7 @@ class TestGameDataStatic:
     def test_game_data_static_return_200(
         self,
         monkeypatch,
-        ):
+            ):
         """Test game data static return correct data
         """
 
@@ -104,7 +104,7 @@ class TestGameDataStatic:
             with open('app/db/data/converted.yaml', "r") as stream:
                 try:
                     y = yaml.safe_load(stream)
-                    return schema_cards.GameCards.parse_obj(y)
+                    return y
                 except yaml.YAMLError as exc:
                     print(exc)
 
@@ -117,20 +117,71 @@ class TestGameDataStatic:
         assert response.json()["objective_cards"], 'objective_cards'
 
 
-class TestCurrentData:
+class TestGameDataCurrent:
     """Test game/data/current
     """
 
-    def test_data_current_return_200(
+    def test_game_data_current_return_200(
         self,
         monkeypatch,
-        ):
+        connection: Generator,
+            ):
         """Test game data current return correct data
         """
+        def mockreturn(*args, **kwargs) -> Callable:
+            with switch_db(model_game.CurrentGameData, 'test-db-alias') as CurrentGameData:
+                game = crud_game.CRUDGame(CurrentGameData)
+                return game.get_current_game_data('DonaldTrump')
+
+        monkeypatch.setattr(crud_game.game, "get_current_game_data", mockreturn)
+
         response = client.post(
             "/game/data/current",
             headers={
-                'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJEb25hbGRUcnVtcCJ9.88z5C7fb1gW2jVTs-ut1aRyp--Z3IrGJqIEKu6VVn50'
-            }
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
             )
-        assert True
+        assert response.status_code == 200, 'wrong status'
+
+    def test_game_data_current_return_401(self):
+        """Test game data current return 401 for unauthorized
+        """
+        response = client.post("/game/data/current")
+        assert response.status_code == 401, 'wrong status'
+        assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
+
+
+class TestCreateNewGame:
+    """Test game/create
+    """
+
+    def test_game_create_return_201(
+        self,
+        monkeypatch,
+        connection: Generator,
+            ):
+        """Test create new game api resource
+        """
+        def mockreturn(*args, **kwargs) -> Callable:
+            with switch_db(model_game.CurrentGameData, 'test-db-alias') as CurrentGameData:
+                game = crud_game.CRUDGame(CurrentGameData)
+                game.create_new_game(args[0])
+
+        monkeypatch.setattr(crud_game.game, "create_new_game", mockreturn)
+
+        response = client.post(
+            "/game/create",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 201, 'wrong status'
+        with switch_db(model_game.CurrentGameData, 'test-db-alias') as CurrentGameData:
+            assert CurrentGameData.objects().count() == 2, 'wrong count of data'
+
+    def test_game_create_return_401(self):
+        """Test game create return 401 for unauthorized
+        """
+        response = client.post("/game/create")
+        assert response.status_code == 401, 'wrong status'
+        assert response.json()['detail'] == 'Not authenticated', 'wrong detail'

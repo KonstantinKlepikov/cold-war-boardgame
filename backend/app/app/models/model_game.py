@@ -1,6 +1,6 @@
 from mongoengine import (
     Document, EmbeddedDocument, EmbeddedDocumentField, StringField,
-    BooleanField, IntField, ValidationError, EmbeddedDocumentListField,
+    BooleanField, IntField, EmbeddedDocumentListField,
     queryset_manager,
         )
 from app.models import model_cards, model_user
@@ -40,20 +40,6 @@ class Player(EmbeddedDocument):
     faction = StringField(null=True)
     player_cards = EmbeddedDocumentField(PlayerCards)
     user = EmbeddedDocumentField(model_user.UserName, null=True)
-
-
-def check_cards_pile(pile_card) -> None:
-    """Chek pile card
-
-    Args:
-        pile_card (): pile card Document
-
-    Raises:
-        ValidationError: wrong pile card
-    """
-    if not isinstance(pile_card, model_cards.GroupCard) or \
-            not isinstance(pile_card, model_cards.ObjectiveCard):
-        raise ValidationError("Wrong pile card")
 
 
 class GameDeck(EmbeddedDocument):

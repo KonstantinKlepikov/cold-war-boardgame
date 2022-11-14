@@ -1,5 +1,5 @@
-from typing import Generator
 import pymongo
+from typing import Generator
 from mongoengine import get_connection, get_db
 from mongoengine.context_managers import switch_db
 from app.models import model_user, model_cards

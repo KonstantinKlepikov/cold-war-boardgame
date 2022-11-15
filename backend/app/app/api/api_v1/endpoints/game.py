@@ -1,4 +1,5 @@
-from fastapi import status, Depends, APIRouter, Query
+from typing import Union, Literal
+from fastapi import status, Depends, APIRouter, Query, HTTPException
 from app.schemas import schema_user, schema_game
 from app.crud import crud_game
 from app.core import game_data, security_user
@@ -52,31 +53,26 @@ def preset(
     crud_game.game.set_priority(user.login, priority)
 
 
-@router.post(
-    "/turn/next",
+@router.patch(
+    "/next",
     status_code=status.HTTP_200_OK,
-    responses=settings.TURN_ERRORS,
-    summary='Go to next turn',
+    responses=settings.NEXT_ERRORS,
+    summary='Go to next turn or/and phase',
     response_description="Ok."
         )
 def next_turn(
-    user: schema_user.User = Depends(security_user.get_current_active_user)
+    turn: Union[Literal['push', ], None] = None,
+    phase: Union[Literal['push', ], None] = None,
+    user: schema_user.User = Depends(security_user.get_current_active_user),
         ) -> None:
-    """Change turn number to next
+    """Change turn number or phase to next
     """
-    data = crud_game.game.get_current_game_data(user.login)
+    if not turn and not phase:
+        raise HTTPException(
+            status_code=400,
+            detail='Need at least one query parameter for this request'
+                )
 
-
-@router.post(
-    "/turn/phase/next",
-    status_code=status.HTTP_200_OK,
-    responses=settings.PHASE_ERRORS,
-    summary='Go to next phase of turn',
-    response_description="Ok."
-        )
-def next_phase(
-    user: schema_user.User = Depends(security_user.get_current_active_user)
-        ) -> None:
-    """Change phase of turn
-    """
-    data = crud_game.game.get_current_game_data(user.login)
+    crud_game.game.set_next_turn_phase(
+        user.login, bool(turn), bool(phase)
+            )

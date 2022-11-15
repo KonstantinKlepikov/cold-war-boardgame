@@ -48,13 +48,10 @@ class Settings(BaseSettings):
     ACCESS_ERRORS: ErrorType = {
         401: {'model': errors.HttpError401},
             }
-    TURN_ERRORS: ErrorType = {
-        409: {'model': errors.HttpError409GameTurn},
+    NEXT_ERRORS: ErrorType = {
+        400: {'model': errors.HttpError400},
         401: {'model': errors.HttpError401},
-            }
-    PHASE_ERRORS: ErrorType = {
-        409: {'model': errors.HttpError409GamePhase},
-        401: {'model': errors.HttpError401},
+        409: {'model': errors.HttpError409},
             }
 
     # test data
@@ -62,6 +59,12 @@ class Settings(BaseSettings):
     user0_password: Optional[str] = None
     user0_hashed_password: Optional[str] = None
     user0_token: Optional[str] = None
+
+    # game constants
+    phases = [
+        'briefing', 'planning', 'influence_struggle',
+        'ceasefire', 'debriefing', 'detente',
+            ]
 
 
 settings = Settings()

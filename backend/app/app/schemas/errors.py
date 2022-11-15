@@ -14,6 +14,26 @@ class HttpErrorMessage(BaseModel):
         }
 
 
+class HttpError400(HttpErrorMessage):
+    """400 Bad Request
+    """
+
+    class Config:
+        schema_extra = {
+
+            "example": {
+                "autorisation error": {
+                    "detail":
+                        "Wrong login or password",
+                        },
+                "next turn phase error": {
+                    "detail":
+                        "Need at least one query parameter for this request",
+                        },
+                    }
+                }
+
+
 class HttpError401(HttpErrorMessage):
     """401 Unauthorized
     """
@@ -26,40 +46,21 @@ class HttpError401(HttpErrorMessage):
         }
 
 
-class HttpError400(HttpErrorMessage):
-    """400 Bad Request
-    """
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "detail": "Wrong login or password",
-            }
-        }
-
-
-class HttpError409GameTurn(HttpErrorMessage):
+class HttpError409(HttpErrorMessage):
     """409 Conflict
     """
 
     class Config:
         schema_extra = {
             "example": {
-                "detail":
-                    "Turn number can't be changed, because game is ended",
-            }
-        }
-
-
-class HttpError409GamePhase(HttpErrorMessage):
-    """409 Conflict
-    """
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "detail":
-                    "This phase is last in a turn. Change turn number "
-                    "before get next phase",
-            }
-        }
+                "next game phase error": {
+                    "detail":
+                        "This phase is last in a turn. Change turn number "
+                        "before get next phase",
+                        },
+                "next turn phase error": {
+                    "detail":
+                        "Turn number can't be changed, because game is end",
+                        },
+                    }
+                }

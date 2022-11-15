@@ -1,60 +1,11 @@
 import pytest
 from typing import Dict, Generator, Union
 from mongoengine.context_managers import switch_db
-from app.crud import crud_user, crud_card, crud_game
-from app.models import model_user, model_cards, model_game
+from fastapi import HTTPException
+from app.crud import crud_game
+from app.models import model_game
 from app.schemas import schema_game
 from app.config import settings
-
-
-class TestCRUDUser:
-    """Test CRUDUser class
-    """
-
-    def test_get_user_by_login_from_db(
-        self,
-        connection: Generator,
-            ) -> None:
-        """Test get user from db by login
-
-        Args:
-            users_data (List[Dict[str, str]]): mock users
-        """
-        with switch_db(model_user.User, 'test-db-alias') as User:
-            crud = crud_user.CRUDUser(User)
-            user = crud.get_by_login(login=settings.user0_login)
-            assert user.login == settings.user0_login, 'wrong user'
-
-            user = crud.get_by_login(login='notexisted')
-            assert user is None, 'existed user'
-
-
-class TestCRUDCards:
-    """Test CRUDCards class
-    """
-
-    def test_get_all_cards(
-        self,
-        connection: Generator,
-            ) -> None:
-        with switch_db(model_cards.AgentCard, 'test-db-alias') as AgentCard, \
-            switch_db(model_cards.GroupCard, 'test-db-alias') as GroupCard, \
-            switch_db(model_cards.ObjectiveCard, 'test-db-alias') as ObjectiveCard:
-                crud = crud_card.CRUDCards(
-                    AgentCard, GroupCard, ObjectiveCard
-                        )
-                cards = crud.get_all_cards()
-                assert isinstance(cards, dict), 'wrong type'
-                assert isinstance(cards['agent_cards'], list), 'wrong agents type'
-                assert len(cards['agent_cards']) == 6, 'wrong agent len'
-                assert isinstance(cards['agent_cards'][0], dict), 'wrong agent type'
-                assert isinstance(cards['group_cards'], list), 'wrong groups type'
-                assert len(cards['group_cards']) == 24, 'wrong group len'
-                assert isinstance(cards['group_cards'][0], dict), 'wrong group type'
-                assert isinstance(cards['objective_cards'], list), 'wrong objectives type'
-                assert len(cards['objective_cards']) == 21, 'wrong group len'
-                assert isinstance(cards['objective_cards'][0], dict), \
-                    'wrong objective type'
 
 
 class TestCRUDGame:
@@ -189,3 +140,81 @@ class TestCRUDGame:
             data = CurrentGameData.objects().first()
             assert isinstance(data.players[0].has_priority, bool), 'wrong priority'
             assert isinstance(data.players[1].has_priority, bool), 'wrong priority'
+
+    def test_set_next_turn_phase_change_the_turn_number(
+        self,
+        connection: Generator,
+            ) -> None:
+        """Test set_next_turn_phase() push turn
+        """
+        with switch_db(model_game.CurrentGameData, 'test-db-alias') as CurrentGameData:
+            game = crud_game.CRUDGame(CurrentGameData)
+            data = CurrentGameData.objects().first()
+            assert data.game_steps.game_turn == 0, 'wrong turn'
+
+            game.set_next_turn_phase(settings.user0_login, True, False)
+            data = CurrentGameData.objects().first()
+            assert data.game_steps.game_turn == 1, 'wrong turn'
+
+    def test_set_next_turn_phase_change_phase(
+        self,
+        connection: Generator,
+            ) -> None:
+        """Test set_next_turn_phase() push phase
+        """
+        with switch_db(model_game.CurrentGameData, 'test-db-alias') as CurrentGameData:
+            game = crud_game.CRUDGame(CurrentGameData)
+            data = CurrentGameData.objects().first()
+            assert data.game_steps.turn_phase == None, 'wrong phase'
+
+            game.set_next_turn_phase(settings.user0_login, False, True)
+            data = CurrentGameData.objects().first()
+            assert data.game_steps.turn_phase == settings.phases[0], 'wrong phase'
+
+            game.set_next_turn_phase(settings.user0_login, False, True)
+            data = CurrentGameData.objects().first()
+            assert data.game_steps.turn_phase == settings.phases[1], 'wrong phase'
+
+    def test_set_next_turn_phase_change_turn_and_phase(
+        self,
+        connection: Generator,
+            ) -> None:
+        """Test set_next_turn_phase() push turn and phases
+        """
+        with switch_db(model_game.CurrentGameData, 'test-db-alias') as CurrentGameData:
+            game = crud_game.CRUDGame(CurrentGameData)
+            data = CurrentGameData.objects().first()
+            assert data.game_steps.game_turn == 0, 'wrong turn'
+            assert data.game_steps.turn_phase == None, 'wrong phase'
+
+            game.set_next_turn_phase(settings.user0_login, True, True)
+            data = CurrentGameData.objects().first()
+            assert data.game_steps.game_turn == 1, 'wrong turn'
+            assert data.game_steps.turn_phase == settings.phases[1], 'wrong phase'
+
+            game.set_next_turn_phase(settings.user0_login, True, True)
+            data = CurrentGameData.objects().first()
+            assert data.game_steps.game_turn == 2, 'wrong turn'
+            assert data.game_steps.turn_phase == settings.phases[1], 'wrong phase'
+
+    def test_set_next_turn_phase_cant_change_detente(
+        self,
+        connection: Generator,
+            ) -> None:
+        """Test set_next_turn_phase() cant change detente
+        """
+        with switch_db(model_game.CurrentGameData, 'test-db-alias') as CurrentGameData:
+            game = crud_game.CRUDGame(CurrentGameData)
+            data = CurrentGameData.objects().first()
+            data.game_steps.turn_phase = settings.phases[-1]
+            data.save()
+
+            with pytest.raises(
+                HTTPException,
+                ):
+                game.set_next_turn_phase(settings.user0_login, False, True)
+
+            game.set_next_turn_phase(settings.user0_login, True, True)
+            data = CurrentGameData.objects().first()
+            assert data.game_steps.game_turn == 1, 'wrong turn'
+            assert data.game_steps.turn_phase == settings.phases[1], 'wrong phase'

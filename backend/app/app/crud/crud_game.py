@@ -2,9 +2,11 @@ import random
 from enum import Enum
 from typing import Optional
 from fastapi.encoders import jsonable_encoder
+from fastapi import HTTPException
 from app.crud import crud_base
 from app.models import model_game
 from app.schemas import schema_game
+from app.config import settings
 
 
 class Priority(str, Enum):
@@ -89,6 +91,42 @@ class CRUDGame(
             data.players[0].has_priority = val
             data.players[1].has_priority = not val
             data.save()
+
+    def set_next_turn_phase(
+        self,
+        login: str,
+        turn: bool,
+        phase: bool,
+            ):
+        """Set next turn or/and next phase
+
+        Args:
+            login (str): player login
+            turn (bool): push the turn
+            phase (bool): push the phase
+        """
+        data = self.get_current_game_data(login)
+
+        if turn:
+            data.game_steps.game_turn += 1
+            data.game_steps.turn_phase = settings.phases[0]
+            data.save()
+
+        if phase:
+            if data.game_steps.turn_phase is None:
+                data.game_steps.turn_phase = settings.phases[0]
+                data.save()
+
+            elif data.game_steps.turn_phase == settings.phases[-1]:
+                raise HTTPException(
+                    status_code=409,
+                    detail="This phase is last in a turn. Change turn number "
+                           "before get next phase"
+                        )
+            else:
+                ind = settings.phases.index(data.game_steps.turn_phase) + 1
+                data.game_steps.turn_phase = settings.phases[ind]
+                data.save()
 
 
 game = CRUDGame(model_game.CurrentGameData)

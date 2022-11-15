@@ -4,6 +4,7 @@ from mongoengine.context_managers import switch_db
 from app.crud import crud_user, crud_card, crud_game
 from app.models import model_user, model_cards, model_game
 from app.schemas import schema_game
+from app.config import settings
 
 
 class TestCRUDUser:
@@ -12,7 +13,6 @@ class TestCRUDUser:
 
     def test_get_user_by_login_from_db(
         self,
-        db_user: Dict[str, str],
         connection: Generator,
             ) -> None:
         """Test get user from db by login
@@ -22,8 +22,8 @@ class TestCRUDUser:
         """
         with switch_db(model_user.User, 'test-db-alias') as User:
             crud = crud_user.CRUDUser(User)
-            user = crud.get_by_login(login=db_user['login'])
-            assert user.login == db_user['login'], 'wrong user'
+            user = crud.get_by_login(login=settings.user0_login)
+            assert user.login == settings.user0_login, 'wrong user'
 
             user = crud.get_by_login(login='notexisted')
             assert user is None, 'existed user'
@@ -69,13 +69,13 @@ class TestCRUDGame:
         """
         with switch_db(model_game.CurrentGameData, 'test-db-alias') as CurrentGameData:
             game = crud_game.CRUDGame(CurrentGameData)
-            state = game.get_current_game_data('DonaldTrump')
+            state = game.get_current_game_data(settings.user0_login)
 
             assert state, 'empty state'
             assert state.game_steps.game_turn == 0, 'wrong game turn'
             assert not state.game_steps.turn_phase, 'wrong turn phase'
 
-            assert state.players[0].user.login == 'DonaldTrump', 'wrong user'
+            assert state.players[0].user.login == settings.user0_login, 'wrong user'
             assert not state.players[0].has_priority, 'wrong priority'
             assert state.players[0].is_bot == False, 'wrong is_bot'
             assert not state.players[0].faction, 'wrong faction'
@@ -119,3 +119,73 @@ class TestCRUDGame:
             assert CurrentGameData.objects().count() == 2, 'wrong count of data'
             assert CurrentGameData.objects[0].id != CurrentGameData.objects[1].id, \
                 'not current'
+
+    def test_set_faction(
+        self,
+        connection: Generator,
+            ) -> None:
+        """Test self faction
+        """
+        with switch_db(model_game.CurrentGameData, 'test-db-alias') as CurrentGameData:
+            game = crud_game.CRUDGame(CurrentGameData)
+
+            game.set_faction(settings.user0_login, crud_game.Faction.KGB)
+            data = CurrentGameData.objects().first()
+            assert data.players[0].faction == 'kgb', \
+                'wrong faction of player'
+            assert data.players[1].faction == 'cia', \
+                'wrong faction of pot'
+
+            game.set_faction(settings.user0_login, crud_game.Faction.CIA)
+            data = CurrentGameData.objects().first()
+            assert data.players[0].faction == 'kgb', \
+                'wrong faction of player'
+            assert data.players[1].faction == 'cia', \
+                'wrong faction of pot'
+
+    def test_set_priority_to_me(
+        self,
+        connection: Generator,
+            ) -> None:
+        """Test set priority to me
+        """
+        with switch_db(model_game.CurrentGameData, 'test-db-alias') as CurrentGameData:
+            game = crud_game.CRUDGame(CurrentGameData)
+
+            game.set_priority(settings.user0_login, crud_game.Priority.TRUE)
+            data = CurrentGameData.objects().first()
+            assert data.players[0].has_priority, 'wrong priority'
+            assert not data.players[1].has_priority, 'wrong priority'
+
+            game.set_priority(settings.user0_login, crud_game.Priority.FALSE)
+            data = CurrentGameData.objects().first()
+            assert data.players[0].has_priority, 'wrong priority'
+            assert not data.players[1].has_priority, 'wrong priority'
+
+    def test_set_priority_to_opponent(
+        self,
+        connection: Generator,
+            ) -> None:
+        """Test set priority to opponent
+        """
+        with switch_db(model_game.CurrentGameData, 'test-db-alias') as CurrentGameData:
+            game = crud_game.CRUDGame(CurrentGameData)
+
+            game.set_priority(settings.user0_login, crud_game.Priority.FALSE)
+            data = CurrentGameData.objects().first()
+            assert not data.players[0].has_priority, 'wrong priority'
+            assert data.players[1].has_priority, 'wrong priority'
+
+    def test_set_priority_random(
+        self,
+        connection: Generator,
+            ) -> None:
+        """Test set priority at random
+        """
+        with switch_db(model_game.CurrentGameData, 'test-db-alias') as CurrentGameData:
+            game = crud_game.CRUDGame(CurrentGameData)
+
+            game.set_priority(settings.user0_login, crud_game.Priority.RANDOM)
+            data = CurrentGameData.objects().first()
+            assert isinstance(data.players[0].has_priority, bool), 'wrong priority'
+            assert isinstance(data.players[1].has_priority, bool), 'wrong priority'

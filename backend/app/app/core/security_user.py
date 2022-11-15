@@ -6,7 +6,7 @@ from app.crud import crud_user
 from app.config import settings
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="user/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.api_v1_str}/user/login")
 
 
 def get_current_user(token: str = Depends(oauth2_scheme)) -> schema_user.User:

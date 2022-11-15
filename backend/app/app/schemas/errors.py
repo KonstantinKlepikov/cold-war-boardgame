@@ -36,3 +36,30 @@ class HttpError400(HttpErrorMessage):
                 "detail": "Wrong login or password",
             }
         }
+
+
+class HttpError409GameTurn(HttpErrorMessage):
+    """409 Conflict
+    """
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "detail":
+                    "Turn number can't be changed, because game is ended",
+            }
+        }
+
+
+class HttpError409GamePhase(HttpErrorMessage):
+    """409 Conflict
+    """
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "detail":
+                    "This phase is last in a turn. Change turn number "
+                    "before get next phase",
+            }
+        }

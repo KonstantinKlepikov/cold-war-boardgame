@@ -9,6 +9,9 @@ ErrorType = Dict[int, Dict[str, Type[errors.HttpErrorMessage]]]
 
 
 class Settings(BaseSettings):
+    # api vars
+    api_v1_str: str = "/api/v1"
+
     # db settings
     mongodb_url: str
     db_name: str = 'prod-db'
@@ -29,7 +32,7 @@ class Settings(BaseSettings):
             "description": "Users api",
         },
         {
-            "name": "game/data",
+            "name": "game_data",
             "description": "Game data api",
         },
         {
@@ -41,16 +44,27 @@ class Settings(BaseSettings):
     # open-api errors
     AUTHENTICATE_RESPONSE_ERRORS: ErrorType = {
         400: {'model': errors.HttpError400},
-        }
+            }
     ACCESS_ERRORS: ErrorType = {
         401: {'model': errors.HttpError401},
-        }
+            }
+    NEXT_ERRORS: ErrorType = {
+        400: {'model': errors.HttpError400},
+        401: {'model': errors.HttpError401},
+        409: {'model': errors.HttpError409},
+            }
 
     # test data
     user0_login: Optional[str] = None
     user0_password: Optional[str] = None
     user0_hashed_password: Optional[str] = None
     user0_token: Optional[str] = None
+
+    # game constants
+    phases = [
+        'briefing', 'planning', 'influence_struggle',
+        'ceasefire', 'debriefing', 'detente',
+            ]
 
 
 settings = Settings()

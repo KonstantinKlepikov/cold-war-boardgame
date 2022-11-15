@@ -40,6 +40,9 @@ TEST_MONGODB_URL=mongodb://${DEV_ROOT_USERNAME}:${DEV_ROOT_PASSWORD}@mongo-test:
 
 # JWT secret key
 SECRET_KEY=<this>
+
+# Test vars
+<some>
 ```
 
 ### Run or stop stack from root

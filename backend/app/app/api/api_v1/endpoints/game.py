@@ -1,6 +1,6 @@
 from typing import Union, Literal
 from fastapi import status, Depends, APIRouter, Query, HTTPException
-from app.schemas import schema_user, schema_game
+from app.schemas import schema_user
 from app.crud import crud_game
 from app.core import game_data, security_user
 from app.config import settings
@@ -11,7 +11,6 @@ router = APIRouter()
 
 @router.post(
     "/create",
-    response_model=schema_game.CurrentGameData,
     status_code=status.HTTP_201_CREATED,
     responses=settings.ACCESS_ERRORS,
     summary='Create new game',

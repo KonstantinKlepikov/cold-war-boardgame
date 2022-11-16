@@ -72,7 +72,7 @@ class UserCreateUpdate(UserBase, UserPassword):
         }
 
 
-class UserInDBBase(UserBase):
+class User(UserBase):
 
     is_active: Optional[bool] = True
 
@@ -85,18 +85,7 @@ class UserInDBBase(UserBase):
         }
 
 
-class User(UserInDBBase):
-
-    class Config:
-        schema_extra = {
-            "example": {
-                "login": "DonaldTrump",
-                "is_active": True,
-            }
-        }
-
-
-class UserInDB(UserInDBBase):
+class UserInDB(User):
     hashed_password: str
 
     class Config:

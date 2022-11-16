@@ -35,12 +35,12 @@ def db_game_data() -> Dict[str, Union[str, bool]]:
     """Get game data
     """
     agent_cards = [
-        {'agent_card': {'name': 'Master Spy'}},
-        {'agent_card': {'name': 'Deputy Director'}},
-        {'agent_card': {'name': 'Double Agent'}},
-        {'agent_card': {'name': 'Analyst'}},
-        {'agent_card': {'name': 'Assassin'}},
-        {'agent_card': {'name': 'Director'}}
+        {'name': 'Master Spy'},
+        {'name': 'Deputy Director'},
+        {'name': 'Double Agent'},
+        {'name': 'Analyst'},
+        {'name': 'Assassin'},
+        {'name': 'Director'},
         ]
 
     return {
@@ -49,12 +49,12 @@ def db_game_data() -> Dict[str, Union[str, bool]]:
                 {
                     'is_bot': False,
                     'player_cards': {'agent_cards': agent_cards},
-                    'user': {'login': settings.user0_login}
+                    'login': settings.user0_login,
                 },
                 {
                     'is_bot': True,
                     'player_cards': {'agent_cards': agent_cards},
-                    'user': None
+                    'login': None,
                 }
             ]
         }

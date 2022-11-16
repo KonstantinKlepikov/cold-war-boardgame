@@ -39,7 +39,7 @@ class CRUDGame(
         Returns:
             CurrentGameData: bd data object
         """
-        return self.model.objects(players__user__login=login).first()
+        return self.model.objects(players__login=login).first()
 
     def create_new_game(self, obj_in: schema_game.CurrentGameData) -> None:
         """Create new game

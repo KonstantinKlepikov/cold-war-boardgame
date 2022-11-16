@@ -1,4 +1,4 @@
-from fastapi import status, Depends, APIRouter
+from fastapi import status, Depends, APIRouter, HTTPException
 from app.schemas import schema_cards, schema_user, schema_game
 from app.crud import crud_card, crud_game
 from app.core import security_user
@@ -26,7 +26,7 @@ def get_static_data() -> schema_cards.GameCards:
     "/current",
     response_model=schema_game.CurrentGameData,
     status_code=status.HTTP_200_OK,
-    responses=settings.ACCESS_ERRORS,
+    responses=settings.CURRENT_DATA_ERRORS,
     summary='Current game data',
     response_description="OK. As response you recieve current game data."
         )
@@ -36,4 +36,11 @@ def get_current_data(
     """Get all current game data (game statement) for current user.
     """
     data = crud_game.game.get_current_game_data(user.login)
-    return data.to_mongo().to_dict()
+    if data:
+        return data.to_mongo().to_dict()
+    else:
+        raise HTTPException(
+            status_code=404,
+            detail="Cant find current game data in db. For start "
+                   "new game use /game/create endpoint",
+                )

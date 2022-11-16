@@ -3,7 +3,7 @@ from mongoengine import (
     )
 
 
-class CardName(EmbeddedDocument):
+class Card(EmbeddedDocument):
     """Card name
     """
     name = StringField(required=True)

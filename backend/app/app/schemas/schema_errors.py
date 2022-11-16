@@ -46,6 +46,19 @@ class HttpError401(HttpErrorMessage):
         }
 
 
+class HttpError404(HttpErrorMessage):
+    """404 Not Found
+    """
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "detail": "Cant find current game data in db. For start "
+                          "new game use /game/create endpoint",
+            }
+        }
+
+
 class HttpError409(HttpErrorMessage):
     """409 Conflict
     """

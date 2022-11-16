@@ -1,27 +1,12 @@
 import random
-from enum import Enum
 from typing import Optional
 from fastapi.encoders import jsonable_encoder
 from fastapi import HTTPException
 from app.crud import crud_base
 from app.models import model_game
 from app.schemas import schema_game
+from app.constructs import Priority, Faction
 from app.config import settings
-
-
-class Priority(str, Enum):
-    """Priority enumeration
-    """
-    TRUE = 'true'
-    FALSE = 'false'
-    RANDOM = 'random'
-
-
-class Faction(str, Enum):
-    """Faction enumeration
-    """
-    CIA = 'cia'
-    KGB = 'kgb'
 
 
 class CRUDGame(
@@ -106,6 +91,11 @@ class CRUDGame(
             phase (bool): push the phase
         """
         data = self.get_current_game_data(login)
+        if data.game_steps.is_game_end:
+            raise HTTPException(
+                status_code=409,
+                detail="Something can't be changed, because game is end"
+                    )
 
         if turn:
             data.game_steps.game_turn += 1

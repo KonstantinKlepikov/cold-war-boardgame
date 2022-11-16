@@ -2,7 +2,8 @@ from typing import Union, Literal
 from fastapi import status, Depends, APIRouter, Query, HTTPException
 from app.schemas import schema_user
 from app.crud import crud_game
-from app.core import game_data, security_user
+from app.core import security_user, game_data
+from app.constructs import Priority, Faction
 from app.config import settings
 
 
@@ -33,11 +34,11 @@ def create_new_game(
     response_description="Ok. Data is changed if not seted before."
         )
 def preset(
-    faction: crud_game.Faction = Query(
+    faction: Faction = Query(
         title="Preset faction",
             ),
-    priority: crud_game.Priority = Query(
-        default=crud_game.Priority.RANDOM,
+    priority: Priority = Query(
+        default=Priority.RANDOM,
         title="Preset priority",
         description="- true - set priority to player\n"
                     "- false - set priority to bot\n"

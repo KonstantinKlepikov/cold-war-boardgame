@@ -1,15 +1,28 @@
 from mongoengine import (
     Document, EmbeddedDocument, EmbeddedDocumentField, StringField,
     BooleanField, IntField, EmbeddedDocumentListField, queryset_manager,
+    ValidationError,
         )
 from app.models import model_cards
+from app.constructs import Phase
+
+
+def check_turn_phase(value: str) -> bool:
+    """Check is turn_phase allowable
+
+    Args:
+        value (str): phase name
+    """
+    if not Phase.has_value(value):
+        raise ValidationError("Phase name is not allowable")
 
 
 class GameSteps(EmbeddedDocument):
     """Game steps definition
     """
     game_turn = IntField(min_value=0, default=0)
-    turn_phase = StringField(null=True)
+    turn_phase = StringField(null=True, validation=check_turn_phase)
+    is_game_end = BooleanField(default=False)
 
 
 class PlayerAgentCard(EmbeddedDocument):

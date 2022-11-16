@@ -1,7 +1,15 @@
-from mongoengine import Document, StringField, IntField, ListField
+from mongoengine import (
+    Document, StringField, IntField, ListField, EmbeddedDocument
+    )
 
 
-class AgentCards(Document):
+class Card(EmbeddedDocument):
+    """Card name
+    """
+    name = StringField(required=True)
+
+
+class AgentCard(Document):
     """Collection of agents cards
     """
 
@@ -14,7 +22,7 @@ class AgentCards(Document):
         }
 
 
-class GroupCards(Document):
+class GroupCard(Document):
     """Collection of group cards
     """
 
@@ -27,7 +35,7 @@ class GroupCards(Document):
         }
 
 
-class ObjectiveCards(Document):
+class ObjectiveCard(Document):
     """Collection of objective cards
     """
 

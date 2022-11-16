@@ -1,11 +1,12 @@
 import streamlit as st
 import requests, os
-from urllib.parse import urljoin
 
 
 API_ROOT = os.environ.get('API_ROOT')
 if not API_ROOT:
     raise RuntimeError('Api root uri not set')
+
+API_VERSION: str = "api/v1"
 
 
 st.set_page_config(page_title='Dashboard', layout="wide")
@@ -23,10 +24,14 @@ with clear_all.container():
         submit = st.form_submit_button(label='login')
 
         if submit:
-            url = urljoin(API_ROOT, 'user/login')
+            url = os.path.join(API_ROOT, API_VERSION, 'user/login')
             r = requests.post(
                 url,
-                json={"login": f"{login}", "password": f"{password}"}
+                headers = {
+                    'accept': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                        },
+                data={"username": f"{login}", "password": f"{password}"}
                 )
 
             if r.status_code == 200:

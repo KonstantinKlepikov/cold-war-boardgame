@@ -1,6 +1,6 @@
 from typing import Literal, Optional, List
 from pydantic import BaseModel, NonNegativeInt, conint
-from app.schemas import schema_cards, schema_user
+from app.schemas import schema_cards
 
 
 class GameSteps(BaseModel):
@@ -26,7 +26,7 @@ class PlayerAgentCard(BaseModel):
     is_in_play: bool = False
     is_in_vacation: bool = False
     is_revealed: bool = False
-    agent_card: schema_cards.CardName
+    name: str
 
     class Config:
         schema_extra = {
@@ -35,8 +35,7 @@ class PlayerAgentCard(BaseModel):
                 "is_in_play": True,
                 "is_in_vacation": False,
                 "is_revealed": False,
-                "agent_card":
-                    {"name": "Master Spy"},
+                "name": "Master Spy",
                 }
             }
 
@@ -45,8 +44,8 @@ class PlayerCards(BaseModel):
     """Player cards schema
     """
     agent_cards: List[PlayerAgentCard]
-    group_cards: List[schema_cards.CardName] = []
-    objective_cards: List[schema_cards.CardName] = []
+    group_cards: List[schema_cards.Card] = []
+    objective_cards: List[schema_cards.Card] = []
 
 
 class GameDeck(BaseModel):
@@ -54,7 +53,7 @@ class GameDeck(BaseModel):
     """
     deck_len: NonNegativeInt = 0
     pile_len: NonNegativeInt = 0
-    pile: List[schema_cards.CardName] = []
+    pile: List[schema_cards.Card] = []
 
     class Config:
         schema_extra = {
@@ -84,7 +83,7 @@ class Player(BaseModel):
     score: conint(ge=0, le=100) = 0
     faction: Optional[Literal['kgb', 'cia']] = None
     player_cards: PlayerCards
-    user: Optional[schema_user.UserBase] = None
+    login: Optional[str] = None
 
     class Config:
         schema_extra = {
@@ -106,14 +105,11 @@ class Player(BaseModel):
                             "is_in_play": True,
                             "is_in_vacation": False,
                             "is_revealed": False,
-                            "agent_card":
-                                {"name": "Master Spy"},
+                            "name": "Master Spy",
                             },
                         ],
                     },
-                "user": {
-                    "login": "DonaldTrump",
-                    }
+                "login": "DonaldTrump",
                 }
             }
 

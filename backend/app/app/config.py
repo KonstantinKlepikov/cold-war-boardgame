@@ -1,11 +1,11 @@
 import toml
 from pydantic import BaseSettings
 from typing import Optional, Dict, List, Type
-from app.schemas import errors
+from app.schemas import schema_errors
 
 
 poetry_data = toml.load('pyproject.toml')['tool']['poetry']
-ErrorType = Dict[int, Dict[str, Type[errors.HttpErrorMessage]]]
+ErrorType = Dict[int, Dict[str, Type[schema_errors.HttpErrorMessage]]]
 
 
 class Settings(BaseSettings):
@@ -43,15 +43,19 @@ class Settings(BaseSettings):
 
     # open-api errors
     AUTHENTICATE_RESPONSE_ERRORS: ErrorType = {
-        400: {'model': errors.HttpError400},
+        400: {'model': schema_errors.HttpError400},
             }
     ACCESS_ERRORS: ErrorType = {
-        401: {'model': errors.HttpError401},
+        401: {'model': schema_errors.HttpError401},
+            }
+    CURRENT_DATA_ERRORS: ErrorType = {
+        401: {'model': schema_errors.HttpError401},
+        404: {'model': schema_errors.HttpError404},
             }
     NEXT_ERRORS: ErrorType = {
-        400: {'model': errors.HttpError400},
-        401: {'model': errors.HttpError401},
-        409: {'model': errors.HttpError409},
+        400: {'model': schema_errors.HttpError400},
+        401: {'model': schema_errors.HttpError401},
+        409: {'model': schema_errors.HttpError409},
             }
 
     # test data

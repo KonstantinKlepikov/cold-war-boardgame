@@ -26,7 +26,7 @@ class TestCRUDGame:
             assert state.game_steps.game_turn == 0, 'wrong game turn'
             assert not state.game_steps.turn_phase, 'wrong turn phase'
 
-            assert state.players[0].user.login == settings.user0_login, 'wrong user'
+            assert state.players[0].login == settings.user0_login, 'wrong user'
             assert not state.players[0].has_priority, 'wrong priority'
             assert state.players[0].is_bot == False, 'wrong is_bot'
             assert not state.players[0].faction, 'wrong faction'
@@ -35,7 +35,7 @@ class TestCRUDGame:
             assert state.players[0].player_cards.group_cards == [], 'hasnt cards'
             assert state.players[0].player_cards.objective_cards == [], 'hasnt cards'
 
-            assert not state.players[1].user, 'wrong user'
+            assert not state.players[1].login, 'wrong user'
             assert not state.players[1].has_priority, 'wrong priority'
             assert state.players[1].is_bot == True, 'wrong is_bot'
             assert not state.players[1].faction, 'wrong faction'

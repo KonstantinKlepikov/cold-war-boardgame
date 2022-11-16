@@ -1,16 +1,14 @@
-from typing import Literal, Optional, List
+from typing import Literal, Optional, List, Union
 from pydantic import BaseModel, NonNegativeInt, conint
 from app.schemas import schema_cards
+from app.constructs import Phase
 
 
 class GameSteps(BaseModel):
     """Game steps schema
     """
     game_turn: NonNegativeInt = 0
-    turn_phase: Optional[Literal[
-        'briefing', 'planning', 'influence_struggle',
-        'ceasefire', 'debriefing', 'detente',
-    ]] = None
+    turn_phase: Union[Phase, None] = None
     is_game_end: bool = False
 
     class Config:

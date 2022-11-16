@@ -10,6 +10,7 @@ class GameSteps(EmbeddedDocument):
     """
     game_turn = IntField(min_value=0, default=0)
     turn_phase = StringField(null=True)
+    is_game_end = BooleanField(default=False)
 
 
 class PlayerAgentCard(EmbeddedDocument):

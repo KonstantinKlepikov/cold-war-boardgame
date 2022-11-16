@@ -25,6 +25,7 @@ class TestCRUDGame:
             assert state, 'empty state'
             assert state.game_steps.game_turn == 0, 'wrong game turn'
             assert not state.game_steps.turn_phase, 'wrong turn phase'
+            assert not state.game_steps.is_game_end, 'game is end'
 
             assert state.players[0].login == settings.user0_login, 'wrong user'
             assert not state.players[0].has_priority, 'wrong priority'
@@ -218,3 +219,30 @@ class TestCRUDGame:
             data = CurrentGameData.objects().first()
             assert data.game_steps.game_turn == 1, 'wrong turn'
             assert data.game_steps.turn_phase == settings.phases[1], 'wrong phase'
+
+    def test_set_next_raises_exception_when_game_end(
+        self,
+        connection: Generator,
+            ) -> None:
+        """Test set_next_turn_phase() raises exception when game end
+        """
+        with switch_db(model_game.CurrentGameData, 'test-db-alias') as CurrentGameData:
+            game = crud_game.CRUDGame(CurrentGameData)
+            data = CurrentGameData.objects().first()
+            data.game_steps.is_game_end = True
+            data.save()
+
+            with pytest.raises(
+                HTTPException,
+                ):
+                game.set_next_turn_phase(settings.user0_login, False, True)
+            with pytest.raises(
+                HTTPException,
+                ):
+                game.set_next_turn_phase(settings.user0_login, True, False)
+            with pytest.raises(
+                HTTPException,
+                ):
+                game.set_next_turn_phase(settings.user0_login, True, True)
+
+

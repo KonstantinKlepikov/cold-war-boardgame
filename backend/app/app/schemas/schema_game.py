@@ -11,12 +11,14 @@ class GameSteps(BaseModel):
         'briefing', 'planning', 'influence_struggle',
         'ceasefire', 'debriefing', 'detente',
     ]] = None
+    is_game_end: bool = False
 
     class Config:
         schema_extra = {
             "example": {
                 "game_turn": 0,
                 "turn_phase": "briefing",
+                "is_game_end": False,
             }
         }
 

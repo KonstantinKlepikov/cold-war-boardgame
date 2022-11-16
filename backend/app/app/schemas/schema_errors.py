@@ -66,14 +66,14 @@ class HttpError409(HttpErrorMessage):
     class Config:
         schema_extra = {
             "example": {
-                "next game phase error": {
+                "next turn phase error": {
                     "detail":
                         "This phase is last in a turn. Change turn number "
                         "before get next phase",
                         },
-                "next turn phase error": {
+                "end game error": {
                     "detail":
-                        "Turn number can't be changed, because game is end",
+                        "Something can't be changed, because game is end",
                         },
                     }
                 }

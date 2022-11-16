@@ -106,6 +106,11 @@ class CRUDGame(
             phase (bool): push the phase
         """
         data = self.get_current_game_data(login)
+        if data.game_steps.is_game_end:
+            raise HTTPException(
+                status_code=409,
+                detail="Something can't be changed, because game is end"
+                    )
 
         if turn:
             data.game_steps.game_turn += 1

@@ -194,6 +194,33 @@ class TestNext:
                                                 "Change turn number " \
                                                 "before get next phase", 'wrong detail'
 
+    def test_next_if_game_end_return_409(
+        self,
+        monkeypatch,
+        connection: Generator,
+        client: TestClient,
+            ) -> None:
+        """Test last phases cant'be pushed
+        """
+        with switch_db(model_game.CurrentGameData, 'test-db-alias') as CurrentGameData:
+            def mockreturn(*args, **kwargs) -> Callable:
+                game = crud_game.CRUDGame(CurrentGameData)
+                data = game.get_current_game_data(settings.user0_login)
+                data.game_steps.is_game_end = True
+                data.save()
+                return game.get_current_game_data(settings.user0_login)
+
+            monkeypatch.setattr(crud_game.game, "get_current_game_data", mockreturn)
+
+            response = client.patch(
+                f"{settings.api_v1_str}/game/next?turn=push",
+                headers={
+                    'Authorization': f'Bearer {settings.user0_token}'
+                    }
+                )
+            assert response.status_code == 409, 'wrong status'
+            assert response.json()['detail'] == "Something can't be changed, because game is end"
+
     def test_query_cant_be_empry(
         self,
         client: TestClient,

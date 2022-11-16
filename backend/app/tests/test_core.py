@@ -78,6 +78,7 @@ class TestGameData:
         assert data, 'empty state'
         assert data.game_steps.game_turn == 0, 'wrong game turn'
         assert not data.game_steps.turn_phase, 'wrong turn phase'
+        assert not data.game_steps.is_game_end, 'game end'
 
         assert data.players[0].login == settings.user0_login, 'wrong user'
         assert not data.players[0].has_priority, 'wrong priority'

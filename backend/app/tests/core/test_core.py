@@ -114,14 +114,9 @@ class TestGameData:
         assert data.players[1].player_cards.objective_cards == [], 'hasnt cards'
 
         assert data.game_decks.group_deck.deck_len == 24, 'wrong group len'
-        assert data.game_decks.group_deck.deck_top == [], 'wrong group top'
-        assert data.game_decks.group_deck.deck_bottom == [], 'wrong group bottom'
         assert data.game_decks.group_deck.pile == [], 'wrong group pile'
         assert data.game_decks.objective_deck.deck_len == 21, \
             'wrong objective len'
-        assert data.game_decks.objective_deck.deck_top == [], \
-            'wrong objective top'
-        assert data.game_decks.objective_deck.deck_bottom == [], \
-            'wrong objective bottom'
         assert data.game_decks.objective_deck.pile == [], \
             'wrong objective pile'
+        assert not data.game_decks.mission_card, 'wrong mission card'

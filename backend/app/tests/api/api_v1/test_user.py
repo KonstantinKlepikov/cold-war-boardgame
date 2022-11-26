@@ -1,4 +1,4 @@
-from typing import Dict, Callable
+from typing import Dict, Callable, Generator
 from fastapi.testclient import TestClient
 from app.crud import crud_user
 from app.models import model_user
@@ -11,24 +11,25 @@ class TestUserLogin:
 
     def test_login_return_200(
         self,
-        db_user: Dict[str, str],
         monkeypatch,
+        connection: Generator,
         client: TestClient,
             ) -> None:
         """Test login return 200 ok
         """
+        def mock_user(*args, **kwargs) -> Callable:
+            user = crud_user.CRUDUser(connection['User'])
+            return user.get_by_login(settings.user0_login)
 
-        def mockreturn(*args, **kwargs) -> Callable:
-            return model_user.User(**db_user)
+        monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
 
-        monkeypatch.setattr(crud_user.user, "get_by_login", mockreturn)
         response = client.post(
             f"{settings.api_v1_str}/user/login",
             data={
                 'username': settings.user0_login,
                 'password': settings.user0_password,
-                },
-            )
+                    },
+                )
 
         assert response.status_code == 200, 'wrong status'
         assert response.json()["access_token"], 'no token'

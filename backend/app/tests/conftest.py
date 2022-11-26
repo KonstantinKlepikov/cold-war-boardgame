@@ -5,7 +5,7 @@ from mongoengine.context_managers import switch_db
 from fastapi.testclient import TestClient
 from app.main import app
 from app.config import settings
-from app.models import model_user, model_game
+from app.models import model_user, model_game, model_cards
 from app.db.init_db import init_db
 
 
@@ -60,7 +60,7 @@ def db_game_data() -> Dict[str, Union[str, bool]]:
         }
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def client() -> Generator:
     with TestClient(app) as c:
         yield c
@@ -81,20 +81,32 @@ def connection(
             )
         conn.drop_database('test-db')
 
-        # init test users
-        with switch_db(model_user.User, 'test-db-alias') as User:
+        init_db('test-db-alias')
+
+        with switch_db(model_user.User, 'test-db-alias') as User, \
+            switch_db(model_game.CurrentGameData, 'test-db-alias') as CurrentGameData, \
+            switch_db(model_cards.AgentCard, 'test-db-alias') as AgentCard, \
+            switch_db(model_cards.GroupCard, 'test-db-alias') as GroupCard, \
+            switch_db(model_cards.ObjectiveCard, 'test-db-alias') as ObjectiveCard \
+                :
+
+            # init test users
             user = User(**db_user)
             user.save()
 
-        # init constant data
-        init_db('test-db-alias')
-
-        # init test user current game
-        with switch_db(model_game.CurrentGameData, 'test-db-alias') as CurrentGameData:
+            # init test user current game
             game = CurrentGameData(**db_game_data)
             game.save()
 
-        yield conn
+
+            yield {
+                'connection': conn,
+                'User': User,
+                'CurrentGameData': CurrentGameData,
+                'AgentCard': AgentCard,
+                'GroupCard': GroupCard,
+                'ObjectiveCard': ObjectiveCard,
+                }
 
     finally:
         conn.drop_database('test-db')

@@ -1,8 +1,10 @@
 import datetime
 import pytest
+from typing import Generator, Callable
 from fastapi import HTTPException
 from app.core import security, security_user, game_data
 from app.schemas import schema_user
+from app.crud import crud_user
 from app.config import settings
 
 
@@ -20,10 +22,10 @@ class TestSecurity:
     def test_verify_hashed_password(self) -> None:
         """Test verify hashed password
         """
-        plain_password = '123456789'
-        hashed_password = security.get_password_hash(plain_password)
-        assert security.verify_password(plain_password, hashed_password), \
-            'wrong hash'
+        assert security.verify_password(
+            settings.user0_password,
+            settings.user0_hashed_password
+            ), 'wrong hash'
 
     def test_create_access_token(self) -> None:
         """Test create access token
@@ -41,9 +43,19 @@ class TestSecurityUser:
     """Test security user functions
     """
 
-    def test_get_current_user(self) -> None:
+    def test_get_current_user(
+        self,
+        monkeypatch,
+        connection: Generator
+            ) -> None:
         """Test get current user
         """
+        def mockreturn(*args, **kwargs) -> Callable:
+            user = crud_user.CRUDUser(connection['User'])
+            return user.get_by_login(settings.user0_login)
+
+        monkeypatch.setattr(crud_user.user, "get_by_login", mockreturn)
+
         user = security_user.get_current_user(settings.user0_token)
         assert user.login == settings.user0_login, 'wrong login'
         assert user.is_active, 'wrong is_active'
@@ -52,7 +64,7 @@ class TestSecurityUser:
             ):
             security_user.get_current_user('12345')
 
-    def test_get_current_active_user(self) -> None:
+    def test_get_current_active_user(self, connection: Generator) -> None:
         """Test get current active user
         """
         schema = schema_user.User(login=settings.user0_login)
@@ -99,11 +111,9 @@ class TestGameData:
         assert data.players[1].player_cards.objective_cards == [], 'hasnt cards'
 
         assert data.game_decks.group_deck.deck_len == 24, 'wrong group len'
-        assert data.game_decks.group_deck.pile_len == 0, 'wrong group pile len'
         assert data.game_decks.group_deck.pile == [], 'wrong group pile'
         assert data.game_decks.objective_deck.deck_len == 21, \
             'wrong objective len'
-        assert data.game_decks.objective_deck.pile_len == 0, \
-            'wrong objective pile len'
         assert data.game_decks.objective_deck.pile == [], \
             'wrong objective pile'
+        assert not data.game_decks.mission_card, 'wrong mission card'

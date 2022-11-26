@@ -33,6 +33,7 @@ def create_access_token(
         to_encode = {"exp": expire, "sub": str(subject)}
     else:
         to_encode = {"sub": str(subject)}
+
     encoded_jwt = jwt.encode(
         to_encode,
         settings.secret_key,

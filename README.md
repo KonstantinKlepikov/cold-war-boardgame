@@ -8,11 +8,9 @@ This is pet project:
 
 ## Project resources
 
-- [API stage](https://cold-war-api-stage.herokuapp.com/docs)
-- [API prod](https://cold-war-api.herokuapp.com/docs)
-- [WEB app stage](https://cold-war-web-stage.herokuapp.com/)
-- [WEB app prod](https://cold-war-web.herokuapp.com/)
-- [docs](https://drive.google.com/drive/folders/1MoP2Ba2yzKSFf3X8XwieKKc8cv_cEhCU?usp=sharing)
+- [API](https://coldwar-api.onrender.com/docs)
+- [WEB](https://coldwar-web.onrender.com/)
+- [project materials](https://drive.google.com/drive/folders/1MoP2Ba2yzKSFf3X8XwieKKc8cv_cEhCU?usp=sharing)
 - [project tasks board](https://github.com/users/KonstantinKlepikov/projects/4/views/5)
 
 Other stuff:

@@ -1,9 +1,7 @@
 import pytest
 from typing import Callable, Generator
 from fastapi.testclient import TestClient
-from mongoengine.context_managers import switch_db
-from app.crud import crud_game
-from app.models import model_game
+from app.crud import crud_game, crud_user
 from app.config import settings
 
 
@@ -19,21 +17,25 @@ class TestCreateNewGame:
             ) -> None:
         """Test create new game api resource
         """
-        with switch_db(model_game.CurrentGameData, 'test-db-alias') as CurrentGameData:
-            def mockreturn(*args, **kwargs) -> Callable:
-                game = crud_game.CRUDGame(CurrentGameData)
-                game.create_new_game(args[0])
+        def mockreturn(*args, **kwargs) -> Callable:
+            game = crud_game.CRUDGame(connection['CurrentGameData'])
+            game.create_new_game(args[0])
 
-            monkeypatch.setattr(crud_game.game, "create_new_game", mockreturn)
+        def mock_user(*args, **kwargs) -> Callable:
+            user = crud_user.CRUDUser(connection['User'])
+            return user.get_by_login(settings.user0_login)
 
-            response = client.post(
-                f"{settings.api_v1_str}/game/create",
-                headers={
-                    'Authorization': f'Bearer {settings.user0_token}'
-                    }
-                )
-            assert response.status_code == 201, 'wrong status'
-            assert CurrentGameData.objects().count() == 2, 'wrong count of data'
+        monkeypatch.setattr(crud_game.game, "create_new_game", mockreturn)
+        monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
+
+        response = client.post(
+            f"{settings.api_v1_str}/game/create",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 201, 'wrong status'
+        assert connection['CurrentGameData'].objects().count() == 2, 'wrong count of data'
 
     def test_game_create_return_401(self, client: TestClient) -> None:
         """Test game create return 401 for unauthorized
@@ -59,21 +61,25 @@ class TestPreset:
             ) -> None:
         """Test game/preset returns 200
         """
-        with switch_db(model_game.CurrentGameData, 'test-db-alias') as CurrentGameData:
-            def mockreturn(*args, **kwargs) -> Callable:
-                game = crud_game.CRUDGame(CurrentGameData)
-                return game.get_current_game_data(settings.user0_login)
+        def mockreturn(*args, **kwargs) -> Callable:
+            game = crud_game.CRUDGame(connection['CurrentGameData'])
+            game.create_new_game(args[0])
 
-            monkeypatch.setattr(crud_game.game, "get_current_game_data", mockreturn)
+        def mock_user(*args, **kwargs) -> Callable:
+            user = crud_user.CRUDUser(connection['User'])
+            return user.get_by_login(settings.user0_login)
 
-            response = client.patch(
-                f"{settings.api_v1_str}/game/preset?faction={faction}&priority={priority}",
-                headers={
-                    'Authorization': f'Bearer {settings.user0_token}'
-                    }
-                )
-            assert response.status_code == 200, 'wrong status'
-            assert CurrentGameData.objects().count() == 1, 'wrong count of data'
+        monkeypatch.setattr(crud_game.game, "create_new_game", mockreturn)
+        monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
+
+        response = client.patch(
+            f"{settings.api_v1_str}/game/preset?faction={faction}&priority={priority}",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 200, 'wrong status'
+        assert connection['CurrentGameData'].objects().count() == 1, 'wrong count of data'
 
     def test_preset_return_422(
         self,
@@ -83,36 +89,40 @@ class TestPreset:
             ) -> None:
         """Test game/preset return 422 if setted data uncorect
         """
-        with switch_db(model_game.CurrentGameData, 'test-db-alias') as CurrentGameData:
-            def mockreturn(*args, **kwargs) -> Callable:
-                game = crud_game.CRUDGame(CurrentGameData)
-                return game.get_current_game_data(settings.user0_login)
+        def mockreturn(*args, **kwargs) -> Callable:
+            game = crud_game.CRUDGame(connection['CurrentGameData'])
+            game.create_new_game(args[0])
 
-            monkeypatch.setattr(crud_game.game, "get_current_game_data", mockreturn)
+        def mock_user(*args, **kwargs) -> Callable:
+            user = crud_user.CRUDUser(connection['User'])
+            return user.get_by_login(settings.user0_login)
 
-            response = client.patch(
-                f"{settings.api_v1_str}/game/preset?faction=abc",
-                headers={
-                    'Authorization': f'Bearer {settings.user0_token}'
-                    }
-                )
-            assert response.status_code == 422, 'wrong status'
+        monkeypatch.setattr(crud_game.game, "create_new_game", mockreturn)
+        monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
 
-            response = client.patch(
-                f"{settings.api_v1_str}/game/preset?faction=abc&priority=false",
-                headers={
-                    'Authorization': f'Bearer {settings.user0_token}'
-                    }
-                )
-            assert response.status_code == 422, 'wrong status'
+        response = client.patch(
+            f"{settings.api_v1_str}/game/preset?faction=abc",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 422, 'wrong status'
 
-            response = client.patch(
-                f"{settings.api_v1_str}/game/preset",
-                headers={
-                    'Authorization': f'Bearer {settings.user0_token}'
-                    }
-                )
-            assert response.status_code == 422, 'wrong status'
+        response = client.patch(
+            f"{settings.api_v1_str}/game/preset?faction=abc&priority=false",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 422, 'wrong status'
+
+        response = client.patch(
+            f"{settings.api_v1_str}/game/preset",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 422, 'wrong status'
 
     def test_preset_return_401(self, client: TestClient) -> None:
         """Test game create return 401 for unauthorized
@@ -134,36 +144,40 @@ class TestNext:
             ) -> None:
         """Test game/next set next turn
         """
-        with switch_db(model_game.CurrentGameData, 'test-db-alias') as CurrentGameData:
-            def mockreturn(*args, **kwargs) -> Callable:
-                game = crud_game.CRUDGame(CurrentGameData)
-                return game.get_current_game_data(settings.user0_login)
+        def mockreturn(*args, **kwargs) -> Callable:
+            game = crud_game.CRUDGame(connection['CurrentGameData'])
+            game.create_new_game(args[0])
 
-            monkeypatch.setattr(crud_game.game, "get_current_game_data", mockreturn)
+        def mock_user(*args, **kwargs) -> Callable:
+            user = crud_user.CRUDUser(connection['User'])
+            return user.get_by_login(settings.user0_login)
 
-            response = client.patch(
-                f"{settings.api_v1_str}/game/next?turn=push",
-                headers={
-                    'Authorization': f'Bearer {settings.user0_token}'
-                    }
-                )
-            assert response.status_code == 200, 'wrong status'
+        monkeypatch.setattr(crud_game.game, "create_new_game", mockreturn)
+        monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
 
-            response = client.patch(
-                f"{settings.api_v1_str}/game/next?turn=push&phase=push",
-                headers={
-                    'Authorization': f'Bearer {settings.user0_token}'
-                    }
-                )
-            assert response.status_code == 200, 'wrong status'
+        response = client.patch(
+            f"{settings.api_v1_str}/game/next?turn=push",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 200, 'wrong status'
 
-            response = client.patch(
-                f"{settings.api_v1_str}/game/next?phase=push",
-                headers={
-                    'Authorization': f'Bearer {settings.user0_token}'
-                    }
-                )
-            assert response.status_code == 200, 'wrong status'
+        response = client.patch(
+            f"{settings.api_v1_str}/game/next?turn=push&phase=push",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 200, 'wrong status'
+
+        response = client.patch(
+            f"{settings.api_v1_str}/game/next?phase=push",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 200, 'wrong status'
 
     def test_next_phase_if_last_return_409(
         self,
@@ -173,26 +187,30 @@ class TestNext:
             ) -> None:
         """Test last phases cant'be pushed
         """
-        with switch_db(model_game.CurrentGameData, 'test-db-alias') as CurrentGameData:
-            def mockreturn(*args, **kwargs) -> Callable:
-                game = crud_game.CRUDGame(CurrentGameData)
-                data = game.get_current_game_data(settings.user0_login)
-                data.game_steps.turn_phase = 'detente'
-                data.save()
-                return game.get_current_game_data(settings.user0_login)
+        def mockreturn(*args, **kwargs) -> Callable:
+            game = crud_game.CRUDGame(connection['CurrentGameData'])
+            data = game.get_current_game_data(settings.user0_login)
+            data.game_steps.turn_phase = 'detente'
+            data.save()
+            return game.get_current_game_data(settings.user0_login)
 
-            monkeypatch.setattr(crud_game.game, "get_current_game_data", mockreturn)
+        def mock_user(*args, **kwargs) -> Callable:
+            user = crud_user.CRUDUser(connection['User'])
+            return user.get_by_login(settings.user0_login)
 
-            response = client.patch(
-                f"{settings.api_v1_str}/game/next?phase=push",
-                headers={
-                    'Authorization': f'Bearer {settings.user0_token}'
-                    }
-                )
-            assert response.status_code == 409, 'wrong status'
-            assert response.json()['detail'] == "This phase is last in a turn. " \
-                                                "Change turn number " \
-                                                "before get next phase", 'wrong detail'
+        monkeypatch.setattr(crud_game.game, "get_current_game_data", mockreturn)
+        monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
+
+        response = client.patch(
+            f"{settings.api_v1_str}/game/next?phase=push",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 409, 'wrong status'
+        assert response.json()['detail'] == "This phase is last in a turn. " \
+                                            "Change turn number " \
+                                            "before get next phase", 'wrong detail'
 
     def test_next_if_game_end_return_409(
         self,
@@ -202,31 +220,43 @@ class TestNext:
             ) -> None:
         """Test last phases cant'be pushed
         """
-        with switch_db(model_game.CurrentGameData, 'test-db-alias') as CurrentGameData:
-            def mockreturn(*args, **kwargs) -> Callable:
-                game = crud_game.CRUDGame(CurrentGameData)
-                data = game.get_current_game_data(settings.user0_login)
-                data.game_steps.is_game_end = True
-                data.save()
-                return game.get_current_game_data(settings.user0_login)
+        def mockreturn(*args, **kwargs) -> Callable:
+            game = crud_game.CRUDGame(connection['CurrentGameData'])
+            data = game.get_current_game_data(settings.user0_login)
+            data.game_steps.is_game_end = True
+            data.save()
+            return game.get_current_game_data(settings.user0_login)
 
-            monkeypatch.setattr(crud_game.game, "get_current_game_data", mockreturn)
+        def mock_user(*args, **kwargs) -> Callable:
+            user = crud_user.CRUDUser(connection['User'])
+            return user.get_by_login(settings.user0_login)
 
-            response = client.patch(
-                f"{settings.api_v1_str}/game/next?turn=push",
-                headers={
-                    'Authorization': f'Bearer {settings.user0_token}'
-                    }
-                )
-            assert response.status_code == 409, 'wrong status'
-            assert response.json()['detail'] == "Something can't be changed, because game is end"
+        monkeypatch.setattr(crud_game.game, "get_current_game_data", mockreturn)
+        monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
+
+        response = client.patch(
+            f"{settings.api_v1_str}/game/next?turn=push",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 409, 'wrong status'
+        assert response.json()['detail'] == "Something can't be changed, because game is end"
 
     def test_query_cant_be_empry(
         self,
+        monkeypatch,
+        connection: Generator,
         client: TestClient,
             ) -> None:
         """Test game/next set next turn
         """
+        def mock_user(*args, **kwargs) -> Callable:
+            user = crud_user.CRUDUser(connection['User'])
+            return user.get_by_login(settings.user0_login)
+
+        monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
+
         response = client.patch(
             f"{settings.api_v1_str}/game/next",
             headers={
@@ -238,9 +268,20 @@ class TestNext:
                                             'for this request', 'wrong detail'
 
 
-    def test_preset_return_401(self, client: TestClient) -> None:
+    def test_preset_return_401(
+        self,
+        monkeypatch,
+        connection: Generator,
+        client: TestClient,
+            ) -> None:
         """Test game create return 401 for unauthorized
         """
+        def mock_user(*args, **kwargs) -> Callable:
+            user = crud_user.CRUDUser(connection['User'])
+            return user.get_by_login(settings.user0_login)
+
+        monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
+
         response = client.patch(f"{settings.api_v1_str}/game/next?turn=push&phase=push")
         assert response.status_code == 401, 'wrong status'
         assert response.json()['detail'] == 'Not authenticated', 'wrong detail'

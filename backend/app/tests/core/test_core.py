@@ -2,11 +2,9 @@ import datetime
 import pytest
 from typing import Generator, Callable
 from fastapi import HTTPException
-from mongoengine.context_managers import switch_db
 from app.core import security, security_user, game_data
 from app.schemas import schema_user
 from app.crud import crud_user
-from app.models import model_user
 from app.config import settings
 
 
@@ -53,9 +51,8 @@ class TestSecurityUser:
         """Test get current user
         """
         def mockreturn(*args, **kwargs) -> Callable:
-            with switch_db(model_user.User, 'test-db-alias') as User:
-                user = crud_user.CRUDUser(User)
-                return user.get_by_login(settings.user0_login)
+            user = crud_user.CRUDUser(connection['User'])
+            return user.get_by_login(settings.user0_login)
 
         monkeypatch.setattr(crud_user.user, "get_by_login", mockreturn)
 

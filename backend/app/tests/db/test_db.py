@@ -1,8 +1,6 @@
 import pymongo
 from typing import Generator
 from mongoengine import get_connection, get_db
-from mongoengine.context_managers import switch_db
-from app.models import model_user, model_cards
 from app.db.init_db import check_db_init
 
 
@@ -28,15 +26,14 @@ class TestDB:
             ) -> None:
         """Test test db is available
         """
-        assert isinstance(connection, pymongo.mongo_client.MongoClient), \
+        assert isinstance(connection['connection'], pymongo.mongo_client.MongoClient), \
             'wrong type of connection'
 
         db = get_db(alias='test-db-alias')
         assert isinstance(db, pymongo.database.Database), \
             'wrong type of db'
         assert db.name == "test-db", 'wrong db name'
-        with switch_db(model_user.User, 'test-db-alias') as User:
-            assert User.objects().count() == 1, 'wrong count of test users'
+        assert connection['User'].objects().count() == 1, 'wrong count of test users'
 
     def test_db_init_cards(
         self,
@@ -44,15 +41,12 @@ class TestDB:
             ) -> None:
         """Test init_db() cards initialisation
         """
-        with switch_db(model_cards.AgentCard, 'test-db-alias') as AgentCards:
-            assert AgentCards.objects().count() == 6, \
-                'wrong count of test agents cards'
-        with switch_db(model_cards.GroupCard, 'test-db-alias') as GroupCards:
-            assert GroupCards.objects().count() == 24, \
-                'wrong count of test groups cards'
-        with switch_db(model_cards.ObjectiveCard, 'test-db-alias') as ObjectiveCards:
-            assert ObjectiveCards.objects().count() == 21, \
-                'wrong count of test objective cards'
+        assert connection['AgentCard'].objects().count() == 6, \
+            'wrong count of test agents cards'
+        assert connection['GroupCard'].objects().count() == 24, \
+            'wrong count of test groups cards'
+        assert connection['ObjectiveCard'].objects().count() == 21, \
+            'wrong count of test objective cards'
 
     def test_check_db_init(
         self,

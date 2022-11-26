@@ -1,6 +1,5 @@
 from typing import Dict, Callable, Generator
 from fastapi.testclient import TestClient
-from mongoengine.context_managers import switch_db
 from app.crud import crud_user
 from app.models import model_user
 from app.config import settings
@@ -18,26 +17,23 @@ class TestUserLogin:
             ) -> None:
         """Test login return 200 ok
         """
+        def mock_user(*args, **kwargs) -> Callable:
+            user = crud_user.CRUDUser(connection['User'])
+            return user.get_by_login(settings.user0_login)
 
-        with switch_db(model_user.User, 'test-db-alias') as User:
+        monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
 
-            def mock_user(*args, **kwargs) -> Callable:
-                user = crud_user.CRUDUser(User)
-                return user.get_by_login(settings.user0_login)
+        response = client.post(
+            f"{settings.api_v1_str}/user/login",
+            data={
+                'username': settings.user0_login,
+                'password': settings.user0_password,
+                    },
+                )
 
-            monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
-
-            response = client.post(
-                f"{settings.api_v1_str}/user/login",
-                data={
-                    'username': settings.user0_login,
-                    'password': settings.user0_password,
-                        },
-                    )
-
-            assert response.status_code == 200, 'wrong status'
-            assert response.json()["access_token"], 'no token'
-            assert response.json()["token_type"] == 'bearer', 'wrong type'
+        assert response.status_code == 200, 'wrong status'
+        assert response.json()["access_token"], 'no token'
+        assert response.json()["token_type"] == 'bearer', 'wrong type'
 
     def test_login_return_400_if_wrong_login(
         self,

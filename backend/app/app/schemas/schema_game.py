@@ -52,18 +52,24 @@ class GameDeck(BaseModel):
     """Game decks
     """
     deck_len: NonNegativeInt = 0
-    pile_len: NonNegativeInt = 0
+    deck_top: List[schema_cards.Card] = []
+    deck_bottom: List[schema_cards.Card] = []
     pile: List[schema_cards.Card] = []
 
     class Config:
         schema_extra = {
             "example": {
                 "deck_len": 0,
-                "pile_len": 0,
+                "deck_top": [
+                    {"name": "Some card"},
+                ],
+                "deck_bottom": [
+                    {"name": "Other card"},
+                ],
                 "pile": [
-                    {"name": "Master Spy"},
+                    {"name": "Ukranian War"},
                     {"name": "Something Else"},
-                ]
+                ],
             }
         }
 

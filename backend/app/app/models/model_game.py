@@ -58,7 +58,8 @@ class GameDeck(EmbeddedDocument):
     """Deck in play difinition (except players cards)
     """
     deck_len = IntField(min_value=0)
-    pile_len = IntField(min_value=0, default=0)
+    deck_top = EmbeddedDocumentListField(model_cards.Card)
+    deck_bottom = EmbeddedDocumentListField(model_cards.Card)
     pile = EmbeddedDocumentListField(model_cards.Card)
 
 

@@ -1,9 +1,8 @@
 from mongoengine import (
     Document, EmbeddedDocument, EmbeddedDocumentField, StringField,
-    BooleanField, IntField, EmbeddedDocumentListField, queryset_manager,
-    ValidationError,
+    BooleanField, IntField, ListField, EmbeddedDocumentListField,
+    ValidationError, queryset_manager,
         )
-from app.models import model_cards
 from app.constructs import Phase
 
 
@@ -26,12 +25,22 @@ class GameSteps(EmbeddedDocument):
 
 
 class PlayerAgentCard(EmbeddedDocument):
-    """Player agent cards
+    """Player agent card
     """
-    is_dead = BooleanField(default=False)
-    is_in_play = BooleanField(default=False)
-    is_in_vacation = BooleanField(default=False)
-    is_revealed = BooleanField(default=False)
+    is_dead = BooleanField()
+    is_in_play = BooleanField()
+    is_in_vacation = BooleanField()
+    is_revealed = BooleanField()
+    name = StringField()
+
+
+class PlayerGroupOrObjectivreCard(EmbeddedDocument):
+    """Known or own by player nonagent card
+    """
+    is_in_deck = BooleanField()
+    is_in_play = BooleanField()
+    is_active = BooleanField(default=True)
+    pos_in_deck = IntField(min_value=0, null=True)
     name = StringField()
 
 
@@ -39,8 +48,8 @@ class PlayerCards(EmbeddedDocument):
     """Array of player cards
     """
     agent_cards = EmbeddedDocumentListField(PlayerAgentCard)
-    group_cards = EmbeddedDocumentListField(model_cards.Card)
-    objective_cards = EmbeddedDocumentListField(model_cards.Card)
+    group_cards = EmbeddedDocumentListField(PlayerGroupOrObjectivreCard)
+    objective_cards = EmbeddedDocumentListField(PlayerGroupOrObjectivreCard)
 
 
 class Player(EmbeddedDocument):
@@ -55,15 +64,14 @@ class Player(EmbeddedDocument):
 
 
 class GameDeck(EmbeddedDocument):
-    """Deck in play difinition (except players cards)
+    """Deck in play difinition
     """
     deck_len = IntField(min_value=0)
-    pile_len = IntField(min_value=0, default=0)
-    pile = EmbeddedDocumentListField(model_cards.Card)
+    pile = ListField(StringField())
 
 
 class GameDecks(EmbeddedDocument):
-    """Game cards definition (include game deck)
+    """Game decks and mission card
     """
     group_deck = EmbeddedDocumentField(
         GameDeck, default=GameDeck(deck_len=24)
@@ -71,6 +79,7 @@ class GameDecks(EmbeddedDocument):
     objective_deck = EmbeddedDocumentField(
         GameDeck, default=GameDeck(deck_len=21)
         )
+    mission_card = StringField(null=True)
 
 
 class CurrentGameData(Document):

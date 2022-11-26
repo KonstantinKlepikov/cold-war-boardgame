@@ -1,11 +1,10 @@
 from typing import Literal, Optional, List, Union
 from pydantic import BaseModel, NonNegativeInt, conint
-from app.schemas import schema_cards
 from app.constructs import Phase
 
 
 class GameSteps(BaseModel):
-    """Game steps schema
+    """Game steps
     """
     game_turn: NonNegativeInt = 0
     turn_phase: Union[Phase, None] = None
@@ -22,6 +21,8 @@ class GameSteps(BaseModel):
 
 
 class PlayerAgentCard(BaseModel):
+    """Agent card owned by player
+    """
     is_dead: bool = False
     is_in_play: bool = False
     is_in_vacation: bool = False
@@ -39,44 +40,64 @@ class PlayerAgentCard(BaseModel):
                 }
             }
 
+class PlayerGroupOrObjectivreCard(BaseModel):
+    """Known or own by player nonagent card.
+    Position here - is any nonegative integer from 0 to len of deck.
+    This represent card position in deck from top to bottom.
+    """
+    is_in_deck: bool
+    is_in_play: bool
+    is_active: bool = True
+    position: Optional[NonNegativeInt]
+    name: str
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "is_in_deck": True,
+                "is_in_play": False,
+                "is_active": True,
+                "position": 0,
+                "name": "Master Spy",
+                }
+            }
+
 
 class PlayerCards(BaseModel):
-    """Player cards schema
+    """Player cards
     """
     agent_cards: List[PlayerAgentCard]
-    group_cards: List[schema_cards.Card] = []
-    objective_cards: List[schema_cards.Card] = []
+    group_cards: List[PlayerGroupOrObjectivreCard] = []
+    objective_cards: List[PlayerGroupOrObjectivreCard] = []
 
 
 class GameDeck(BaseModel):
-    """Game decks
+    """Game deck
     """
     deck_len: NonNegativeInt = 0
-    pile_len: NonNegativeInt = 0
-    pile: List[schema_cards.Card] = []
+    pile: List[str] = []
 
     class Config:
         schema_extra = {
             "example": {
                 "deck_len": 0,
-                "pile_len": 0,
                 "pile": [
-                    {"name": "Master Spy"},
-                    {"name": "Something Else"},
-                ]
+                    "Ukranian War", "Something Else",
+                ],
             }
         }
 
 
 class GameDecks(BaseModel):
-    """Game cards of all decs
+    """Game decks and mission card
     """
     group_deck: GameDeck = GameDeck(deck_len=24)
     objective_deck: GameDeck = GameDeck(deck_len=21)
+    mission_card: Optional[str] = None
 
 
 class Player(BaseModel):
-    """Player current data schema
+    """Player current data
     """
     has_priority: Optional[bool] = None
     is_bot: Optional[bool] = None
@@ -94,18 +115,30 @@ class Player(BaseModel):
                 "faction": "kgb",
                 "player_cards": {
                     "agent_cards": [
-                        {"name": "Master Spy"},
-                    ],
-                    "group_cards": [
-                        {"name": "Director"},
-                    ],
-                    "objective_cards": [
                         {
                             "is_dead": False,
                             "is_in_play": True,
                             "is_in_vacation": False,
                             "is_revealed": False,
                             "name": "Master Spy",
+                            },
+                    ],
+                    "group_cards": [
+                        {
+                            "is_in_deck": True,
+                            "is_in_play": False,
+                            "is_active": True,
+                            "position": 0,
+                            "name": "Militia",
+                            },
+                    ],
+                    "objective_cards": [
+                        {
+                            "is_in_deck": False,
+                            "is_in_play": True,
+                            "is_active": False,
+                            "position": None,
+                            "name": "Egypt",
                             },
                         ],
                     },
@@ -115,7 +148,7 @@ class Player(BaseModel):
 
 
 class CurrentGameData(BaseModel):
-    """Read or write current game data
+    """Current game data
     """
     game_steps: GameSteps = GameSteps()
     players: List[Player]

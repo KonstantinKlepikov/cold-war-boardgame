@@ -25,7 +25,7 @@ def login(
     """Send for autorization:
 
     - **password**
-    - **email**
+    - **login**
     """
     db_user = crud_user.user.get_by_login(user.username)
 
@@ -38,6 +38,6 @@ def login(
 
     else:
         return {
-            'access_token': security.create_access_token(user.username),
+            'access_token': security.create_access_token(subject=user.username),
             "token_type": "bearer"
                 }

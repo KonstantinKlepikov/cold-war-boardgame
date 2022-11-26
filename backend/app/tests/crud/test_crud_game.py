@@ -46,14 +46,12 @@ class TestCRUDGame:
             assert state.players[1].player_cards.objective_cards == [], 'hasnt cards'
 
             assert state.game_decks.group_deck.deck_len == 24, 'wrong group len'
-            assert state.game_decks.group_deck.pile_len == 0, 'wrong group pile len'
             assert state.game_decks.group_deck.pile == [], 'wrong group pile'
             assert state.game_decks.objective_deck.deck_len == 21, \
                 'wrong objective len'
-            assert state.game_decks.objective_deck.pile_len == 0, \
-                'wrong objective pile len'
             assert state.game_decks.objective_deck.pile == [], \
                 'wrong objective pile'
+            assert not state.game_decks.mission_card, 'wrong mission card'
 
     def test_create_new_game(
         self,

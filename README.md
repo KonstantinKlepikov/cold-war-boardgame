@@ -9,8 +9,8 @@ This is pet project:
 ## Project resources
 
 - [API](https://coldwar-api.onrender.com/docs)
-- [docs](https://drive.google.com/drive/folders/1MoP2Ba2yzKSFf3X8XwieKKc8cv_cEhCU?usp=sharing)
 - [WEB](https://coldwar-web.onrender.com/)
+- [project materials](https://drive.google.com/drive/folders/1MoP2Ba2yzKSFf3X8XwieKKc8cv_cEhCU?usp=sharing)
 - [project tasks board](https://github.com/users/KonstantinKlepikov/projects/4/views/5)
 
 Other stuff:

@@ -60,7 +60,7 @@ def db_game_data() -> Dict[str, Union[str, bool]]:
         }
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def client() -> Generator:
     with TestClient(app) as c:
         yield c

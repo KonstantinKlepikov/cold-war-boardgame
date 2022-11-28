@@ -6,17 +6,24 @@ from app.schemas import schema_game
 from app.config import settings
 
 
+@pytest.fixture(scope="function")
+def game(connection: Generator) -> crud_game.CRUDGame:
+    """Get game object
+    """
+    return crud_game.CRUDGame(connection['CurrentGameData'])
+
+
 class TestCRUDGame:
     """Test CRUDGame class
     """
 
     def test_get_current_game_data_return_state(
         self,
+        game: crud_game.CRUDGame,
         connection: Generator,
             ) -> None:
         """Test get current game data return state
         """
-        game = crud_game.CRUDGame(connection['CurrentGameData'])
         state = game.get_current_game_data(settings.user0_login)
 
         assert state, 'empty state'
@@ -52,12 +59,12 @@ class TestCRUDGame:
 
     def test_create_new_game(
         self,
+        game: crud_game.CRUDGame,
         db_game_data: Dict[str, Union[str, bool]],
         connection: Generator,
             ) -> None:
         """Test create new game
         """
-        game = crud_game.CRUDGame(connection['CurrentGameData'])
         assert connection['CurrentGameData'].objects().count() == 1, 'wrong count of data'
 
         obj_in = schema_game.CurrentGameData(**db_game_data)
@@ -68,12 +75,11 @@ class TestCRUDGame:
 
     def test_set_faction(
         self,
+        game: crud_game.CRUDGame,
         connection: Generator,
             ) -> None:
         """Test self faction
         """
-        game = crud_game.CRUDGame(connection['CurrentGameData'])
-
         game.set_faction(settings.user0_login, crud_game.Faction.KGB)
         data = connection['CurrentGameData'].objects().first()
         assert data.players[0].faction == 'kgb', \
@@ -90,12 +96,11 @@ class TestCRUDGame:
 
     def test_set_priority_to_me(
         self,
+        game: crud_game.CRUDGame,
         connection: Generator,
             ) -> None:
         """Test set priority to me
         """
-        game = crud_game.CRUDGame(connection['CurrentGameData'])
-
         game.set_priority(settings.user0_login, crud_game.Priority.TRUE)
         data = connection['CurrentGameData'].objects().first()
         assert data.players[0].has_priority, 'wrong priority'
@@ -106,15 +111,13 @@ class TestCRUDGame:
         assert data.players[0].has_priority, 'wrong priority'
         assert not data.players[1].has_priority, 'wrong priority'
 
-
     def test_set_priority_to_opponent(
         self,
+        game: crud_game.CRUDGame,
         connection: Generator,
             ) -> None:
         """Test set priority to opponent
         """
-        game = crud_game.CRUDGame(connection['CurrentGameData'])
-
         game.set_priority(settings.user0_login, crud_game.Priority.FALSE)
         data = connection['CurrentGameData'].objects().first()
         assert not data.players[0].has_priority, 'wrong priority'
@@ -122,98 +125,42 @@ class TestCRUDGame:
 
     def test_set_priority_random(
         self,
+        game: crud_game.CRUDGame,
         connection: Generator,
             ) -> None:
         """Test set priority at random
         """
-        game = crud_game.CRUDGame(connection['CurrentGameData'])
-
         game.set_priority(settings.user0_login, crud_game.Priority.RANDOM)
         data = connection['CurrentGameData'].objects().first()
         assert isinstance(data.players[0].has_priority, bool), 'wrong priority'
         assert isinstance(data.players[1].has_priority, bool), 'wrong priority'
 
+
+class TestCRUDGameNextTurn:
+    """Test CRUDGame next_turn method
+    """
+
     def test_set_next_turn_phase_change_the_turn_number(
         self,
+        game: crud_game.CRUDGame,
         connection: Generator,
             ) -> None:
-        """Test set_next_turn_phase() push turn
+        """Test set_next_turn() push turn
         """
-        game = crud_game.CRUDGame(connection['CurrentGameData'])
         data = connection['CurrentGameData'].objects().first()
         assert data.game_steps.game_turn == 0, 'wrong turn'
 
-        game.set_next_turn_phase(settings.user0_login, True, False)
+        game.set_next_turn(settings.user0_login)
         data = connection['CurrentGameData'].objects().first()
         assert data.game_steps.game_turn == 1, 'wrong turn'
 
-    def test_set_next_turn_phase_change_phase(
+    def test_set_next_turn_raises_exception_when_game_end(
         self,
+        game: crud_game.CRUDGame,
         connection: Generator,
             ) -> None:
-        """Test set_next_turn_phase() push phase
+        """Test set_next_turn) raises exception when game end
         """
-        game = crud_game.CRUDGame(connection['CurrentGameData'])
-        data = connection['CurrentGameData'].objects().first()
-        assert data.game_steps.turn_phase == None, 'wrong phase'
-
-        game.set_next_turn_phase(settings.user0_login, False, True)
-        data = connection['CurrentGameData'].objects().first()
-        assert data.game_steps.turn_phase == settings.phases[0], 'wrong phase'
-
-        game.set_next_turn_phase(settings.user0_login, False, True)
-        data = connection['CurrentGameData'].objects().first()
-        assert data.game_steps.turn_phase == settings.phases[1], 'wrong phase'
-
-    def test_set_next_turn_phase_change_turn_and_phase(
-        self,
-        connection: Generator,
-            ) -> None:
-        """Test set_next_turn_phase() push turn and phases
-        """
-        game = crud_game.CRUDGame(connection['CurrentGameData'])
-        data = connection['CurrentGameData'].objects().first()
-        assert data.game_steps.game_turn == 0, 'wrong turn'
-        assert data.game_steps.turn_phase == None, 'wrong phase'
-
-        game.set_next_turn_phase(settings.user0_login, True, True)
-        data = connection['CurrentGameData'].objects().first()
-        assert data.game_steps.game_turn == 1, 'wrong turn'
-        assert data.game_steps.turn_phase == settings.phases[1], 'wrong phase'
-
-        game.set_next_turn_phase(settings.user0_login, True, True)
-        data = connection['CurrentGameData'].objects().first()
-        assert data.game_steps.game_turn == 2, 'wrong turn'
-        assert data.game_steps.turn_phase == settings.phases[1], 'wrong phase'
-
-    def test_set_next_turn_phase_cant_change_detente(
-        self,
-        connection: Generator,
-            ) -> None:
-        """Test set_next_turn_phase() cant change detente
-        """
-        game = crud_game.CRUDGame(connection['CurrentGameData'])
-        data = connection['CurrentGameData'].objects().first()
-        data.game_steps.turn_phase = settings.phases[-1]
-        data.save()
-
-        with pytest.raises(
-            HTTPException,
-            ):
-            game.set_next_turn_phase(settings.user0_login, False, True)
-
-        game.set_next_turn_phase(settings.user0_login, True, True)
-        data = connection['CurrentGameData'].objects().first()
-        assert data.game_steps.game_turn == 1, 'wrong turn'
-        assert data.game_steps.turn_phase == settings.phases[1], 'wrong phase'
-
-    def test_set_next_raises_exception_when_game_end(
-        self,
-        connection: Generator,
-            ) -> None:
-        """Test set_next_turn_phase() raises exception when game end
-        """
-        game = crud_game.CRUDGame(connection['CurrentGameData'])
         data = connection['CurrentGameData'].objects().first()
         data.game_steps.is_game_end = True
         data.save()
@@ -221,12 +168,76 @@ class TestCRUDGame:
         with pytest.raises(
             HTTPException,
             ):
-            game.set_next_turn_phase(settings.user0_login, False, True)
+            game.set_next_turn(settings.user0_login)
+
+class TestCRUDGameNextPhase:
+    """Test CRUDGame next_phase method
+    """
+
+    def test_set_next_phase_change_phase(
+        self,
+        game: crud_game.CRUDGame,
+        connection: Generator,
+            ) -> None:
+        """Test set_next_phase() push phase
+        """
+        data = connection['CurrentGameData'].objects().first()
+        assert data.game_steps.turn_phase == None, 'wrong phase'
+
+        game.set_next_phase(settings.user0_login)
+        data = connection['CurrentGameData'].objects().first()
+        assert data.game_steps.turn_phase == settings.phases[0], 'wrong phase'
+
+    def test_set_next_phase_cant_change_detente(
+        self,
+        game: crud_game.CRUDGame,
+        connection: Generator,
+            ) -> None:
+        """Test set_next_phase() cant change detente
+        """
+        data = connection['CurrentGameData'].objects().first()
+        data.game_steps.turn_phase = settings.phases[-1]
+        data.save()
+
         with pytest.raises(
             HTTPException,
             ):
-            game.set_next_turn_phase(settings.user0_login, True, False)
+            game.set_next_phase(settings.user0_login)
+
+    def test_set_next_phase_raises_exception_when_game_end(
+        self,
+        game: crud_game.CRUDGame,
+        connection: Generator,
+            ) -> None:
+        """Test set_next_phase() raises exception when game end
+        """
+        data = connection['CurrentGameData'].objects().first()
+        data.game_steps.is_game_end = True
+        data.save()
+
         with pytest.raises(
             HTTPException,
             ):
-            game.set_next_turn_phase(settings.user0_login, True, True)
+            game.set_next_phase(settings.user0_login)
+
+
+class TestCRUDGamePhaseConditions:
+    """Tesy CRUDGame chek_phase_conditions()
+    """
+
+    def test_chek_phase_conditions_raise_if_no_priority(
+        self,
+        game: crud_game.CRUDGame,
+        connection: Generator,
+            ) -> None:
+        """Test _chek_phase_conditions() if no player has
+        priority in briefing
+        """
+        data = connection['CurrentGameData'].objects().first()
+        data.game_steps.turn_phase = settings.phases[0]
+        data.save()
+
+        with pytest.raises(
+            HTTPException,
+            ):
+            game._chek_phase_conditions(settings.user0_login)

@@ -58,21 +58,44 @@ def preset(
     status_code=status.HTTP_200_OK,
     responses=settings.NEXT_ERRORS,
     summary='Go to next turn or/and phase',
-    response_description="Ok."
+    response_description="Ok.",
+    deprecated=True,
         )
-def next_turn(
+def next_turn_phase(
     turn: Union[Literal['push', ], None] = None,
     phase: Union[Literal['push', ], None] = None,
     user: schema_user.User = Depends(security_user.get_current_active_user),
         ) -> None:
     """Change turn number or phase to next
     """
-    if not turn and not phase:
-        raise HTTPException(
-            status_code=400,
-            detail='Need at least one query parameter for this request'
-                )
+    return None
 
-    crud_game.game.set_next_turn_phase(
-        user.login, bool(turn), bool(phase)
-            )
+
+@router.patch(
+    "/next_turn",
+    status_code=status.HTTP_200_OK,
+    responses=settings.NEXT_ERRORS,
+    summary='Go to next turn',
+    response_description="Ok.",
+        )
+def next_turn(
+    user: schema_user.User = Depends(security_user.get_current_active_user),
+        ) -> None:
+    """Change turn number to next
+    """
+    crud_game.game.set_next_turn(user.login)
+
+
+@router.patch(
+    "/next_phase",
+    status_code=status.HTTP_200_OK,
+    responses=settings.NEXT_ERRORS,
+    summary='Go to next phase',
+    response_description="Ok.",
+        )
+def next_phase(
+    user: schema_user.User = Depends(security_user.get_current_active_user),
+        ) -> None:
+    """Change phase to next
+    """
+    crud_game.game.set_next_phase(user.login)

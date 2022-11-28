@@ -4,8 +4,7 @@ asttokens==2.0.8
 attrs==22.1.0
 autoflake==1.4
 backcall==0.2.0
-backports.zoneinfo;python_version<"3.9"
-bcrypt==4.0.1
+bgameb==0.0.28
 black==21.12b0
 blinker==1.5
 cachetools==5.2.0
@@ -14,7 +13,9 @@ cffi==1.15.1
 charset-normalizer==2.0.12
 click==8.0.3
 commonmark==0.9.1
+coverage==6.5.0
 cryptography==38.0.1
+dataclasses-json==0.5.7
 debugpy==1.6.3
 decorator==5.1.1
 dnspython==2.2.1
@@ -31,6 +32,7 @@ httptools==0.4.0
 idna==3.3
 importlib-metadata==4.12.0
 importlib-resources==5.9.0
+incremental==21.3.0
 iniconfig==1.1.1
 ipykernel==6.15.1
 ipython==8.0.0
@@ -42,7 +44,10 @@ jsonschema==4.14.0
 jupyter-client==7.3.4
 jupyter-core==4.11.1
 jupyterlab-widgets==3.0.2
+loguru==0.6.0
 MarkupSafe==2.1.1
+marshmallow==3.19.0
+marshmallow-enum==1.5.1
 matplotlib-inline==0.1.6
 mccabe==0.6.1
 mongoengine==0.24.2
@@ -107,6 +112,7 @@ tomli==1.2.3
 toolz==0.12.0
 tornado==6.2
 traitlets==5.3.0
+typing-inspect==0.8.0
 typing_extensions==4.3.0
 tzdata==2022.2
 tzlocal==4.2

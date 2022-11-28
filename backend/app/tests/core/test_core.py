@@ -1,5 +1,6 @@
 import datetime
 import pytest
+import bgameb
 from typing import Generator, Callable
 from fastapi import HTTPException
 from app.core import security, security_user, game_data
@@ -117,3 +118,28 @@ class TestGameData:
         assert data.game_decks.objective_deck.pile == [], \
             'wrong objective pile'
         assert not data.game_decks.mission_card, 'wrong mission card'
+
+
+class TestGameProcessor:
+    """Test GameProcessor class
+    """
+
+    @pytest.fixture(scope="function")
+    def game(self, connection: Generator) -> game_data.GameProcessor:
+        """Get game processor object
+        """
+        return game_data.GameProcessor()
+
+    def test_create_game(self, game: game_data.GameProcessor) -> None:
+        """Test game is created
+        """
+        assert isinstance(game.game, bgameb.Game), 'wrong game'
+        assert isinstance(game.cards, dict), 'not a cards'
+
+    def test_objective_deck(self, game: game_data.GameProcessor) -> None:
+        """Test objective deck creation
+        """
+        game.init_new_objective_deck()
+        print(game.game.objective_deck.get_names())
+        print(game.game.objective_deck.__dict__.keys())
+        assert len(game.game.objective_deck) == 26, 'wrong len' # FIXME: here is 21, but tnedd fixes in bgameb

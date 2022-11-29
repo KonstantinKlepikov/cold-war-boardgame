@@ -6,6 +6,7 @@ from fastapi import HTTPException
 from app.core import security, security_user, game_data
 from app.schemas import schema_user
 from app.crud import crud_user
+from app.models import model_game
 from app.config import settings
 
 
@@ -128,13 +129,14 @@ class TestGameProcessor:
     def game(self, connection: Generator) -> game_data.GameProcessor:
         """Get game processor object
         """
-        return game_data.GameProcessor()
+        return game_data.GameProcessor(login=settings.user0_login)
 
     def test_create_game(self, game: game_data.GameProcessor) -> None:
         """Test game is created
         """
         assert isinstance(game.game, bgameb.Game), 'wrong game'
         assert isinstance(game.cards, dict), 'not a cards'
+        assert isinstance(game.current, model_game.CurrentGameData), 'wrong current'
 
     def test_objective_deck(self, game: game_data.GameProcessor) -> None:
         """Test objective deck creation
@@ -143,3 +145,15 @@ class TestGameProcessor:
         print(game.game.objective_deck.get_names())
         print(game.game.objective_deck.__dict__.keys())
         assert len(game.game.objective_deck) == 26, 'wrong len' # FIXME: here is 21, but tnedd fixes in bgameb
+
+    def test_not_inted_game_eaise_exception(
+        self,
+        connection: Generator,
+            ) -> None:
+        """Exception is raised if player not starts any games
+        """
+        data = connection['CurrentGameData'].objects().first().delete()
+        with pytest.raises(
+            HTTPException,
+            ):
+            game_data.GameProcessor(login=settings.user0_login)

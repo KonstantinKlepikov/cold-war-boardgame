@@ -51,10 +51,12 @@ class TestCRUDGame:
 
         assert state.game_decks.group_deck.deck_len == 24, 'wrong group len'
         assert state.game_decks.group_deck.pile == [], 'wrong group pile'
+        assert len(state.game_decks.group_deck.current) == 24, 'wrong current'
         assert state.game_decks.objective_deck.deck_len == 21, \
             'wrong objective len'
         assert state.game_decks.objective_deck.pile == [], \
             'wrong objective pile'
+        assert len(state.game_decks.objective_deck.current) == 21, 'wrong current'
         assert not state.game_decks.mission_card, 'wrong mission card'
 
     def test_create_new_game(
@@ -72,6 +74,8 @@ class TestCRUDGame:
         assert connection['CurrentGameData'].objects().count() == 2, 'wrong count of data'
         assert connection['CurrentGameData'].objects[0].id != connection['CurrentGameData'].objects[1].id, \
             'not current'
+        assert len(connection['CurrentGameData'].objects[1].game_decks.objective_deck.current) == 21, \
+            'wrong current'
 
     def test_set_faction(
         self,

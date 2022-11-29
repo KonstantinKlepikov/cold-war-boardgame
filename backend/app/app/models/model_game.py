@@ -68,6 +68,7 @@ class GameDeck(EmbeddedDocument):
     """
     deck_len = IntField(min_value=0)
     pile = ListField(StringField())
+    current = ListField(StringField())
 
 
 class GameDecks(EmbeddedDocument):

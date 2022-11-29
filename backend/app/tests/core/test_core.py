@@ -114,10 +114,20 @@ class TestGameData:
 
         assert data.game_decks.group_deck.deck_len == 24, 'wrong group len'
         assert data.game_decks.group_deck.pile == [], 'wrong group pile'
+        with pytest.raises(
+            AttributeError,
+            match="object has no attribute"
+                ):
+            data.game_decks.group_deck.current
         assert data.game_decks.objective_deck.deck_len == 21, \
             'wrong objective len'
         assert data.game_decks.objective_deck.pile == [], \
             'wrong objective pile'
+        with pytest.raises(
+            AttributeError,
+            match="object has no attribute"
+                ):
+            data.game_decks.objective_deck.current
         assert not data.game_decks.mission_card, 'wrong mission card'
 
 
@@ -138,15 +148,7 @@ class TestGameProcessor:
         assert isinstance(game.cards, dict), 'not a cards'
         assert isinstance(game.current, model_game.CurrentGameData), 'wrong current'
 
-    def test_objective_deck(self, game: game_data.GameProcessor) -> None:
-        """Test objective deck creation
-        """
-        game.init_new_objective_deck()
-        print(game.game.objective_deck.get_names())
-        print(game.game.objective_deck.__dict__.keys())
-        assert len(game.game.objective_deck) == 26, 'wrong len' # FIXME: here is 21, but tnedd fixes in bgameb
-
-    def test_not_inted_game_eaise_exception(
+    def test_not_inited_game_raise_exception(
         self,
         connection: Generator,
             ) -> None:
@@ -157,3 +159,10 @@ class TestGameProcessor:
             HTTPException,
             ):
             game_data.GameProcessor(login=settings.user0_login)
+
+    def test_init_new_decks(self, game: game_data.GameProcessor) -> None:
+        """Test init new deck init deck in Game objects
+        """
+        game.init_new_decks()
+        assert len(game.game.objective_deck) == 26, 'wrong len' # FIXME: here is 21, but need fixes in bgameb
+        assert len(game.game.group_deck) == 29, 'wrong len' # FIXME: here is 21, but need fixes in bgameb

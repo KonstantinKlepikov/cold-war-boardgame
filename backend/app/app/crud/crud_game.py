@@ -2,7 +2,7 @@ import random
 from typing import Optional
 from fastapi.encoders import jsonable_encoder
 from fastapi import HTTPException
-from app.crud import crud_base
+from app.crud import crud_base,crud_card
 from app.models import model_game
 from app.schemas import schema_game
 from app.constructs import Priority, Faction
@@ -17,7 +17,6 @@ class CRUDGame(
         ):
     """Crud for game current state document
     """
-
     def get_current_game_data(self, login: str) -> Optional[model_game.CurrentGameData]:
         """Get current game data from db
 
@@ -31,6 +30,12 @@ class CRUDGame(
         """
         db_data = jsonable_encoder(obj_in)
         game = self.model(**db_data)
+
+        # add current cards
+        current = crud_card.cards.get_cards_names()
+        game.game_decks.group_deck.current = current['group_cards']
+        game.game_decks.objective_deck.current = current['objective_cards']
+
         game.save()
 
     def set_faction(self, login: str, faction: Faction) -> None:

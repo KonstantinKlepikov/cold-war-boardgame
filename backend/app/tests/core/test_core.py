@@ -3,11 +3,12 @@ import pytest
 import bgameb
 from typing import Generator, Callable
 from fastapi import HTTPException
-from app.core import security, security_user, game_data
+from app.core import security, security_user
 from app.schemas import schema_user
-from app.crud import crud_user
+from app.crud import crud_user, crud_card, crud_game
 from app.models import model_game
 from app.config import settings
+from app.core import game_logic
 
 
 class TestSecurity:
@@ -87,7 +88,7 @@ class TestGameData:
     def test_make_game_data(self) -> None:
         """Test make_game_data()
         """
-        data = game_data.make_game_data(settings.user0_login)
+        data = game_logic.make_game_data(settings.user0_login)
 
         assert data, 'empty state'
         assert data.game_steps.game_turn == 0, 'wrong game turn'
@@ -136,17 +137,19 @@ class TestGameProcessor:
     """
 
     @pytest.fixture(scope="function")
-    def game(self, connection: Generator) -> game_data.GameProcessor:
+    def game_proc(self, connection: Generator) -> game_logic.GameProcessor:
         """Get game processor object
         """
-        return game_data.GameProcessor(login=settings.user0_login)
+        cards = crud_card.cards.get_all_cards()
+        current_data = crud_game.game.get_current_game_data(login=settings.user0_login)
+        return game_logic.GameProcessor(cards=cards, current_data=current_data)
 
-    def test_create_game(self, game: game_data.GameProcessor) -> None:
+    def test_create_game(self, game_proc: game_logic.GameProcessor) -> None:
         """Test game is created
         """
-        assert isinstance(game.game, bgameb.Game), 'wrong game'
-        assert isinstance(game.cards, dict), 'not a cards'
-        assert isinstance(game.current, model_game.CurrentGameData), 'wrong current'
+        assert isinstance(game_proc.game, bgameb.Game), 'wrong game'
+        assert isinstance(game_proc.cards, dict), 'not a cards'
+        assert isinstance(game_proc.current_data, model_game.CurrentGameData), 'wrong current'
 
     def test_not_inited_game_raise_exception(
         self,
@@ -154,15 +157,28 @@ class TestGameProcessor:
             ) -> None:
         """Exception is raised if player not starts any games
         """
-        data = connection['CurrentGameData'].objects().first().delete()
+        connection['CurrentGameData'].objects().first().delete()
         with pytest.raises(
             HTTPException,
             ):
-            game_data.GameProcessor(login=settings.user0_login)
+            cards = crud_card.cards.get_all_cards()
+            current_data = crud_game.game.get_current_game_data(login=settings.user0_login)
+            game_logic.GameProcessor(cards=cards, current_data=current_data)
 
-    def test_init_new_decks(self, game: game_data.GameProcessor) -> None:
+    def test_init_game_data(self, game_proc: game_logic.GameProcessor) -> None:
         """Test init new deck init deck in Game objects
         """
-        game.init_new_decks()
-        assert len(game.game.objective_deck) == 26, 'wrong len' # FIXME: here is 21, but need fixes in bgameb
-        assert len(game.game.group_deck) == 29, 'wrong len' # FIXME: here is 21, but need fixes in bgameb
+        game_proc.init_game_data()
+        assert game_proc.game.player, 'player not inited'
+        assert len(game_proc.game.player.other) > 0, 'empty player other'
+        assert game_proc.game.bot, 'bot not inited'
+        assert len(game_proc.game.bot.other) > 0, 'empty bot other'
+
+        assert len(game_proc.game.objective_deck) == 24, 'wrong objective len'
+        with pytest.raises(AttributeError):
+            game_proc.game.objective_deck.other._id
+
+        assert len(game_proc.game.group_deck) == 27, 'wrong group len'
+        with pytest.raises(AttributeError):
+            game_proc.game.group_deck.other._id
+

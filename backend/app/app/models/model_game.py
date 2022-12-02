@@ -27,18 +27,18 @@ class GameSteps(EmbeddedDocument):
 class PlayerAgentCard(EmbeddedDocument):
     """Player agent card
     """
-    is_dead = BooleanField()
-    is_in_play = BooleanField()
-    is_in_vacation = BooleanField()
-    is_revealed = BooleanField()
+    is_dead = BooleanField(default=False)
+    is_in_play = BooleanField(default=False)
+    is_in_vacation = BooleanField(default=False)
+    is_revealed = BooleanField(default=False)
     name = StringField()
 
 
 class PlayerGroupOrObjectivreCard(EmbeddedDocument):
     """Known or own by player nonagent card
     """
-    is_in_deck = BooleanField()
-    is_in_play = BooleanField()
+    is_in_deck = BooleanField(default=True)
+    is_in_play = BooleanField(default=False)
     is_active = BooleanField(default=True)
     pos_in_deck = IntField(min_value=0, null=True)
     name = StringField()

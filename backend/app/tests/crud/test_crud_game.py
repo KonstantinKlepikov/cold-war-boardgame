@@ -1,6 +1,7 @@
 import pytest
 from typing import Dict, Generator, Union
 from fastapi import HTTPException
+from app.core import game_logic
 from app.crud import crud_game
 from app.schemas import schema_game
 from app.config import settings
@@ -58,6 +59,14 @@ class TestCRUDGame:
             'wrong objective pile'
         assert len(state.game_decks.objective_deck.current) == 21, 'wrong current'
         assert not state.game_decks.mission_card, 'wrong mission card'
+
+    def test_get_game_processor(
+        self,
+        game: crud_game.CRUDGame,
+        connection: Generator,
+            ) -> None:
+        game_proc = game.get_game_processor(settings.user0_login)
+        assert isinstance(game_proc, game_logic.GameProcessor), 'wrong processor'
 
     def test_create_new_game(
         self,
@@ -229,12 +238,12 @@ class TestCRUDGamePhaseConditions:
     """Tesy CRUDGame chek_phase_conditions()
     """
 
-    def test_chek_phase_conditions_raise_if_no_priority(
+    def testchek_phase_conditions_before_next_raise_if_no_priority(
         self,
         game: crud_game.CRUDGame,
         connection: Generator,
             ) -> None:
-        """Test _chek_phase_conditions() if no player has
+        """Test chek_phase_conditions_before_next() if no player has
         priority in briefing
         """
         data = connection['CurrentGameData'].objects().first()
@@ -244,4 +253,4 @@ class TestCRUDGamePhaseConditions:
         with pytest.raises(
             HTTPException,
             ):
-            game._chek_phase_conditions(settings.user0_login)
+            game.chek_phase_conditions_before_next(settings.user0_login)

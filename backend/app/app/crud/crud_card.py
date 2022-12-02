@@ -59,6 +59,19 @@ class CRUDCards(crud_base.CRUDBase[Union[
             for key, val in db_cards.items()
                 }
 
+    @lru_cache
+    def get_cards_dict(self) -> Dict[str, Dict[str, Union[str, int]]]:
+        """Get cards data as dict by his names
+
+        Returns:
+            Dict[str, Dict[str, Union[str, int]]]: cards dict
+        """
+        db_cards = self.get_all_cards()
+        return {
+            key: {card['name']: card for card in val}
+            for key, val in db_cards.items()
+                }
+
 
 cards = CRUDCards(
     agent_card=model_cards.AgentCard,

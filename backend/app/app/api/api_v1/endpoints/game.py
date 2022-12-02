@@ -2,9 +2,10 @@ from typing import Union, Literal
 from fastapi import status, Depends, APIRouter, Query, HTTPException
 from app.schemas import schema_user
 from app.crud import crud_game
-from app.core import security_user, game_data
+from app.core import security_user
 from app.constructs import Priority, Faction
 from app.config import settings
+from app.core import game_logic
 
 
 router = APIRouter()
@@ -22,7 +23,7 @@ def create_new_game(
         ) -> None:
     """Create new game.
     """
-    obj_in = game_data.make_game_data(user.login)
+    obj_in = game_logic.make_game_data(user.login)
     crud_game.game.create_new_game(obj_in)
 
 

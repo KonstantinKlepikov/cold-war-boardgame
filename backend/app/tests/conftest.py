@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.config import settings
 from app.models import model_user, model_game, model_cards
+from app.crud import crud_game
 from app.db.init_db import init_db
 
 
@@ -135,3 +136,10 @@ def connection(
     finally:
         conn.drop_database('test-db')
         disconnect(alias='test-db-alias')
+
+
+@pytest.fixture(scope="function")
+def game(connection: Generator) -> crud_game.CRUDGame:
+    """Get crud game object
+    """
+    return crud_game.CRUDGame(connection['CurrentGameData'])

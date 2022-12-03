@@ -7,11 +7,11 @@ from app.schemas import schema_game
 from app.config import settings
 
 
-@pytest.fixture(scope="function")
-def game(connection: Generator) -> crud_game.CRUDGame:
-    """Get game object
-    """
-    return crud_game.CRUDGame(connection['CurrentGameData'])
+# @pytest.fixture(scope="function")
+# def game(connection: Generator) -> crud_game.CRUDGame:
+#     """Get game object
+#     """
+#     return crud_game.CRUDGame(connection['CurrentGameData'])
 
 
 class TestCRUDGame:
@@ -21,7 +21,6 @@ class TestCRUDGame:
     def test_get_current_game_data_return_state(
         self,
         game: crud_game.CRUDGame,
-        connection: Generator,
             ) -> None:
         """Test get current game data return state
         """
@@ -63,8 +62,9 @@ class TestCRUDGame:
     def test_get_game_processor(
         self,
         game: crud_game.CRUDGame,
-        connection: Generator,
             ) -> None:
+        """Test gt game processor returns game processor obgect
+        """
         game_proc = game.get_game_processor(settings.user0_login)
         assert isinstance(game_proc, game_logic.GameProcessor), 'wrong processor'
 
@@ -83,7 +83,18 @@ class TestCRUDGame:
         assert connection['CurrentGameData'].objects().count() == 2, 'wrong count of data'
         assert connection['CurrentGameData'].objects[0].id != connection['CurrentGameData'].objects[1].id, \
             'not current'
-        assert len(connection['CurrentGameData'].objects[1].game_decks.objective_deck.current) == 21, \
+
+    def test_deal_and_shuffle_decks(
+        self,
+        game: crud_game.CRUDGame,
+        connection: Generator,
+            ) -> None:
+        """Test deal_and_shuffle_decks()
+        """
+        game.deal_and_shuffle_decks(settings.user0_login)
+        assert len(connection['CurrentGameData'].objects[0].game_decks.objective_deck.current) == 21, \
+            'wrong current'
+        assert len(connection['CurrentGameData'].objects[0].game_decks.group_deck.current) == 24, \
             'wrong current'
 
     def test_set_faction(
@@ -167,24 +178,24 @@ class TestCRUDGameNextTurn:
         data = connection['CurrentGameData'].objects().first()
         assert data.game_steps.game_turn == 1, 'wrong turn'
 
-    def test_set_next_turn_raises_exception_when_game_end(
-        self,
-        game: crud_game.CRUDGame,
-        connection: Generator,
-            ) -> None:
-        """Test set_next_turn) raises exception when game end
-        """
-        data = connection['CurrentGameData'].objects().first()
-        data.game_steps.is_game_end = True
-        data.save()
+    # def test_set_next_turn_raises_exception_when_game_end(
+    #     self,
+    #     game: crud_game.CRUDGame,
+    #     connection: Generator,
+    #         ) -> None:
+    #     """Test set_next_turn) raises exception when game end
+    #     """
+    #     data = connection['CurrentGameData'].objects().first()
+    #     data.game_steps.is_game_end = True
+    #     data.save()
 
-        with pytest.raises(
-            HTTPException,
-            ):
-            game.set_next_turn(settings.user0_login)
+    #     with pytest.raises(
+    #         HTTPException,
+    #         ):
+    #         game.set_next_turn(settings.user0_login)
 
 class TestCRUDGameNextPhase:
-    """Test CRUDGame next_phase method
+    """Test CRUDGame set_next_phase())
     """
 
     def test_set_next_phase_change_phase(
@@ -235,22 +246,5 @@ class TestCRUDGameNextPhase:
 
 
 class TestCRUDGamePhaseConditions:
-    """Tesy CRUDGame chek_phase_conditions()
+    """Test CRUDGame set_phase_conditions_after_next()
     """
-
-    def testchek_phase_conditions_before_next_raise_if_no_priority(
-        self,
-        game: crud_game.CRUDGame,
-        connection: Generator,
-            ) -> None:
-        """Test chek_phase_conditions_before_next() if no player has
-        priority in briefing
-        """
-        data = connection['CurrentGameData'].objects().first()
-        data.game_steps.turn_phase = settings.phases[0]
-        data.save()
-
-        with pytest.raises(
-            HTTPException,
-            ):
-            game.chek_phase_conditions_before_next(settings.user0_login)

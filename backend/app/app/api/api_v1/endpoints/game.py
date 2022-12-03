@@ -1,5 +1,5 @@
 from typing import Union, Literal
-from fastapi import status, Depends, APIRouter, Query, HTTPException
+from fastapi import status, Depends, APIRouter, Query
 from app.schemas import schema_user
 from app.crud import crud_game
 from app.core import security_user
@@ -25,6 +25,7 @@ def create_new_game(
     """
     obj_in = game_logic.make_game_data(user.login)
     crud_game.game.create_new_game(obj_in)
+    crud_game.game.deal_and_shuffle_decks(user.login)
 
 
 @router.patch(

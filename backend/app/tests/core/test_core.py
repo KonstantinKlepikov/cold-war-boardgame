@@ -140,8 +140,14 @@ class TestGameProcessor:
     def game_proc(self, connection: Generator) -> game_logic.GameProcessor:
         """Get game processor object
         """
-        cards = crud_card.cards.get_all_cards()
-        current_data = crud_game.game.get_current_game_data(login=settings.user0_login)
+        cards = crud_card.CRUDCards(
+            connection['AgentCard'],
+            connection['GroupCard'],
+            connection['ObjectiveCard']
+                ).get_all_cards()
+        current_data = crud_game.CRUDGame(
+            connection['CurrentGameData']
+                ).get_current_game_data(settings.user0_login)
         return game_logic.GameProcessor(cards=cards, current_data=current_data)
 
     def test_create_game(self, game_proc: game_logic.GameProcessor) -> None:
@@ -161,24 +167,81 @@ class TestGameProcessor:
         with pytest.raises(
             HTTPException,
             ):
-            cards = crud_card.cards.get_all_cards()
-            current_data = crud_game.game.get_current_game_data(login=settings.user0_login)
+            cards = crud_card.CRUDCards(
+                connection['AgentCard'],
+                connection['GroupCard'],
+                connection['ObjectiveCard']
+                    ).get_all_cards()
+            current_data = crud_game.CRUDGame(
+                connection['CurrentGameData']
+                    ).get_current_game_data(settings.user0_login)
             game_logic.GameProcessor(cards=cards, current_data=current_data)
 
     def test_init_game_data(self, game_proc: game_logic.GameProcessor) -> None:
         """Test init new deck init deck in Game objects
         """
-        game_proc.init_game_data()
-        assert game_proc.game.player, 'player not inited'
-        assert len(game_proc.game.player.other) > 0, 'empty player other'
+        game = game_proc.init_game_data()
+        assert game.player, 'player not inited'
+        assert len(game.player.other) > 0, 'empty player other'
         assert game_proc.game.bot, 'bot not inited'
-        assert len(game_proc.game.bot.other) > 0, 'empty bot other'
+        assert len(game.bot.other) > 0, 'empty bot other'
 
-        assert len(game_proc.game.objective_deck) == 24, 'wrong objective len'
+        assert len(game.objective_deck) == 24, 'wrong objective len'
         with pytest.raises(AttributeError):
-            game_proc.game.objective_deck.other._id
+            game.objective_deck.other._id
 
-        assert len(game_proc.game.group_deck) == 27, 'wrong group len'
+        assert len(game.group_deck) == 27, 'wrong group len'
         with pytest.raises(AttributeError):
-            game_proc.game.group_deck.other._id
+            game.group_deck.other._id
 
+class TestCheckPhaseConditions:
+    """Test chek_phase_conditions_before_next()
+    """
+
+    def test_chek_phase_conditions_before_next_raise_if_no_priority(
+        self,
+        # game: crud_game.CRUDGame,
+        connection: Generator,
+            ) -> None:
+        """Test chek_phase_conditions_before_next() if no player has
+        priority in briefing
+        """
+        data = connection['CurrentGameData'].objects().first()
+        data.game_steps.turn_phase = settings.phases[0]
+        data.save()
+
+        with pytest.raises(
+            HTTPException,
+            ):
+            game_logic.chek_phase_conditions_before_next(data)
+
+    def test_chek_phase_conditions_before_next_if_last_phase(
+        self,
+        connection: Generator,
+            ) -> None:
+        """Test chek_phase_conditions_before_next() if last phase
+        and needed push to next tun
+        """
+        data = connection['CurrentGameData'].objects().first()
+        data.game_steps.turn_phase = settings.phases[5]
+        data.save()
+
+        with pytest.raises(
+            HTTPException,
+                ):
+            game_logic.chek_phase_conditions_before_next(data)
+
+    def test_chek_phase_conditions_before_next_if_game_end(
+        self,
+        connection: Generator,
+            ) -> None:
+        """Test chek_phase_conditions_before_next() if game end
+        """
+        data = connection['CurrentGameData'].objects().first()
+        data.game_steps.is_game_end = True
+        data.save()
+
+        with pytest.raises(
+            HTTPException,
+            ):
+            game_logic.chek_phase_conditions_before_next(data)

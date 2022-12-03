@@ -43,40 +43,40 @@ class CRUDGame(
             current_data=self.get_current_game_data(login)
                 )
 
-
     def create_new_game(self, obj_in: schema_game.CurrentGameData) -> None:
         """Create new game
         """
         db_data = jsonable_encoder(obj_in)
         current_data = self.model(**db_data)
 
-        # add cards
-        # cards = crud_card.cards.get_cards_names()
-        # current_data.game_decks.group_deck.current = cards['group_cards']
-        # current_data.game_decks.objective_deck.current = cards['objective_cards']
         current_data.save()
 
+    def deal_and_shuffle_decks(self, login: str) -> None:
+        """Shuffle objective and group decks
+
+        Args:
+            login (str): player login
+        """
         # create game and add cards
-        game_proc = self.get_game_processor(obj_in.players[0].login)
+        game_proc = self.get_game_processor(login)
         game_proc.init_game_data()
-        game = game_proc.game
 
         # deal and shuffle cards
-        game.group_deck.deal()
-        game.group_deck.shuffle()
+        game_proc.game.group_deck.deal()
+        game_proc.game.group_deck.shuffle()
 
-        game.objective_deck.deal()
-        game.objective_deck.shuffle()
+        game_proc.game.objective_deck.deal()
+        game_proc.game.objective_deck.shuffle()
 
-        obj_current = game.objective_deck.get_current_names()
-        current_data.game_decks.objective_deck.current = obj_current
-        current_data.game_decks.objective_deck.deck_len = len(obj_current)
+        obj_current = game_proc.game.objective_deck.get_current_names()
+        game_proc.current_data.game_decks.objective_deck.current = obj_current
+        game_proc.current_data.game_decks.objective_deck.deck_len = len(obj_current)
 
-        group_current = game.group_deck.get_current_names()
-        current_data.game_decks.group_deck.current = group_current
-        current_data.game_decks.group_deck.deck_len = len(group_current)
+        group_current = game_proc.game.group_deck.get_current_names()
+        game_proc.current_data.game_decks.group_deck.current = group_current
+        game_proc.current_data.game_decks.group_deck.deck_len = len(group_current)
 
-        current_data.save()
+        game_proc.current_data.save()
 
     def set_faction(self, login: str, faction: Faction) -> None:
         """Set player and opponent faction
@@ -122,48 +122,47 @@ class CRUDGame(
             data.players[1].has_priority = not val
             data.save()
 
-    # deprecated
-    def set_next_turn_phase(
-        self,
-        login: str,
-        turn: bool,
-        phase: bool,
-            ) -> None:
-        """Set next turn or/and next phase
+    # def set_next_turn_phase(
+    #     self,
+    #     login: str,
+    #     turn: bool,
+    #     phase: bool,
+    #         ) -> None:
+    #     """Set next turn or/and next phase
 
-        Args:
-            login (str): player login
-            turn (bool): push the turn
-            phase (bool): push the phase
-        """
-        current_data = self.get_current_game_data(login)
-        if current_data.game_steps.is_game_end:
-            raise HTTPException(
-                status_code=409,
-                detail="Something can't be changed, because game is end"
-                    )
+    #     Args:
+    #         login (str): player login
+    #         turn (bool): push the turn
+    #         phase (bool): push the phase
+    #     """
+    #     current_data = self.get_current_game_data(login)
+    #     if current_data.game_steps.is_game_end:
+    #         raise HTTPException(
+    #             status_code=409,
+    #             detail="Something can't be changed, because game is end"
+    #                 )
 
-        if turn:
-            current_data.game_steps.game_turn += 1
-            current_data.game_steps.turn_phase = settings.phases[0]
-            current_data.save()
+    #     if turn:
+    #         current_data.game_steps.game_turn += 1
+    #         current_data.game_steps.turn_phase = settings.phases[0]
+    #         current_data.save()
 
-        if phase:
-            if current_data.game_steps.turn_phase is None:
-                current_data.game_steps.turn_phase = settings.phases[0]
-                current_data.save()
+    #     if phase:
+    #         if current_data.game_steps.turn_phase is None:
+    #             current_data.game_steps.turn_phase = settings.phases[0]
+    #             current_data.save()
 
-            elif current_data.game_steps.turn_phase == settings.phases[-1]:
-                raise HTTPException(
-                    status_code=409,
-                    detail="This phase is last in a turn. Change turn number "
-                           "before get next phase"
-                        )
-            else:
-                self.chek_phase_conditions_before_next(login)
-                ind = settings.phases.index(current_data.game_steps.turn_phase) + 1
-                current_data.game_steps.turn_phase = settings.phases[ind]
-                current_data.save()
+    #         elif current_data.game_steps.turn_phase == settings.phases[-1]:
+    #             raise HTTPException(
+    #                 status_code=409,
+    #                 detail="This phase is last in a turn. Change turn number "
+    #                        "before get next phase"
+    #                     )
+    #         else:
+    #             self.chek_phase_conditions_before_next(login)
+    #             ind = settings.phases.index(current_data.game_steps.turn_phase) + 1
+    #             current_data.game_steps.turn_phase = settings.phases[ind]
+    #             current_data.save()
 
     def set_next_turn(
         self,
@@ -195,24 +194,14 @@ class CRUDGame(
             login (str): player login
         """
         current_data = self.get_current_game_data(login)
-        if current_data.game_steps.is_game_end:
-            raise HTTPException(
-                status_code=409,
-                detail="Something can't be changed, because game is end"
-                    )
+        game_logic.chek_phase_conditions_before_next(current_data)
 
+        #TODO: make it wth GameProcessor
         if current_data.game_steps.turn_phase is None:
             current_data.game_steps.turn_phase = settings.phases[0]
             current_data.save()
 
-        elif current_data.game_steps.turn_phase == settings.phases[-1]:
-            raise HTTPException(
-                status_code=409,
-                detail="This phase is last in a turn. Change turn number "
-                        "before get next phase"
-                    )
         else:
-            self.chek_phase_conditions_before_next(login)
             ind = settings.phases.index(current_data.game_steps.turn_phase) + 1
             current_data.game_steps.turn_phase = settings.phases[ind]
             current_data.save()
@@ -226,61 +215,6 @@ class CRUDGame(
         Args:
             login (str): player login
         """
-
-    def chek_phase_conditions_before_next(
-        self,
-        login: str
-            ) -> None:
-        """_summary_
-
-        Args:
-            login (str): _description_
-        """
-        current_data = self.get_current_game_data(login)
-        phase = current_data.game_steps.turn_phase
-
-        # check briefing before next
-        if phase == settings.phases[0]:
-
-            # players has priority
-            if not current_data.players[0].has_priority \
-                    and not current_data.players[1].has_priority:
-                raise HTTPException(
-                    status_code=409,
-                    detail="No one player has priority. Cant next from briefing."
-                        )
-
-            # objective card defined
-            if not current_data.game_decks.mission_card:
-                raise HTTPException(
-                    status_code=409,
-                    detail="Mission card undefined."
-                        )
-
-
-        # planning
-        elif phase == settings.phases[1]:
-            pass
-
-        # influence_struggle
-        elif phase == settings.phases[2]:
-            pass
-
-        # ceasefire
-        elif phase == settings.phases[3]:
-            pass
-
-        # debriefing
-        elif phase == settings.phases[4]:
-            pass
-
-        # detente
-        elif phase == settings.phases[5]:
-            raise HTTPException(
-                status_code=409,
-                detail="This phase is last in a turn. Change turn number "
-                        "before get next phase"
-                    )
 
     def set_phase_conditions_after_next(
         self,

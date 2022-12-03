@@ -85,7 +85,7 @@ typecheck = ["mypy"]
 
 [[package]]
 name = "bgameb"
-version = "0.0.27"
+version = "0.0.30"
 description = "Board Game Builder"
 category = "main"
 optional = false
@@ -1089,7 +1089,7 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "3.8.12"
-content-hash = "1a5f5f0b4997fc2e507c2033940502108ebff5be2841739a157467cdab627fc4"
+content-hash = "aa9546648ba20731410dcff21bc4d7c3eeecbb997c359a7d7c74eaf117867da2"
 
 [metadata.files]
 anyio = [
@@ -1140,8 +1140,8 @@ bcrypt = [
     {file = "bcrypt-4.0.1.tar.gz", hash = "sha256:27d375903ac8261cfe4047f6709d16f7d18d39b1ec92aaf72af989552a650ebd"},
 ]
 bgameb = [
-    {file = "bgameb-0.0.27-py3-none-any.whl", hash = "sha256:8d2659c0f497c18741e51db14d496a40f244eaaa52ad13a248fd801705099c50"},
-    {file = "bgameb-0.0.27.tar.gz", hash = "sha256:5f959e7ef703037595f98d6605ddcd5f93972e988141ad821435bb01493403a9"},
+    {file = "bgameb-0.0.30-py3-none-any.whl", hash = "sha256:167618564b5686e1868e71f303250f40ece316eda9479aa6c7e9939affcdaaba"},
+    {file = "bgameb-0.0.30.tar.gz", hash = "sha256:bc40fca058f5dcdf8eab3ca06dc3672e5a8130e92226bce746b0265c440f7b72"},
 ]
 black = [
     {file = "black-21.12b0-py3-none-any.whl", hash = "sha256:a615e69ae185e08fdd73e4715e260e2479c861b5740057fde6e8b4e3b7dd589f"},
@@ -1284,6 +1284,7 @@ coverage = [
 cryptography = [
     {file = "cryptography-38.0.3-cp36-abi3-macosx_10_10_universal2.whl", hash = "sha256:984fe150f350a3c91e84de405fe49e688aa6092b3525f407a18b9646f6612320"},
     {file = "cryptography-38.0.3-cp36-abi3-macosx_10_10_x86_64.whl", hash = "sha256:ed7b00096790213e09eb11c97cc6e2b757f15f3d2f85833cd2d3ec3fe37c1722"},
+    {file = "cryptography-38.0.3-cp36-abi3-macosx_10_12_universal2.whl", hash = "sha256:726e3a1bfee0e919b278c8f766fdcf1fe30f8e6feea590e3f248d3636b58ffb3"},
     {file = "cryptography-38.0.3-cp36-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.manylinux_2_24_aarch64.whl", hash = "sha256:bbf203f1a814007ce24bd4d51362991d5cb90ba0c177a9c08825f2cc304d871f"},
     {file = "cryptography-38.0.3-cp36-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:554bec92ee7d1e9d10ded2f7e92a5d70c1f74ba9524947c0ba0c850c7b011828"},
     {file = "cryptography-38.0.3-cp36-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b1b52c9e5f8aa2b802d48bd693190341fae201ea51c7a167d69fc48b60e8a959"},

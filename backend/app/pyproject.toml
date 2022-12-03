@@ -18,7 +18,7 @@ pymongo = {extras = ["srv"], version = "^4.2.0"}
 fastapi = "^0.79.1"
 uvicorn = {extras = ["standard"], version = "^0.18.2"}
 mongoengine = "^0.24.2"
-bgameb = ">=0.0.4"
+bgameb = ">=0.0.30"
 python-jose = {extras = ["cryptography"], version = "^3.3.0"}
 passlib = "^1.7.4"
 toml = "^0.10.2"

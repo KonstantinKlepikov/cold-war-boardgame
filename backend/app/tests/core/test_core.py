@@ -1,11 +1,14 @@
 import datetime
 import pytest
+import bgameb
 from typing import Generator, Callable
 from fastapi import HTTPException
-from app.core import security, security_user, game_data
+from app.core import security, security_user
 from app.schemas import schema_user
-from app.crud import crud_user
+from app.crud import crud_user, crud_card, crud_game
+from app.models import model_game
 from app.config import settings
+from app.core import game_logic
 
 
 class TestSecurity:
@@ -85,7 +88,7 @@ class TestGameData:
     def test_make_game_data(self) -> None:
         """Test make_game_data()
         """
-        data = game_data.make_game_data(settings.user0_login)
+        data = game_logic.make_game_data(settings.user0_login)
 
         assert data, 'empty state'
         assert data.game_steps.game_turn == 0, 'wrong game turn'
@@ -112,8 +115,132 @@ class TestGameData:
 
         assert data.game_decks.group_deck.deck_len == 24, 'wrong group len'
         assert data.game_decks.group_deck.pile == [], 'wrong group pile'
+        with pytest.raises(
+            AttributeError,
+            match="object has no attribute"
+                ):
+            data.game_decks.group_deck.current
         assert data.game_decks.objective_deck.deck_len == 21, \
             'wrong objective len'
         assert data.game_decks.objective_deck.pile == [], \
             'wrong objective pile'
+        with pytest.raises(
+            AttributeError,
+            match="object has no attribute"
+                ):
+            data.game_decks.objective_deck.current
         assert not data.game_decks.mission_card, 'wrong mission card'
+
+
+class TestGameProcessor:
+    """Test GameProcessor class
+    """
+
+    @pytest.fixture(scope="function")
+    def game_proc(self, connection: Generator) -> game_logic.GameProcessor:
+        """Get game processor object
+        """
+        cards = crud_card.CRUDCards(
+            connection['AgentCard'],
+            connection['GroupCard'],
+            connection['ObjectiveCard']
+                ).get_all_cards()
+        current_data = crud_game.CRUDGame(
+            connection['CurrentGameData']
+                ).get_current_game_data(settings.user0_login)
+        return game_logic.GameProcessor(cards=cards, current_data=current_data)
+
+    def test_create_game(self, game_proc: game_logic.GameProcessor) -> None:
+        """Test game is created
+        """
+        assert isinstance(game_proc.game, bgameb.Game), 'wrong game'
+        assert isinstance(game_proc.cards, dict), 'not a cards'
+        assert isinstance(game_proc.current_data, model_game.CurrentGameData), 'wrong current'
+
+    def test_not_inited_game_raise_exception(
+        self,
+        connection: Generator,
+            ) -> None:
+        """Exception is raised if player not starts any games
+        """
+        connection['CurrentGameData'].objects().first().delete()
+        with pytest.raises(
+            HTTPException,
+            ):
+            cards = crud_card.CRUDCards(
+                connection['AgentCard'],
+                connection['GroupCard'],
+                connection['ObjectiveCard']
+                    ).get_all_cards()
+            current_data = crud_game.CRUDGame(
+                connection['CurrentGameData']
+                    ).get_current_game_data(settings.user0_login)
+            game_logic.GameProcessor(cards=cards, current_data=current_data)
+
+    def test_init_game_data(self, game_proc: game_logic.GameProcessor) -> None:
+        """Test init new deck init deck in Game objects
+        """
+        game = game_proc.init_game_data()
+        assert game.player, 'player not inited'
+        assert len(game.player.other) > 0, 'empty player other'
+        assert game_proc.game.bot, 'bot not inited'
+        assert len(game.bot.other) > 0, 'empty bot other'
+
+        assert len(game.objective_deck) == 24, 'wrong objective len'
+        with pytest.raises(AttributeError):
+            game.objective_deck.other._id
+
+        assert len(game.group_deck) == 27, 'wrong group len'
+        with pytest.raises(AttributeError):
+            game.group_deck.other._id
+
+class TestCheckPhaseConditions:
+    """Test chek_phase_conditions_before_next()
+    """
+
+    def test_chek_phase_conditions_before_next_raise_if_no_priority(
+        self,
+        connection: Generator,
+            ) -> None:
+        """Test chek_phase_conditions_before_next() if no player has
+        priority in briefing
+        """
+        data = connection['CurrentGameData'].objects().first()
+        data.game_steps.turn_phase = settings.phases[0]
+        data.save()
+
+        with pytest.raises(
+            HTTPException,
+            ):
+            game_logic.chek_phase_conditions_before_next(data)
+
+    def test_chek_phase_conditions_before_next_if_last_phase(
+        self,
+        connection: Generator,
+            ) -> None:
+        """Test chek_phase_conditions_before_next() if last phase
+        and needed push to next tun
+        """
+        data = connection['CurrentGameData'].objects().first()
+        data.game_steps.turn_phase = settings.phases[5]
+        data.save()
+
+        with pytest.raises(
+            HTTPException,
+                ):
+            game_logic.chek_phase_conditions_before_next(data)
+
+    def test_chek_phase_conditions_before_next_if_game_end(
+        self,
+        connection: Generator,
+            ) -> None:
+        """Test chek_phase_conditions_before_next() if game end
+        """
+        data = connection['CurrentGameData'].objects().first()
+        data.game_steps.is_game_end = True
+        data.save()
+
+        with pytest.raises(
+            HTTPException,
+            ):
+            game_logic.chek_phase_conditions_before_next(data)

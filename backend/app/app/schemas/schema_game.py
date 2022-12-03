@@ -45,8 +45,8 @@ class PlayerGroupOrObjectivreCard(BaseModel):
     Position here - is any nonegative integer from 0 to len of deck.
     This represent card position in deck from top to bottom.
     """
-    is_in_deck: bool
-    is_in_play: bool
+    is_in_deck: bool = True
+    is_in_play: bool = False
     is_active: bool = True
     position: Optional[NonNegativeInt]
     name: str

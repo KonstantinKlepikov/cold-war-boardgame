@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from app.main import app
 from app.config import settings
 from app.models import model_user, model_game, model_cards
+from app.crud import crud_game
 from app.db.init_db import init_db
 
 
@@ -42,8 +43,32 @@ def db_game_data() -> Dict[str, Union[str, bool]]:
         {'name': 'Assassin'},
         {'name': 'Director'},
         ]
+    group_cards = [
+        'Guerilla', 'Militia', 'Mercenaries', 'Police', 'Infantry', 'Generals',
+        'Workers', 'Mafia', 'Food companies', 'Industry', 'Oil Tycoons',
+        'Bankers', 'Students', 'Trade Union', 'Nationalists', 'Fundamentalists',
+        'Opposition', 'Government', 'Artists', 'NGOs', 'Phone company',
+        'Newspapers', 'Radio', 'Television',
+            ]
+    objective_cards = [
+        'Nobel Peace Prize', 'Live Benefit', 'Nuclear Escalation', 'Space Race',
+        'Olympic Games', 'Summit Meeting', 'Egypt', 'Vietnam', 'Panama', 'Angola',
+        'Afghanistan', 'Houndaras', 'Libya', 'Greece', 'Turkey', 'Iran', 'Cuba',
+        'Congo', 'Czechoslovakia', 'Chile', 'Korea',
+            ]
 
     return {
+        'game_decks':
+            {
+                'group_deck': {
+                    'current': group_cards,
+                    'deck_len': 24,
+                        },
+                'objective_deck': {
+                    'current': objective_cards,
+                    'deck_len': 21,
+                        }
+            },
         'players':
             [
                 {
@@ -111,3 +136,10 @@ def connection(
     finally:
         conn.drop_database('test-db')
         disconnect(alias='test-db-alias')
+
+
+@pytest.fixture(scope="function")
+def game(connection: Generator) -> crud_game.CRUDGame:
+    """Get crud game object
+    """
+    return crud_game.CRUDGame(connection['CurrentGameData'])

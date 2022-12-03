@@ -122,48 +122,6 @@ class CRUDGame(
             data.players[1].has_priority = not val
             data.save()
 
-    # def set_next_turn_phase(
-    #     self,
-    #     login: str,
-    #     turn: bool,
-    #     phase: bool,
-    #         ) -> None:
-    #     """Set next turn or/and next phase
-
-    #     Args:
-    #         login (str): player login
-    #         turn (bool): push the turn
-    #         phase (bool): push the phase
-    #     """
-    #     current_data = self.get_current_game_data(login)
-    #     if current_data.game_steps.is_game_end:
-    #         raise HTTPException(
-    #             status_code=409,
-    #             detail="Something can't be changed, because game is end"
-    #                 )
-
-    #     if turn:
-    #         current_data.game_steps.game_turn += 1
-    #         current_data.game_steps.turn_phase = settings.phases[0]
-    #         current_data.save()
-
-    #     if phase:
-    #         if current_data.game_steps.turn_phase is None:
-    #             current_data.game_steps.turn_phase = settings.phases[0]
-    #             current_data.save()
-
-    #         elif current_data.game_steps.turn_phase == settings.phases[-1]:
-    #             raise HTTPException(
-    #                 status_code=409,
-    #                 detail="This phase is last in a turn. Change turn number "
-    #                        "before get next phase"
-    #                     )
-    #         else:
-    #             self.chek_phase_conditions_before_next(login)
-    #             ind = settings.phases.index(current_data.game_steps.turn_phase) + 1
-    #             current_data.game_steps.turn_phase = settings.phases[ind]
-    #             current_data.save()
-
     def set_next_turn(
         self,
         login: str,

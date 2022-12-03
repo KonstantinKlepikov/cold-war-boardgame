@@ -56,24 +56,6 @@ def preset(
 
 
 @router.patch(
-    "/next",
-    status_code=status.HTTP_200_OK,
-    responses=settings.NEXT_ERRORS,
-    summary='Go to next turn or/and phase',
-    response_description="Ok.",
-    deprecated=True,
-        )
-def next_turn_phase(
-    turn: Union[Literal['push', ], None] = None,
-    phase: Union[Literal['push', ], None] = None,
-    user: schema_user.User = Depends(security_user.get_current_active_user),
-        ) -> None:
-    """Change turn number or phase to next
-    """
-    return None
-
-
-@router.patch(
     "/next_turn",
     status_code=status.HTTP_200_OK,
     responses=settings.NEXT_ERRORS,

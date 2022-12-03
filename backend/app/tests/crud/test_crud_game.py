@@ -178,22 +178,6 @@ class TestCRUDGameNextTurn:
         data = connection['CurrentGameData'].objects().first()
         assert data.game_steps.game_turn == 1, 'wrong turn'
 
-    # def test_set_next_turn_raises_exception_when_game_end(
-    #     self,
-    #     game: crud_game.CRUDGame,
-    #     connection: Generator,
-    #         ) -> None:
-    #     """Test set_next_turn) raises exception when game end
-    #     """
-    #     data = connection['CurrentGameData'].objects().first()
-    #     data.game_steps.is_game_end = True
-    #     data.save()
-
-    #     with pytest.raises(
-    #         HTTPException,
-    #         ):
-    #         game.set_next_turn(settings.user0_login)
-
 class TestCRUDGameNextPhase:
     """Test CRUDGame set_next_phase())
     """

@@ -129,7 +129,7 @@ class GameProcessor:
         """Init new objective deck
 
         Returns:
-            bgameb.Game = initet game object
+            bgameb.Game: initet game object
         """
         # init ptayers
         for p in self.current_data.players:

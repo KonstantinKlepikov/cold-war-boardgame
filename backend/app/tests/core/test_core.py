@@ -200,7 +200,6 @@ class TestCheckPhaseConditions:
 
     def test_chek_phase_conditions_before_next_raise_if_no_priority(
         self,
-        # game: crud_game.CRUDGame,
         connection: Generator,
             ) -> None:
         """Test chek_phase_conditions_before_next() if no player has

@@ -7,13 +7,6 @@ from app.schemas import schema_game
 from app.config import settings
 
 
-# @pytest.fixture(scope="function")
-# def game(connection: Generator) -> crud_game.CRUDGame:
-#     """Get game object
-#     """
-#     return crud_game.CRUDGame(connection['CurrentGameData'])
-
-
 class TestCRUDGame:
     """Test CRUDGame class
     """
@@ -65,7 +58,9 @@ class TestCRUDGame:
             ) -> None:
         """Test gt game processor returns game processor obgect
         """
-        game_proc = game.get_game_processor(settings.user0_login)
+        game_proc = game.get_game_processor(
+            game.get_current_game_data(settings.user0_login)
+                )
         assert isinstance(game_proc, game_logic.GameProcessor), 'wrong processor'
 
     def test_create_new_game(
@@ -91,11 +86,12 @@ class TestCRUDGame:
             ) -> None:
         """Test deal_and_shuffle_decks()
         """
-        game.deal_and_shuffle_decks(settings.user0_login)
+        game_proc = game.deal_and_shuffle_decks(settings.user0_login)
         assert len(connection['CurrentGameData'].objects[0].game_decks.objective_deck.current) == 21, \
             'wrong current'
         assert len(connection['CurrentGameData'].objects[0].game_decks.group_deck.current) == 24, \
             'wrong current'
+        assert isinstance(game_proc, game_logic.GameProcessor), 'wrong return'
 
     def test_set_faction(
         self,
@@ -192,7 +188,10 @@ class TestCRUDGameNextPhase:
         data = connection['CurrentGameData'].objects().first()
         assert data.game_steps.turn_phase == None, 'wrong phase'
 
-        game.set_next_phase(settings.user0_login)
+        proc_game = game.set_next_phase(settings.user0_login)
+        assert isinstance(proc_game, game_logic.GameProcessor), 'wrong game_proce'
+        assert proc_game.game.other['turn_phase'] == settings.phases[0], \
+            'wrong proc phase'
         data = connection['CurrentGameData'].objects().first()
         assert data.game_steps.turn_phase == settings.phases[0], 'wrong phase'
 
@@ -230,5 +229,55 @@ class TestCRUDGameNextPhase:
 
 
 class TestCRUDGamePhaseConditions:
-    """Test CRUDGame set_phase_conditions_after_next()
+    """Test CRUDGame change conditions after set next phase
     """
+
+    def test_set_mission_card(
+        self,
+        started_game_proc: game_logic.GameProcessor,
+        game: crud_game.CRUDGame,
+            ) -> None:
+        """Test set mission card and change objective deck
+        """
+        current_data = game.get_current_game_data(settings.user0_login)
+        l = current_data.game_decks.objective_deck.deck_len - 1
+        cards = current_data.game_decks.objective_deck.current
+
+        current_data, game_proc = game.set_mission_card(
+            current_data=game.get_current_game_data(settings.user0_login),
+            game_proc=started_game_proc,
+                )
+
+        assert isinstance(current_data.game_decks.mission_card, str), 'mission not set'
+        assert current_data.game_decks.objective_deck.deck_len == l, 'wrong len'
+        assert current_data.game_decks.objective_deck.current == cards[:-1], 'wrong current'
+        assert len(game_proc.game.objective_deck.current) == l, 'wrong proc current'
+        assert game_proc.game.objective_deck.mission_card == current_data.game_decks.mission_card, \
+            'wrong proc mission card'
+
+    def test_set_phase_conditions_after_next_briefing(
+        self,
+        started_game_proc: game_logic.GameProcessor,
+        game: crud_game.CRUDGame,
+        connection: Generator,
+            ) -> None:
+        """Test set_phase_conditions_after_next() set mission card
+        in briefing
+        """
+        data = connection['CurrentGameData'].objects().first()
+        data.game_steps.turn_phase = settings.phases[0]
+        data.save()
+
+        assert data.game_decks.mission_card is None, 'wrong mission card'
+        l = data.game_decks.objective_deck.deck_len
+        cards = data.game_decks.objective_deck.current
+
+        game.set_phase_conditions_after_next(
+            login=settings.user0_login,
+            game_proc=started_game_proc,
+                )
+
+        data = connection['CurrentGameData'].objects().first()
+        assert isinstance(data.game_decks.mission_card, str), 'mission not set'
+        assert data.game_decks.objective_deck.deck_len == l - 1, 'wrong len'
+        assert data.game_decks.objective_deck.current == cards[:-1], 'wrong current'

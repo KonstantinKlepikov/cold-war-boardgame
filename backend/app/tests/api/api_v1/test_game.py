@@ -1,6 +1,7 @@
 import pytest
 from typing import Callable, Generator
 from fastapi.testclient import TestClient
+from app.core import game_logic
 from app.crud import crud_game, crud_user
 from app.config import settings
 
@@ -17,16 +18,32 @@ class TestCreateNewGame:
             ) -> None:
         """Test create new game api resource
         """
-        def mockreturn(*args, **kwargs) -> Callable:
-            game = crud_game.CRUDGame(connection['CurrentGameData'])
-            game.create_new_game(args[0])
+        game = crud_game.CRUDGame(connection['CurrentGameData'])
+
+        def mock_game(*args, **kwargs) -> Callable:
+            return game.create_new_game(args[0])
+
+        def mock_shuffle(*args, **kwargs) -> Callable:
+            return game.deal_and_shuffle_decks(args[0])
 
         def mock_user(*args, **kwargs) -> Callable:
             user = crud_user.CRUDUser(connection['User'])
             return user.get_by_login(settings.user0_login)
 
-        monkeypatch.setattr(crud_game.game, "create_new_game", mockreturn)
         monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
+        monkeypatch.setattr(crud_game.game, "create_new_game", mock_game)
+        monkeypatch.setattr(crud_game.game, "deal_and_shuffle_decks", mock_shuffle)
+
+        # def mockreturn(*args, **kwargs) -> Callable:
+        #     game = crud_game.CRUDGame(connection['CurrentGameData'])
+        #     game.create_new_game(args[0])
+
+        # def mock_user(*args, **kwargs) -> Callable:
+        #     user = crud_user.CRUDUser(connection['User'])
+        #     return user.get_by_login(settings.user0_login)
+
+        # monkeypatch.setattr(crud_game.game, "create_new_game", mockreturn)
+        # monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
 
         response = client.post(
             f"{settings.api_v1_str}/game/create",
@@ -137,16 +154,19 @@ class TestNextTurn:
     """
 
     @pytest.fixture(scope="function")
-    def mock_return(self, monkeypatch, connection: Generator) -> None:
+    def mock_return(
+        self,
+        monkeypatch,
+        user: crud_user.CRUDUser,
+        game: crud_game.CRUDGame,
+            ) -> None:
         """Mock user and game
         """
 
         def mock_game(*args, **kwargs) -> Callable:
-            game = crud_game.CRUDGame(connection['CurrentGameData'])
             game.create_new_game(args[0])
 
         def mock_user(*args, **kwargs) -> Callable:
-            user = crud_user.CRUDUser(connection['User'])
             return user.get_by_login(settings.user0_login)
 
         monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
@@ -172,20 +192,19 @@ class TestNextTurn:
     def test_next_if_game_end_return_409(
         self,
         monkeypatch,
-        connection: Generator,
+        user: crud_user.CRUDUser,
+        game: crud_game.CRUDGame,
         client: TestClient,
             ) -> None:
         """Test turn can't be pushed if game end
         """
         def mock_game(*args, **kwargs) -> Callable:
-            game = crud_game.CRUDGame(connection['CurrentGameData'])
             data = game.get_current_game_data(settings.user0_login)
             data.game_steps.is_game_end = True
             data.save()
             return game.get_current_game_data(settings.user0_login)
 
         def mock_user(*args, **kwargs) -> Callable:
-            user = crud_user.CRUDUser(connection['User'])
             return user.get_by_login(settings.user0_login)
 
         monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
@@ -213,25 +232,35 @@ class TestNextPhase:
     """
 
     @pytest.fixture(scope="function")
-    def mock_return(self, monkeypatch, connection: Generator) -> None:
+    def mock_return(
+        self,
+        monkeypatch,
+        user: crud_user.CRUDUser,
+        game: crud_game.CRUDGame,
+            ) -> None:
         """Mock user and game
         """
+        obj_in = game_logic.make_game_data(settings.user0_login)
+        game.create_new_game(obj_in)
+        game.deal_and_shuffle_decks(settings.user0_login)
 
-        def mock_game(*args, **kwargs) -> Callable:
-            game = crud_game.CRUDGame(connection['CurrentGameData'])
-            game.create_new_game(args[0])
+        def mock_set_next_phase(*args, **kwargs) -> Callable:
+            return game.set_next_phase(args[0])
+
+        def mock_conditions(*args, **kwargs) -> Callable:
+            return game.set_phase_conditions_after_next(args[0], args[1])
 
         def mock_user(*args, **kwargs) -> Callable:
-            user = crud_user.CRUDUser(connection['User'])
             return user.get_by_login(settings.user0_login)
 
         monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
-        monkeypatch.setattr(crud_game.game, "create_new_game", mock_game)
+        monkeypatch.setattr(crud_game.game, "set_next_phase", mock_set_next_phase)
+        monkeypatch.setattr(crud_game.game, "set_phase_conditions_after_next", mock_conditions)
 
     def test_next_phase_return_200(
         self,
         mock_return,
-        connection: Generator,
+        # connection: Generator,
         client: TestClient,
             ) -> None:
         """Test game/next set next phase

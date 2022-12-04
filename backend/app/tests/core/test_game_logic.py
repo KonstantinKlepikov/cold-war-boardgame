@@ -1,84 +1,10 @@
-import datetime
 import pytest
 import bgameb
-from typing import Generator, Callable
+from typing import Generator
 from fastapi import HTTPException
-from app.core import security, security_user
-from app.schemas import schema_user
-from app.crud import crud_user, crud_card, crud_game
-from app.models import model_game
+from app.crud import crud_game
 from app.config import settings
 from app.core import game_logic
-
-
-class TestSecurity:
-    """Test security functions
-    """
-
-    def test_password_is_hashed(self) -> None:
-        """Test password is hashed
-        """
-        plain_password = '123456789'
-        hashed_password = security.get_password_hash(plain_password)
-        assert len(hashed_password) == 60, 'wrong hashed password len'
-
-    def test_verify_hashed_password(self) -> None:
-        """Test verify hashed password
-        """
-        assert security.verify_password(
-            settings.user0_password,
-            settings.user0_hashed_password
-            ), 'wrong hash'
-
-    def test_create_access_token(self) -> None:
-        """Test create access token
-        """
-        data = settings.user0_login
-        token = security.create_access_token(data)
-        assert len(token) == 109, 'wrong len'
-        token = security.create_access_token(
-            data, expires_delta=datetime.timedelta(minutes=1)
-                )
-        assert len(token) == 132, 'wrong len'
-
-
-class TestSecurityUser:
-    """Test security user functions
-    """
-
-    def test_get_current_user(
-        self,
-        monkeypatch,
-        connection: Generator
-            ) -> None:
-        """Test get current user
-        """
-        def mockreturn(*args, **kwargs) -> Callable:
-            user = crud_user.CRUDUser(connection['User'])
-            return user.get_by_login(settings.user0_login)
-
-        monkeypatch.setattr(crud_user.user, "get_by_login", mockreturn)
-
-        user = security_user.get_current_user(settings.user0_token)
-        assert user.login == settings.user0_login, 'wrong login'
-        assert user.is_active, 'wrong is_active'
-        with pytest.raises(
-            HTTPException,
-            ):
-            security_user.get_current_user('12345')
-
-    def test_get_current_active_user(self, connection: Generator) -> None:
-        """Test get current active user
-        """
-        schema = schema_user.User(login=settings.user0_login)
-        user = security_user.get_current_active_user(schema)
-        assert user.login == settings.user0_login, 'wrong login'
-        assert user.is_active, 'wrong is_active'
-        with pytest.raises(
-            HTTPException,
-            ):
-            schema = schema_user.User(login=settings.user0_login, is_active=None)
-            security_user.get_current_active_user(schema)
 
 
 class TestGameData:
@@ -136,63 +62,67 @@ class TestGameProcessor:
     """Test GameProcessor class
     """
 
-    @pytest.fixture(scope="function")
-    def game_proc(self, connection: Generator) -> game_logic.GameProcessor:
-        """Get game processor object
-        """
-        cards = crud_card.CRUDCards(
-            connection['AgentCard'],
-            connection['GroupCard'],
-            connection['ObjectiveCard']
-                ).get_all_cards()
-        current_data = crud_game.CRUDGame(
-            connection['CurrentGameData']
-                ).get_current_game_data(settings.user0_login)
-        return game_logic.GameProcessor(cards=cards, current_data=current_data)
-
     def test_create_game(self, game_proc: game_logic.GameProcessor) -> None:
         """Test game is created
         """
         assert isinstance(game_proc.game, bgameb.Game), 'wrong game'
         assert isinstance(game_proc.cards, dict), 'not a cards'
-        assert isinstance(game_proc.current_data, model_game.CurrentGameData), 'wrong current'
 
-    def test_not_inited_game_raise_exception(
+    def _check_if_current_raise_exception(
         self,
-        connection: Generator,
+        game_proc: game_logic.GameProcessor
             ) -> None:
         """Exception is raised if player not starts any games
         """
-        connection['CurrentGameData'].objects().first().delete()
         with pytest.raises(
             HTTPException,
             ):
-            cards = crud_card.CRUDCards(
-                connection['AgentCard'],
-                connection['GroupCard'],
-                connection['ObjectiveCard']
-                    ).get_all_cards()
-            current_data = crud_game.CRUDGame(
-                connection['CurrentGameData']
-                    ).get_current_game_data(settings.user0_login)
-            game_logic.GameProcessor(cards=cards, current_data=current_data)
+            game_proc._check_if_current()
 
-    def test_init_game_data(self, game_proc: game_logic.GameProcessor) -> None:
+    def test_init_game_data(
+        self,
+        game: crud_game.CRUDGame,
+        game_proc: game_logic.GameProcessor
+            ) -> None:
         """Test init new deck init deck in Game objects
         """
-        game = game_proc.init_game_data()
-        assert game.player, 'player not inited'
-        assert len(game.player.other) > 0, 'empty player other'
+        game_proc = game_proc.init_game_data(
+            game.get_current_game_data(settings.user0_login)
+                )
+        assert isinstance(game_proc, game_logic.GameProcessor), 'wrong proc'
+        assert game_proc.game.player, 'player not inited'
+        assert len(game_proc.game.player.other) > 0, 'empty player other'
         assert game_proc.game.bot, 'bot not inited'
-        assert len(game.bot.other) > 0, 'empty bot other'
+        assert len(game_proc.game.bot.other) > 0, 'empty bot other'
 
-        assert len(game.objective_deck) == 24, 'wrong objective len'
+        assert len(game_proc.game.objective_deck) == 25, 'wrong objective args len'
+        assert game_proc.game.objective_deck.mission_card is None, 'wrong mission card'
+        assert not game_proc.game.objective_deck.current, 'nonempty objective current'
         with pytest.raises(AttributeError):
-            game.objective_deck.other._id
+            game_proc.game.objective_deck.other._id
 
-        assert len(game.group_deck) == 27, 'wrong group len'
+        assert len(game_proc.game.group_deck) == 27, 'wrong group args len'
+        assert not game_proc.game.group_deck.current, 'group current'
         with pytest.raises(AttributeError):
-            game.group_deck.other._id
+            game_proc.game.group_deck.other._id
+
+    # def test_feel_the_decks_if_current_exist(
+    #     self,
+    #     game: crud_game.CRUDGame,
+    #     game_proc: game_logic.GameProcessor,
+    #         ) -> None:
+    #     """Test deal_cards_from_db()
+    #     """
+    #     obj_in = game_logic.make_game_data(settings.user0_login)
+    #     game.create_new_game(obj_in)
+    #     game.deal_and_shuffle_decks(settings.user0_login)
+
+    #     game_proc.deal_cards_from_db(
+    #         game.get_current_game_data(settings.user0_login)
+    #             )
+    #     assert len(game_proc.game.objective_deck.current) == 22, \
+    #         'wring proc current obj deck'
+
 
 class TestCheckPhaseConditions:
     """Test chek_phase_conditions_before_next()

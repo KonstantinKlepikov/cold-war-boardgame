@@ -82,4 +82,5 @@ def next_phase(
         ) -> None:
     """Change phase to next
     """
-    crud_game.game.set_next_phase(user.login)
+    game_proc = crud_game.game.set_next_phase(user.login)
+    crud_game.game.set_phase_conditions_after_next(user.login, game_proc)

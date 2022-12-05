@@ -25,7 +25,12 @@ def create_new_game(
     """
     obj_in = game_logic.make_game_data(user.login)
     crud_game.game.create_new_game(obj_in)
-    crud_game.game.deal_and_shuffle_decks(user.login)
+    current_data = crud_game.game.get_current_game_data(user.login)
+    game_proc = crud_game.game.get_game_processor(current_data)
+    crud_game.game.deal_and_shuffle_decks(
+        current_data,
+        game_proc
+    )
 
 
 @router.patch(

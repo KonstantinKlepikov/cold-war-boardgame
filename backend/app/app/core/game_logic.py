@@ -163,36 +163,30 @@ class GameProcessor:
                 )
             self.game.objective_deck.add(card)
 
+        # init game steps
+        self.game.add(bgameb.Steps('game_steps'))
+        for num, val in enumerate(settings.phases):
+            step = bgameb.Step(val, priority=num)
+            self.game.game_steps.add(step)
+
+        # fill game steps
+        self.game.game_turn = current_data.game_steps.game_turn
+        self.game.turn_phase = current_data.game_steps.turn_phase
+        self.game.is_game_end = current_data.game_steps.is_game_end
+        self.game.game_steps.deal(current_data.game_steps.turn_phases_left)
+
         # fill objective deck
         if current_data.game_decks.objective_deck.current:
             self.game.objective_deck.deal(
                 current_data.game_decks.objective_deck.current
                     )
         m = current_data.game_decks.mission_card
-        self.game.objective_deck.mission_card = m if m else None
+
+        # fill mission card
+        self.game.mission_card = m if m else None
 
         # from pprint import pprint
         # pprint(self.game.to_dict())
         # print('---'*20)
-
-        return self
-
-    def deal_cards_from_db(
-        self,
-        current_data: Optional[model_game.CurrentGameData]
-            ) -> bgameb.Game:
-        """Deal decks if current exist in db
-
-        Args:
-            current_data (Optional[model_game.CurrentGameData])
-
-        Returns:
-            bgameb.Game: initet game object
-        """
-        # deal objective deck
-        if current_data.game_decks.objective_deck.current:
-            self.game.objective_deck.deal(
-                current_data.game_decks.objective_deck.current
-                    )
 
         return self

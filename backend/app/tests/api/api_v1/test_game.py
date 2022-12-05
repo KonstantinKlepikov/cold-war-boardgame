@@ -24,7 +24,7 @@ class TestCreateNewGame:
             return game.create_new_game(args[0])
 
         def mock_shuffle(*args, **kwargs) -> Callable:
-            return game.deal_and_shuffle_decks(args[0])
+            return game.deal_and_shuffle_decks(args[0], args[1])
 
         def mock_user(*args, **kwargs) -> Callable:
             user = crud_user.CRUDUser(connection['User'])

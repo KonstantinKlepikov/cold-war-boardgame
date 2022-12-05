@@ -182,14 +182,12 @@ def started_game_proc(
     game: crud_game.CRUDGame,
         ) -> game_logic.GameProcessor:
     """Init the game and return processor
-
-    Args:
-        game_proc (game_logic.GameProcessor): _description_
-
-    Returns:
-        game_logic.GameProcessor: _description_
     """
     obj_in = game_logic.make_game_data(settings.user0_login)
     game.create_new_game(obj_in)
-    game_proc = game.deal_and_shuffle_decks(settings.user0_login)
+    current_data = game.get_current_game_data(settings.user0_login)
+    game_proc = game.get_game_processor(current_data)
+    game_proc = game.deal_and_shuffle_decks(
+        current_data, game_proc
+        )
     return game_proc

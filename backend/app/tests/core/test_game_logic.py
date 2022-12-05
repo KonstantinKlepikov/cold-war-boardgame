@@ -39,14 +39,14 @@ class TestGameData:
         assert data.players[1].player_cards.group_cards == [], 'hasnt cards'
         assert data.players[1].player_cards.objective_cards == [], 'hasnt cards'
 
-        assert data.game_decks.group_deck.deck_len == 24, 'wrong group len'
+        assert data.game_decks.group_deck.deck_len == 0, 'wrong group len'
         assert data.game_decks.group_deck.pile == [], 'wrong group pile'
         with pytest.raises(
             AttributeError,
             match="object has no attribute"
                 ):
             data.game_decks.group_deck.current
-        assert data.game_decks.objective_deck.deck_len == 21, \
+        assert data.game_decks.objective_deck.deck_len == 0, \
             'wrong objective len'
         assert data.game_decks.objective_deck.pile == [], \
             'wrong objective pile'
@@ -89,19 +89,28 @@ class TestGameProcessor:
         game_proc = game_proc.init_game_data(
             game.get_current_game_data(settings.user0_login)
                 )
+        # game
         assert isinstance(game_proc, game_logic.GameProcessor), 'wrong proc'
         assert game_proc.game.player, 'player not inited'
         assert len(game_proc.game.player.other) > 0, 'empty player other'
         assert game_proc.game.bot, 'bot not inited'
         assert len(game_proc.game.bot.other) > 0, 'empty bot other'
 
-        assert len(game_proc.game.objective_deck) == 25, 'wrong objective args len'
-        assert game_proc.game.objective_deck.mission_card is None, 'wrong mission card'
+        # steps
+        assert game_proc.game.game_turn == 0, 'wrong turn'
+        assert game_proc.game.turn_phase is None, 'wrong phase'
+        assert game_proc.game.is_game_end == False, 'game is end'
+        assert len(game_proc.game.game_steps.current) == 6, 'wrong current'
+
+        # objectives
+        assert len(game_proc.game.objective_deck) == 24, 'wrong objective args len' # TODO: change in bgameb
+        assert game_proc.game.mission_card is None, 'wrong mission card'
         assert not game_proc.game.objective_deck.current, 'nonempty objective current'
         with pytest.raises(AttributeError):
             game_proc.game.objective_deck.other._id
 
-        assert len(game_proc.game.group_deck) == 27, 'wrong group args len'
+        # groups
+        assert len(game_proc.game.group_deck) == 27, 'wrong group args len' # TODO: change in bgameb
         assert not game_proc.game.group_deck.current, 'group current'
         with pytest.raises(AttributeError):
             game_proc.game.group_deck.other._id

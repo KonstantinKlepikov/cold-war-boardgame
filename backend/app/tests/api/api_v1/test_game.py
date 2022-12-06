@@ -340,8 +340,9 @@ class TestNextPhase:
             ) -> None:
         """Test game/next set next phase
         """
-        assert connection['CurrentGameData'].objects().first() \
-            .game_steps.turn_phase is None, 'wrong turn_tphase'
+        current = connection['CurrentGameData'].objects().first()
+        assert current.game_steps.turn_phase is None, 'wrong turn_tphase'
+        assert current.game_decks.mission_card is None, 'wrong mission card'
 
         response = client.patch(
             f"{settings.api_v1_str}/game/next_phase",
@@ -350,8 +351,10 @@ class TestNextPhase:
                 }
             )
         assert response.status_code == 200, 'wrong status'
-        assert connection['CurrentGameData'].objects().first() \
-            .game_steps.turn_phase == settings.phases[0], 'wrong turn_tphase'
+
+        current = connection['CurrentGameData'].objects().first()
+        assert current.game_steps.turn_phase == settings.phases[0], 'wrong turn_phase'
+        assert isinstance(current.game_decks.mission_card, str), 'wrong mission card'
 
     def test_next_phase_if_last_return_409(
         self,

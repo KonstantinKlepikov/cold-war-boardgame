@@ -91,8 +91,8 @@ class GameDeck(BaseModel):
 class GameDecks(BaseModel):
     """Game decks and mission card
     """
-    group_deck: GameDeck = GameDeck(deck_len=24)
-    objective_deck: GameDeck = GameDeck(deck_len=21)
+    group_deck: GameDeck = GameDeck()
+    objective_deck: GameDeck = GameDeck()
     mission_card: Optional[str] = None
 
 

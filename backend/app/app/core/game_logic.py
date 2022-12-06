@@ -57,12 +57,8 @@ def chek_phase_conditions_before_next(
 
     phase = current_data.game_steps.turn_phase
 
-    # before start first turn
-    if phase is None:
-        pass
-
     # briefing
-    elif phase == settings.phases[0]:
+    if phase == settings.phases[0]:
 
         # players has priority
         if not current_data.players[0].has_priority \
@@ -106,49 +102,47 @@ def chek_phase_conditions_before_next(
 
 class GameProcessor:
     """Create the game object to manipulation of game tools
+
+    Args:
+        cards (Dict[str, List[Dict[str, Union[str, int]]]])
+        current_data (Optional[model_game.CurrentGameData])
     """
 
     def __init__(
         self,
         cards: Dict[str, List[Dict[str, Union[str, int]]]],
-        current_data: Optional[model_game.CurrentGameData],
+        current_data: Optional[model_game.CurrentGameData]
             ) -> None:
         self.game = bgameb.Game('Cold War Game')
         self.cards = cards
+        self._check_if_current(current_data)
 
-        if current_data:
-            self.current_data = current_data
-        else:
+    def _check_if_current(
+        self,
+        current_data: Optional[model_game.CurrentGameData]
+            ):
+        if not current_data:
             raise HTTPException(
                 status_code=404,
                 detail="Cant find current game data in db. For start "
                     "new game use /game/create endpoint",
-                    )
+                        )
+        else:
+            self.current_data = current_data
 
-    def init_game_data(self) -> bgameb.Game:
+    def init_game_data(self):
         """Init new objective deck
 
         Returns:
-            bgameb.Game: initet game object
+            GameProcessor: initet game processor
         """
+
         # init ptayers
         for p in self.current_data.players:
             data: dict = p.to_mongo().to_dict()
             name = 'bot' if data['is_bot'] == True else 'player'
             player = bgameb.Player(name, **data)
             self.game.add(player)
-
-            # init agent deck
-            # self.game[name].add(bgameb.Shaker('Agent Deck'))
-            # for c in data['player_cards']['agent_cards']:
-            #     m = {**c, **self._cards['agent_cards'][c['name']]}
-            # # for c in self.cards['agent_cards']:
-
-            #     card = bgameb.Card(
-            #         c['name'],
-            #         **m
-            #         )
-            #     self.game[name].agent_deck.add(card)
 
         # init group deck
         self.game.add(bgameb.Deck('Group Deck'))
@@ -170,8 +164,34 @@ class GameProcessor:
                 )
             self.game.objective_deck.add(card)
 
+        # init game steps
+        self.game.add(bgameb.Steps('game_steps'))
+        for num, val in enumerate(settings.phases):
+            step = bgameb.Step(val, priority=num)
+            self.game.game_steps.add(step)
+
+        #  fill players
+        self.game.player.faction = self.current_data.players[0].faction
+        self.game.bot.faction = self.current_data.players[1].faction
+
+        # fill game steps
+        self.game.game_turn = self.current_data.game_steps.game_turn
+        self.game.turn_phase = self.current_data.game_steps.turn_phase
+        self.game.is_game_end = self.current_data.game_steps.is_game_end
+        self.game.game_steps.deal(self.current_data.game_steps.turn_phases_left)
+
+        # fill objective deck
+        if self.current_data.game_decks.objective_deck.current:
+            self.game.objective_deck.deal(
+                self.current_data.game_decks.objective_deck.current
+                    )
+        m = self.current_data.game_decks.mission_card
+
+        # fill mission card
+        self.game.mission_card = m if m else None
+
         # from pprint import pprint
         # pprint(self.game.to_dict())
         # print('---'*20)
 
-        return self.game
+        return self

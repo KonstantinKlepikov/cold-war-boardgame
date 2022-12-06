@@ -5,8 +5,9 @@ from mongoengine.context_managers import switch_db
 from fastapi.testclient import TestClient
 from app.main import app
 from app.config import settings
+from app.core import game_logic
 from app.models import model_user, model_game, model_cards
-from app.crud import crud_game
+from app.crud import crud_game, crud_card, crud_user
 from app.db.init_db import init_db
 
 
@@ -143,3 +144,53 @@ def game(connection: Generator) -> crud_game.CRUDGame:
     """Get crud game object
     """
     return crud_game.CRUDGame(connection['CurrentGameData'])
+
+
+@pytest.fixture(scope="function")
+def user(connection: Generator) -> crud_user.CRUDUser:
+    """Get crud game object
+    """
+    return crud_user.CRUDUser(connection['User'])
+
+
+@pytest.fixture(scope="function")
+def cards(connection: Generator) -> crud_card.CRUDCards:
+    """Get game processor object
+    """
+    return crud_card.CRUDCards(
+        connection['AgentCard'],
+        connection['GroupCard'],
+        connection['ObjectiveCard'],
+            )
+
+@pytest.fixture(scope="function")
+def game_proc(
+    game: crud_game.CRUDGame,
+    cards: crud_card.CRUDCards,
+        ) -> game_logic.GameProcessor:
+    """Get game processor object
+    """
+    current_data = game.get_current_game_data(settings.user0_login)
+    return game_logic.GameProcessor(cards.get_all_cards(), current_data)
+
+
+@pytest.fixture(scope="function")
+def inited_game_proc(
+    game_proc: game_logic.GameProcessor,
+        ) -> game_logic.GameProcessor:
+    """Get game processor object
+    """
+    return game_proc.init_game_data()
+
+
+@pytest.fixture(scope="function")
+def started_game_proc(
+    game: crud_game.CRUDGame,
+        ) -> game_logic.GameProcessor:
+    """Init the game and return processor
+    """
+    obj_in = game_logic.make_game_data(settings.user0_login)
+    game.create_new_game(obj_in)
+    game_proc = game.get_game_processor(settings.user0_login)
+    game_proc = game.deal_and_shuffle_decks(game_proc)
+    return game_proc

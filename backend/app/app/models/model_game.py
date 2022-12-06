@@ -4,6 +4,7 @@ from mongoengine import (
     ValidationError, queryset_manager,
         )
 from app.constructs import Phase
+from app.config import settings
 
 
 def check_turn_phase(value: str) -> bool:
@@ -21,6 +22,7 @@ class GameSteps(EmbeddedDocument):
     """
     game_turn = IntField(min_value=0, default=0)
     turn_phase = StringField(null=True, validation=check_turn_phase)
+    turn_phases_left = ListField(StringField(), default=settings.phases)
     is_game_end = BooleanField(default=False)
 
 
@@ -66,7 +68,7 @@ class Player(EmbeddedDocument):
 class GameDeck(EmbeddedDocument):
     """Deck in play difinition
     """
-    deck_len = IntField(min_value=0)
+    deck_len = IntField(min_value=0, default=0)
     pile = ListField(StringField())
     current = ListField(StringField())
 
@@ -75,10 +77,10 @@ class GameDecks(EmbeddedDocument):
     """Game decks and mission card
     """
     group_deck = EmbeddedDocumentField(
-        GameDeck, default=GameDeck(deck_len=24)
+        GameDeck, default=GameDeck()
         )
     objective_deck = EmbeddedDocumentField(
-        GameDeck, default=GameDeck(deck_len=21)
+        GameDeck, default=GameDeck()
         )
     mission_card = StringField(null=True)
 

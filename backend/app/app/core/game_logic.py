@@ -170,9 +170,14 @@ class GameProcessor:
             step = bgameb.Step(val, priority=num)
             self.game.game_steps.add(step)
 
+        # init coin for random choice
+        self.game.add(bgameb.Dice('coin'))
+
         #  fill players
         self.game.player.faction = self.current_data.players[0].faction
         self.game.bot.faction = self.current_data.players[1].faction
+        self.game.player.score = self.current_data.players[0].score
+        self.game.bot.score = self.current_data.players[1].score
 
         # fill game steps
         self.game.game_turn = self.current_data.game_steps.game_turn

@@ -287,6 +287,59 @@ class TestCRUDGamePhaseConditions:
         assert data.game_decks.objective_deck.deck_len == l, 'wrong in db len'
         assert data.game_decks.objective_deck.current == cards[:-1], 'wrong in db current'
 
+    def test_set_turn_priority_at_the_turn_0(
+        self,
+        started_game_proc: game_logic.GameProcessor,
+        game: crud_game.CRUDGame,
+        connection: Generator,
+            ) -> None:
+        """Test set turn priority at the turn 0
+        """
+        started_game_proc.game.player.score = 30
+        started_game_proc.game.bot.score = 0
+
+        game_proc = game.set_turn_priority(started_game_proc)
+
+        assert isinstance(game_proc, game_logic.GameProcessor), 'wrong game_proce'
+        assert isinstance(game_proc.current_data.players[0].has_priority, bool), 'wrong priority'
+        assert isinstance(game_proc.current_data.players[1].has_priority, bool), 'wrong priority'
+        assert isinstance(game_proc.game.player.has_priority, bool), 'wrong priority'
+        assert isinstance(game_proc.game.bot.has_priority, bool), 'wrong priority'
+
+        data = connection['CurrentGameData'].objects().first()
+        assert isinstance(data.players[0].has_priority, bool), 'wrong priority'
+        assert isinstance(data.players[1].has_priority, bool), 'wrong priority'
+
+    @pytest.mark.parametrize("test_input,expected", [
+        ((30, 0), (True, False)),
+        ((0, 30), (False, True)),
+        ((0, 0), (None, None)),
+            ])
+    def test_set_turn_priority(
+        self,
+        test_input: Tuple[int],
+        expected: Tuple[bool],
+        started_game_proc: game_logic.GameProcessor,
+        game: crud_game.CRUDGame,
+        connection: Generator,
+            ) -> None:
+        """Test set turn priority
+        """
+        started_game_proc.game.player.score = test_input[0]
+        started_game_proc.game.bot.score = test_input[1]
+        started_game_proc.game.game_turn = 1
+
+        game_proc = game.set_turn_priority(started_game_proc)
+
+        assert game_proc.current_data.players[0].has_priority == expected[0], 'wrong priority'
+        assert game_proc.current_data.players[1].has_priority == expected[1], 'wrong priority'
+        assert game_proc.game.player.has_priority == expected[0], 'wrong priority'
+        assert game_proc.game.bot.has_priority == expected[1], 'wrong priority'
+
+        data = connection['CurrentGameData'].objects().first()
+        assert data.players[0].has_priority == expected[0], 'wrong priority'
+        assert data.players[1].has_priority == expected[1], 'wrong priority'
+
     def test_set_phase_conditions_after_next_briefing(
         self,
         started_game_proc: game_logic.GameProcessor,

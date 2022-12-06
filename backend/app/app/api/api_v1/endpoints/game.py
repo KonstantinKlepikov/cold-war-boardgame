@@ -61,7 +61,7 @@ def preset(
     "/preset/faction",
     status_code=status.HTTP_200_OK,
     responses=settings.NEXT_ERRORS,
-    summary='Preset priority before game start',
+    summary='Preset faction before game start',
     response_description="Ok. Faction is setted."
         )
 def preset_faction(
@@ -70,8 +70,7 @@ def preset_faction(
             ),
     user: schema_user.User = Depends(security_user.get_current_active_user),
         ) -> None:
-    """Preset faction and/or priotity for game
-    if not seted before in this game
+    """Preset faction of player
     """
     game_proc = crud_game.game.get_game_processor(user.login)
     game_proc = crud_game.game.set_faction(q, game_proc)
@@ -81,8 +80,9 @@ def preset_faction(
     "/preset/priority",
     status_code=status.HTTP_200_OK,
     responses=settings.NEXT_ERRORS,
-    summary='Preset priority for game sides before game start',
-    response_description="Ok. Priority is setted."
+    summary='Preset priority before game start',
+    response_description="Ok. Priority is setted.",
+    deprecated=True,
         )
 def preset_priority(
     q: Priority = Query(
@@ -93,8 +93,7 @@ def preset_priority(
             ),
     user: schema_user.User = Depends(security_user.get_current_active_user),
         ) -> None:
-    """Preset faction and/or priotity for game
-    if not seted before in this game
+    """Preset priotity of player
     """
     game_proc = crud_game.game.get_game_processor(user.login)
     game_proc = crud_game.game.set_priority(q, game_proc)

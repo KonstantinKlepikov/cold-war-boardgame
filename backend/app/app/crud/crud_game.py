@@ -241,6 +241,36 @@ class CRUDGame(
 
         return game_proc
 
+    def set_turn_priority(
+        self,
+        game_proc: game_logic.GameProcessor,
+            ) -> game_logic.GameProcessor:
+        """Set priority to the turn. It used in influence struggle.
+
+        Args:
+            game_proc (game_logic.GameProcessor)
+
+        Returns:
+            game_logic.GameProcessor
+        """
+        if game_proc.game.game_turn == 0:
+            val = True if game_proc.game.coin.roll()[0] == 1 else False
+        elif game_proc.game.player.score > game_proc.game.bot.score:
+            val = True
+        elif game_proc.game.player.score < game_proc.game.bot.score:
+            val = False
+        else:
+            return game_proc
+
+        game_proc.game.player.has_priority = val
+        game_proc.game.bot.has_priority = not val
+
+        game_proc.current_data.players[0].has_priority = val
+        game_proc.current_data.players[1].has_priority = not val
+        game_proc.current_data.save()
+
+        return game_proc
+
     def set_phase_conditions_after_next(
         self,
         game_proc: game_logic.GameProcessor,
@@ -259,6 +289,7 @@ class CRUDGame(
         if phase == settings.phases[0]:
 
             game_proc = self.set_mission_card(game_proc)
+            game_proc = self.set_turn_priority(game_proc)
 
         # planning
         elif phase == settings.phases[1]:

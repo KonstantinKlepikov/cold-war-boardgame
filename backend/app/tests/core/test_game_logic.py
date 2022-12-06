@@ -91,18 +91,25 @@ class TestGameProcessor:
 
         # players
         assert game_proc.game.player, 'player not inited'
+        assert game_proc.game.player.has_priority is None, 'wrong turn priority'
         assert game_proc.game.player.faction is None, 'wrong faction'
+        assert game_proc.game.player.score == 0, 'wrong score'
         assert len(game_proc.game.player.other) > 0, 'empty player other'
         assert game_proc.game.bot, 'bot not inited'
+        assert game_proc.game.bot.has_priority is None, 'wrong turn priority'
         assert game_proc.game.bot.faction is None, 'wrong faction'
+        assert game_proc.game.bot.score == 0, 'wrong score'
         assert len(game_proc.game.bot.other) > 0, 'empty bot other'
-
 
         # steps
         assert game_proc.game.game_turn == 0, 'wrong turn'
         assert game_proc.game.turn_phase is None, 'wrong phase'
         assert game_proc.game.is_game_end == False, 'game is end'
         assert len(game_proc.game.game_steps.current) == 6, 'wrong current'
+
+        # coin
+        assert isinstance(game_proc.game.coin, bgameb.Dice), 'wrong coin'
+        assert game_proc.game.coin.sides == 2, 'wrong sides'
 
         # objectives
         assert len(game_proc.game.objective_deck) == 24, 'wrong objective args len' # TODO: change len definition in bgameb

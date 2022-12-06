@@ -1,4 +1,3 @@
-from typing import Union, Literal
 from fastapi import status, Depends, APIRouter, Query
 from app.schemas import schema_user
 from app.crud import crud_game
@@ -25,12 +24,8 @@ def create_new_game(
     """
     obj_in = game_logic.make_game_data(user.login)
     crud_game.game.create_new_game(obj_in)
-    current_data = crud_game.game.get_current_game_data(user.login)
-    game_proc = crud_game.game.get_game_processor(current_data)
-    crud_game.game.deal_and_shuffle_decks(
-        current_data,
-        game_proc
-    )
+    game_proc = crud_game.game.get_game_processor(user.login)
+    game_proc = crud_game.game.deal_and_shuffle_decks(game_proc)
 
 
 @router.patch(
@@ -38,7 +33,8 @@ def create_new_game(
     status_code=status.HTTP_200_OK,
     responses=settings.ACCESS_ERRORS,
     summary='Preset faction and priority before game start',
-    response_description="Ok. Data is changed if not seted before."
+    response_description="Ok. Data is changed if not seted before.",
+    deprecated=True,
         )
 def preset(
     faction: Faction = Query(
@@ -56,8 +52,52 @@ def preset(
     """Preset faction and/or priotity for game
     if not seted before in this game
     """
-    crud_game.game.set_faction(user.login, faction)
-    crud_game.game.set_priority(user.login, priority)
+    game_proc = crud_game.game.get_game_processor(user.login)
+    game_proc = crud_game.game.set_faction(faction, game_proc)
+    game_proc = crud_game.game.set_priority(priority, game_proc)
+
+
+@router.patch(
+    "/preset/faction",
+    status_code=status.HTTP_200_OK,
+    responses=settings.NEXT_ERRORS,
+    summary='Preset priority before game start',
+    response_description="Ok. Faction is setted."
+        )
+def preset_faction(
+    q: Faction = Query(
+        title="Preset faction",
+            ),
+    user: schema_user.User = Depends(security_user.get_current_active_user),
+        ) -> None:
+    """Preset faction and/or priotity for game
+    if not seted before in this game
+    """
+    game_proc = crud_game.game.get_game_processor(user.login)
+    game_proc = crud_game.game.set_faction(q, game_proc)
+
+
+@router.patch(
+    "/preset/priority",
+    status_code=status.HTTP_200_OK,
+    responses=settings.NEXT_ERRORS,
+    summary='Preset priority for game sides before game start',
+    response_description="Ok. Priority is setted."
+        )
+def preset_priority(
+    q: Priority = Query(
+        title="Preset priority",
+        description="- true - set priority to player\n"
+                    "- false - set priority to bot\n"
+                    "- random - set priority at random\n"
+            ),
+    user: schema_user.User = Depends(security_user.get_current_active_user),
+        ) -> None:
+    """Preset faction and/or priotity for game
+    if not seted before in this game
+    """
+    game_proc = crud_game.game.get_game_processor(user.login)
+    game_proc = crud_game.game.set_priority(q, game_proc)
 
 
 @router.patch(
@@ -72,7 +112,8 @@ def next_turn(
         ) -> None:
     """Change turn number to next
     """
-    crud_game.game.set_next_turn(user.login)
+    game_proc = crud_game.game.get_game_processor(user.login)
+    game_proc = crud_game.game.set_next_turn(game_proc)
 
 
 @router.patch(
@@ -87,5 +128,6 @@ def next_phase(
         ) -> None:
     """Change phase to next
     """
-    game_proc = crud_game.game.set_next_phase(user.login)
-    crud_game.game.set_phase_conditions_after_next(user.login, game_proc)
+    game_proc = crud_game.game.get_game_processor(user.login)
+    game_proc = crud_game.game.set_next_phase(game_proc)
+    game_proc = crud_game.game.set_phase_conditions_after_next(game_proc)

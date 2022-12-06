@@ -154,27 +154,33 @@ def user(connection: Generator) -> crud_user.CRUDUser:
 
 
 @pytest.fixture(scope="function")
-def game_proc(connection: Generator) -> game_logic.GameProcessor:
+def cards(connection: Generator) -> crud_card.CRUDCards:
     """Get game processor object
     """
-    cards = crud_card.CRUDCards(
+    return crud_card.CRUDCards(
         connection['AgentCard'],
         connection['GroupCard'],
-        connection['ObjectiveCard']
-            ).get_all_cards()
-    return game_logic.GameProcessor(cards)
+        connection['ObjectiveCard'],
+            )
+
+@pytest.fixture(scope="function")
+def game_proc(
+    game: crud_game.CRUDGame,
+    cards: crud_card.CRUDCards,
+        ) -> game_logic.GameProcessor:
+    """Get game processor object
+    """
+    current_data = game.get_current_game_data(settings.user0_login)
+    return game_logic.GameProcessor(cards.get_all_cards(), current_data)
 
 
 @pytest.fixture(scope="function")
 def inited_game_proc(
     game_proc: game_logic.GameProcessor,
-    game: crud_game.CRUDGame,
         ) -> game_logic.GameProcessor:
     """Get game processor object
     """
-    return game_proc.init_game_data(
-        game.get_current_game_data(settings.user0_login)
-            )
+    return game_proc.init_game_data()
 
 
 @pytest.fixture(scope="function")
@@ -185,9 +191,6 @@ def started_game_proc(
     """
     obj_in = game_logic.make_game_data(settings.user0_login)
     game.create_new_game(obj_in)
-    current_data = game.get_current_game_data(settings.user0_login)
-    game_proc = game.get_game_processor(current_data)
-    game_proc = game.deal_and_shuffle_decks(
-        current_data, game_proc
-        )
+    game_proc = game.get_game_processor(settings.user0_login)
+    game_proc = game.deal_and_shuffle_decks(game_proc)
     return game_proc

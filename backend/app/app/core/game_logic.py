@@ -102,14 +102,20 @@ def chek_phase_conditions_before_next(
 
 class GameProcessor:
     """Create the game object to manipulation of game tools
+
+    Args:
+        cards (Dict[str, List[Dict[str, Union[str, int]]]])
+        current_data (Optional[model_game.CurrentGameData])
     """
 
     def __init__(
         self,
         cards: Dict[str, List[Dict[str, Union[str, int]]]],
+        current_data: Optional[model_game.CurrentGameData]
             ) -> None:
         self.game = bgameb.Game('Cold War Game')
         self.cards = cards
+        self._check_if_current(current_data)
 
     def _check_if_current(
         self,
@@ -121,23 +127,18 @@ class GameProcessor:
                 detail="Cant find current game data in db. For start "
                     "new game use /game/create endpoint",
                         )
+        else:
+            self.current_data = current_data
 
-    def init_game_data(
-        self,
-        current_data: Optional[model_game.CurrentGameData]
-            ):
+    def init_game_data(self):
         """Init new objective deck
-
-        Args:
-            current_data (Optional[model_game.CurrentGameData])
 
         Returns:
             GameProcessor: initet game processor
         """
-        self._check_if_current(current_data)
 
         # init ptayers
-        for p in current_data.players:
+        for p in self.current_data.players:
             data: dict = p.to_mongo().to_dict()
             name = 'bot' if data['is_bot'] == True else 'player'
             player = bgameb.Player(name, **data)
@@ -169,18 +170,22 @@ class GameProcessor:
             step = bgameb.Step(val, priority=num)
             self.game.game_steps.add(step)
 
+        #  fill players
+        self.game.player.faction = self.current_data.players[0].faction
+        self.game.bot.faction = self.current_data.players[1].faction
+
         # fill game steps
-        self.game.game_turn = current_data.game_steps.game_turn
-        self.game.turn_phase = current_data.game_steps.turn_phase
-        self.game.is_game_end = current_data.game_steps.is_game_end
-        self.game.game_steps.deal(current_data.game_steps.turn_phases_left)
+        self.game.game_turn = self.current_data.game_steps.game_turn
+        self.game.turn_phase = self.current_data.game_steps.turn_phase
+        self.game.is_game_end = self.current_data.game_steps.is_game_end
+        self.game.game_steps.deal(self.current_data.game_steps.turn_phases_left)
 
         # fill objective deck
-        if current_data.game_decks.objective_deck.current:
+        if self.current_data.game_decks.objective_deck.current:
             self.game.objective_deck.deal(
-                current_data.game_decks.objective_deck.current
+                self.current_data.game_decks.objective_deck.current
                     )
-        m = current_data.game_decks.mission_card
+        m = self.current_data.game_decks.mission_card
 
         # fill mission card
         self.game.mission_card = m if m else None

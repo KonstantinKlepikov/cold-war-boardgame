@@ -9,13 +9,14 @@ class TestCRUDUser:
 
     def test_get_user_by_login_from_db(
         self,
-        connection: Generator,
+        user: crud_user.CRUDUser
+        # connection: Generator,
             ) -> None:
         """Test get user from db by login
         """
-        crud = crud_user.CRUDUser(connection['User'])
-        user = crud.get_by_login(login=settings.user0_login)
-        assert user.login == settings.user0_login, 'wrong user'
+        # crud = crud_user.CRUDUser(connection['User'])
+        u = user.get_by_login(login=settings.user0_login)
+        assert u.login == settings.user0_login, 'wrong user'
 
-        user = crud.get_by_login(login='notexisted')
-        assert user is None, 'existed user'
+        u = user.get_by_login(login='notexisted')
+        assert u is None, 'existed user'

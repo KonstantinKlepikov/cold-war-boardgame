@@ -86,15 +86,17 @@ class TestGameProcessor:
             ) -> None:
         """Test init new deck init deck in Game objects
         """
-        game_proc = game_proc.init_game_data(
-            game.get_current_game_data(settings.user0_login)
-                )
-        # game
+        game_proc = game_proc.init_game_data()
         assert isinstance(game_proc, game_logic.GameProcessor), 'wrong proc'
+
+        # players
         assert game_proc.game.player, 'player not inited'
+        assert game_proc.game.player.faction is None, 'wrong faction'
         assert len(game_proc.game.player.other) > 0, 'empty player other'
         assert game_proc.game.bot, 'bot not inited'
+        assert game_proc.game.bot.faction is None, 'wrong faction'
         assert len(game_proc.game.bot.other) > 0, 'empty bot other'
+
 
         # steps
         assert game_proc.game.game_turn == 0, 'wrong turn'
@@ -103,34 +105,17 @@ class TestGameProcessor:
         assert len(game_proc.game.game_steps.current) == 6, 'wrong current'
 
         # objectives
-        assert len(game_proc.game.objective_deck) == 24, 'wrong objective args len' # TODO: change in bgameb
+        assert len(game_proc.game.objective_deck) == 24, 'wrong objective args len' # TODO: change len definition in bgameb
         assert game_proc.game.mission_card is None, 'wrong mission card'
         assert not game_proc.game.objective_deck.current, 'nonempty objective current'
         with pytest.raises(AttributeError):
             game_proc.game.objective_deck.other._id
 
         # groups
-        assert len(game_proc.game.group_deck) == 27, 'wrong group args len' # TODO: change in bgameb
+        assert len(game_proc.game.group_deck) == 27, 'wrong group args len' # TODO: change len definition in bgameb
         assert not game_proc.game.group_deck.current, 'group current'
         with pytest.raises(AttributeError):
             game_proc.game.group_deck.other._id
-
-    # def test_feel_the_decks_if_current_exist(
-    #     self,
-    #     game: crud_game.CRUDGame,
-    #     game_proc: game_logic.GameProcessor,
-    #         ) -> None:
-    #     """Test deal_cards_from_db()
-    #     """
-    #     obj_in = game_logic.make_game_data(settings.user0_login)
-    #     game.create_new_game(obj_in)
-    #     game.deal_and_shuffle_decks(settings.user0_login)
-
-    #     game_proc.deal_cards_from_db(
-    #         game.get_current_game_data(settings.user0_login)
-    #             )
-    #     assert len(game_proc.game.objective_deck.current) == 22, \
-    #         'wring proc current obj deck'
 
 
 class TestCheckPhaseConditions:

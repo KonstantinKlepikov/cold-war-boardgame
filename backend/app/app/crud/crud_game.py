@@ -3,7 +3,7 @@ from typing import Optional
 from fastapi.encoders import jsonable_encoder
 from fastapi import HTTPException
 from app.core import game_logic
-from app.crud import crud_base,crud_card
+from app.crud import crud_base, crud_card, crud_game
 from app.models import model_game
 from app.schemas import schema_game
 from app.constructs import Priority, Faction
@@ -32,18 +32,22 @@ class CRUDGame(
 
     def get_game_processor(
         self,
-        current_data: model_game.CurrentGameData,
+        login: str,
             ) -> game_logic.GameProcessor:
         """Get game processor
 
         Args:
             current_data (CurrentGameData): bd data object
+            login (str): user login
 
         Returns:
             game_logic.GameProcessor: processor
         """
-        game_proc = game_logic.GameProcessor(crud_card.cards.get_all_cards())
-        return game_proc.init_game_data(current_data)
+        game_proc = game_logic.GameProcessor(
+            crud_card.cards.get_all_cards(),
+            crud_game.game.get_current_game_data(login)
+                )
+        return game_proc.init_game_data()
 
     def create_new_game(self, obj_in: schema_game.CurrentGameData) -> None:
         """Create new game
@@ -54,20 +58,16 @@ class CRUDGame(
 
     def deal_and_shuffle_decks(
         self,
-        current_data: model_game.CurrentGameData,
         game_proc: game_logic.GameProcessor,
             ) -> game_logic.GameProcessor:
         """Shuffle objective and group decks
 
         Args:
-            current_data (model_game.CurrentGameData)
             game_proc (game_logic.GameProcessor)
 
         Returns:
             game_logic.GameProcessor
         """
-        print(current_data.game_decks.group_deck.deck_len)
-        print(current_data.game_decks.objective_deck.current)
         game_proc.game.group_deck.deal()
         game_proc.game.group_deck.shuffle()
 
@@ -75,121 +75,150 @@ class CRUDGame(
         game_proc.game.objective_deck.shuffle()
 
         obj_current = game_proc.game.objective_deck.get_current_names()
-        current_data.game_decks.objective_deck.current = obj_current
-        current_data.game_decks.objective_deck.deck_len = len(obj_current)
+        game_proc.current_data.game_decks.objective_deck.current = obj_current
+        game_proc.current_data.game_decks.objective_deck.deck_len = len(obj_current)
 
         group_current = game_proc.game.group_deck.get_current_names()
-        current_data.game_decks.group_deck.current = group_current
-        current_data.game_decks.group_deck.deck_len = len(group_current)
+        game_proc.current_data.game_decks.group_deck.current = group_current
+        game_proc.current_data.game_decks.group_deck.deck_len = len(group_current)
 
-        current_data.save()
-
-        print("-"*20)
-        print(current_data.game_decks.group_deck.deck_len)
-        print(current_data.game_decks.objective_deck.current)
+        game_proc.current_data.save()
 
         return game_proc
 
-    def set_faction(self, login: str, faction: Faction) -> None:
+    def set_faction(
+        self,
+        faction: Faction,
+        game_proc: game_logic.GameProcessor,
+            ) -> game_logic.GameProcessor:
         """Set player and opponent faction
 
         Args:
-            login (str): player login
             faction (Literal['kgb', 'cia']): player faction
-        """
-        current_data = self.get_current_game_data(login)
-
-        if current_data.players[0].faction is None:
-            current_data.players[0].faction = faction.value
-            if faction == Faction.CIA:
-                current_data.players[1].faction = 'kgb'
-            else:
-                current_data.players[1].faction = 'cia'
-            current_data.save()
-
-    def set_priority(
-        self,
-        login: str,
-        priority: Priority
-            ) -> None:
-        """Set priority for player
-
-        Args:
-            login (str): player login
-            priority (Priority): priority.
-        """
-        current_data = self.get_current_game_data(login)
-
-        if current_data.players[0].has_priority is None:
-            val = None
-            if priority.value == Priority.TRUE:
-                val = True
-            elif priority.value == Priority.FALSE:
-                val = False
-            elif priority.value == Priority.RANDOM:
-                val = random.choice([True, False])
-                # TODO: use bgameb here
-
-            current_data.players[0].has_priority = val
-            current_data.players[1].has_priority = not val
-            current_data.save()
-
-    def set_next_turn(
-        self,
-        login: str,
-            ) -> None:
-        """Set next turn
-
-        Args:
-            login (str): player login
-        """
-        current_data = self.get_current_game_data(login)
-        if current_data.game_steps.is_game_end:
-            raise HTTPException(
-                status_code=409,
-                detail="Something can't be changed, because game is end"
-                    )
-
-        current_data.game_steps.game_turn += 1
-        current_data.game_steps.turn_phase = settings.phases[0]
-        current_data.save()
-
-    def set_next_phase(
-        self,
-        current_data: model_game.CurrentGameData,
-        game_proc: game_logic.GameProcessor,
-            ) -> game_logic.GameProcessor:
-        """Set next phase
-
-        Args:
-            current_data (model_game.CurrentGameData)
             game_proc (game_logic.GameProcessor)
 
         Returns:
             game_logic.GameProcessor
         """
-        phase = current_data.game_steps.turn_phase
+        if game_proc.current_data.players[0].faction:
+            raise HTTPException(
+                status_code=409,
+                detail="Factions yet setted for this game"
+                    )
+
+        game_proc.game.player.faction = faction.value
+        game_proc.game.bot.faction = 'kgb' if faction == Faction.CIA else 'cia'
+
+        game_proc.current_data.players[0].faction = faction.value
+        game_proc.current_data.players[1].faction = game_proc.game.bot.faction
+
+        game_proc.current_data.save()
+
+        return game_proc
+
+    def set_priority(
+        self,
+        priority: Priority,
+        game_proc: game_logic.GameProcessor,
+            ) -> game_logic.GameProcessor:
+        """Set priority for player
+
+        Args:
+            priority (Priority): priority.
+            game_proc (game_logic.GameProcessor)
+
+        Returns:
+            game_logic.GameProcessor
+        """
+        if game_proc.current_data.players[0].has_priority \
+                or game_proc.current_data.players[1].has_priority:
+            raise HTTPException(
+                status_code=409,
+                detail="Priority yet setted for this game"
+                    )
+
+        if priority == Priority.TRUE:
+            val = True
+        elif priority == Priority.FALSE:
+            val = False
+        elif priority == Priority.RANDOM:
+            val = random.choice([True, False])
+
+        game_proc.game.player.has_priority = val
+        game_proc.game.bot.has_priority = not val
+
+        game_proc.current_data.players[0].has_priority = val
+        game_proc.current_data.players[1].has_priority = not val
+
+        game_proc.current_data.save()
+
+        return game_proc
+
+    def set_next_turn(
+        self,
+        game_proc: game_logic.GameProcessor,
+            ) -> game_logic.GameProcessor:
+        """Set next turn
+
+        Args:
+            game_proc (game_logic.GameProcessor)
+
+        Returns:
+            game_logic.GameProcessor
+        """
+        if game_proc.current_data.game_steps.is_game_end:
+            raise HTTPException(
+                status_code=409,
+                detail="Something can't be changed, because game is end"
+                    )
+
+        game_proc.game.game_turn += 1
+
+        game_proc.current_data.game_steps.game_turn += 1
+        game_proc.current_data.game_steps.turn_phase = settings.phases[0]
+        game_proc.current_data.save()
+
+        return game_proc
+
+    def set_next_phase(
+        self,
+        game_proc: game_logic.GameProcessor,
+            ) -> game_logic.GameProcessor:
+        """Set next phase
+
+        Args:
+            game_proc (game_logic.GameProcessor)
+
+        Returns:
+            game_logic.GameProcessor
+        """
+        if game_proc.current_data.game_steps.is_game_end:
+            raise HTTPException(
+                status_code=409,
+                detail="Something can't be changed, because game is end"
+                    )
+
+        phase = game_proc.current_data.game_steps.turn_phase
         if not phase == settings.phases[5] \
-                and not current_data.game_steps.is_game_end == True:
+                and not game_proc.current_data.game_steps.is_game_end == True:
 
             phase = game_proc.game.game_steps.pull().id
 
-            current_data.game_steps.turn_phase = phase
-            current_data.game_steps.turn_phases_current = game_proc.game.game_steps.get_current_names()
+            game_proc.current_data.game_steps.turn_phase = phase
+            game_proc.current_data.game_steps.turn_phases_current = \
+                game_proc.game.game_steps.get_current_names()
             game_proc.game.turn_phase = phase
-            current_data.save()
+            game_proc.current_data.save()
 
         return game_proc
 
     def set_mission_card(
         self,
-        current_data: model_game.CurrentGameData,
         game_proc: game_logic.GameProcessor,
             ) -> game_logic.GameProcessor:
         """Set mission card on a turn
 
         Args:
-            current_data (model_game.CurrentGameData)
             game_proc (game_logic.GameProcessor)
 
         Returns:
@@ -204,34 +233,32 @@ class CRUDGame(
                     )
 
         current_names = game_proc.game.objective_deck.get_current_names()
-        current_data.game_decks.objective_deck.current = current_names
-        current_data.game_decks.objective_deck.deck_len = len(current_names)
-        current_data.game_decks.mission_card = game_proc.game.mission_card
 
-        current_data.save()
+        game_proc.current_data.game_decks.objective_deck.current = current_names
+        game_proc.current_data.game_decks.objective_deck.deck_len = len(current_names)
+        game_proc.current_data.game_decks.mission_card = game_proc.game.mission_card
+        game_proc.current_data.save()
 
         return game_proc
 
     def set_phase_conditions_after_next(
         self,
-        current_data: model_game.CurrentGameData,
         game_proc: game_logic.GameProcessor,
-            ) -> None:
+            ) -> game_logic.GameProcessor:
         """Set som phase conditions after push phase
 
         Args:
-            current_data (model_game.CurrentGameData)
             game_proc (game_logic.GameProcessor)
 
         Returns:
             game_logic.GameProcessor
         """
-        phase = current_data.game_steps.turn_phase
+        phase = game_proc.current_data.game_steps.turn_phase
 
         # set briefing states after next
         if phase == settings.phases[0]:
 
-            self.set_mission_card(current_data, game_proc)
+            game_proc = self.set_mission_card(game_proc)
 
         # planning
         elif phase == settings.phases[1]:
@@ -252,6 +279,8 @@ class CRUDGame(
         # detente
         elif phase == settings.phases[5]:
             pass
+
+        return game_proc
 
 
 game = CRUDGame(model_game.CurrentGameData)

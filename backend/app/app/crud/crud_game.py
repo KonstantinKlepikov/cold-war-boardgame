@@ -74,11 +74,11 @@ class CRUDGame(
         game_proc.game.objective_deck.deal()
         game_proc.game.objective_deck.shuffle()
 
-        obj_current = game_proc.game.objective_deck.get_current_names()
+        obj_current = game_proc.game.objective_deck.get_current_ids()
         game_proc.current_data.game_decks.objective_deck.current = obj_current
         game_proc.current_data.game_decks.objective_deck.deck_len = len(obj_current)
 
-        group_current = game_proc.game.group_deck.get_current_names()
+        group_current = game_proc.game.group_deck.get_current_ids()
         game_proc.current_data.game_decks.group_deck.current = group_current
         game_proc.current_data.game_decks.group_deck.deck_len = len(group_current)
 
@@ -206,7 +206,7 @@ class CRUDGame(
 
             game_proc.current_data.game_steps.turn_phase = phase
             game_proc.current_data.game_steps.turn_phases_current = \
-                game_proc.game.game_steps.get_current_names()
+                game_proc.game.game_steps.get_current_ids()
             game_proc.game.turn_phase = phase
             game_proc.current_data.save()
 
@@ -225,14 +225,14 @@ class CRUDGame(
             game_logic.GameProcessor
         """
         try:
-            game_proc.game.mission_card = game_proc.game.objective_deck.current.pop().id
+            game_proc.game.mission_card = game_proc.game.objective_deck.pop().id
         except IndexError:
             raise HTTPException(
                 status_code=409,
                 detail="Objective deck is empty."
                     )
 
-        current_names = game_proc.game.objective_deck.get_current_names()
+        current_names = game_proc.game.objective_deck.get_current_ids()
 
         game_proc.current_data.game_decks.objective_deck.current = current_names
         game_proc.current_data.game_decks.objective_deck.deck_len = len(current_names)

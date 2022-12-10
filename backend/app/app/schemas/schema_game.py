@@ -47,7 +47,7 @@ class PlayerGroupOrObjectivreCard(BaseModel):
     """
     is_in_deck: bool = True
     is_in_play: bool = False
-    is_active: bool = True
+    is_active: Optional[bool]
     position: Optional[NonNegativeInt]
     name: str
 
@@ -56,7 +56,7 @@ class PlayerGroupOrObjectivreCard(BaseModel):
             "example": {
                 "is_in_deck": True,
                 "is_in_play": False,
-                "is_active": True,
+                "is_active": None,
                 "position": 0,
                 "name": "Master Spy",
                 }

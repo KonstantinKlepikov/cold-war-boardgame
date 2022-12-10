@@ -173,9 +173,13 @@ class CRUDGame(
                     )
 
         game_proc.game.game_turn += 1
+        game_proc.game.game_steps.deal()
+        # game_proc.game.game_steps.pull()
+        game_proc.game.game_steps.current_step = None # NOTE: change in bgameb
 
         game_proc.current_data.game_steps.game_turn += 1
-        game_proc.current_data.game_steps.turn_phase = settings.phases[0]
+        # game_proc.current_data.game_steps.turn_phase = settings.phases[0]
+        game_proc.current_data.game_steps.turn_phase = None
         game_proc.current_data.save()
 
         return game_proc
@@ -192,22 +196,27 @@ class CRUDGame(
         Returns:
             game_logic.GameProcessor
         """
-        if game_proc.current_data.game_steps.is_game_end:
+        if game_proc.game.is_game_end == True:
             raise HTTPException(
                 status_code=409,
                 detail="Something can't be changed, because game is end"
                     )
 
-        phase = game_proc.current_data.game_steps.turn_phase
-        if not phase == settings.phases[5] \
-                and not game_proc.current_data.game_steps.is_game_end == True:
+        # phase = game_proc.current_data.game_steps.turn_phase
+        # phase = game_proc.game.game_steps.current_step
 
-            phase = game_proc.game.game_steps.pull().id
+        if not game_proc.game.game_steps.current_step \
+                or game_proc.game.game_steps.current_step.id != settings.phases[5]:
+                # and not game_proc.current_data.game_steps.is_game_end == True:
 
-            game_proc.current_data.game_steps.turn_phase = phase
+            # phase = game_proc.game.game_steps.pull().id
+            game_proc.game.game_steps.pull()
+
+            # game_proc.current_data.game_steps.turn_phase = phase
+            game_proc.current_data.game_steps.turn_phase = game_proc.game.game_steps.current_step.id
             game_proc.current_data.game_steps.turn_phases_current = \
                 game_proc.game.game_steps.get_current_ids()
-            game_proc.game.turn_phase = phase
+            # game_proc.game.turn_phase = phase
             game_proc.current_data.save()
 
         return game_proc

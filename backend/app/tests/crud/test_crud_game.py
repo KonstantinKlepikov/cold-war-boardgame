@@ -172,7 +172,7 @@ class TestCRUDGameNext:
     """Test CRUDGame next_turn and next_phase
     """
 
-    def test_set_next_turn_hange_the_turn_number(
+    def test_set_next_turn_change_the_turn_number(
         self,
         game: crud_game.CRUDGame,
         inited_game_proc: game_logic.GameProcessor,
@@ -212,7 +212,7 @@ class TestCRUDGameNext:
         game_proc = game.set_next_phase(inited_game_proc)
 
         assert isinstance(game_proc, game_logic.GameProcessor), 'wrong game_proce'
-        assert game_proc.game.turn_phase == settings.phases[0], \
+        assert game_proc.game.game_steps.current_step.id == settings.phases[0], \
             'wrong proc phase'
         assert game_proc.current_data.game_steps.turn_phase == settings.phases[0], \
             'wrong proc phase'
@@ -220,6 +220,7 @@ class TestCRUDGameNext:
         data = connection['CurrentGameData'].objects().first()
         assert data.game_steps.turn_phase == settings.phases[0], 'wrong phase'
 
+    @pytest.mark.skip('Wait for bgameb changes')
     def test_set_next_phase_cant_change_detente(
         self,
         game: crud_game.CRUDGame,
@@ -248,7 +249,8 @@ class TestCRUDGameNext:
             ) -> None:
         """Test set_next_phase() raises exception when game end
         """
-        inited_game_proc.current_data.game_steps.is_game_end = True
+        # inited_game_proc.current_data.game_steps.is_game_end = True
+        inited_game_proc.game.is_game_end = True
 
         with pytest.raises(HTTPException):
             game_proc = game.set_next_phase(inited_game_proc)

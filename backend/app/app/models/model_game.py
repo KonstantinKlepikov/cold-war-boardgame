@@ -41,7 +41,7 @@ class PlayerGroupOrObjectivreCard(EmbeddedDocument):
     """
     is_in_deck = BooleanField(default=True)
     is_in_play = BooleanField(default=False)
-    is_active = BooleanField(default=True)
+    is_active = BooleanField(null=True)
     pos_in_deck = IntField(min_value=0, null=True)
     name = StringField()
 

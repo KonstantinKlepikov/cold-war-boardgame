@@ -1,9 +1,11 @@
-import bgameb
-from typing import Dict, List, Union, Optional
+from typing import Dict, List, Union, Optional, Any
 from fastapi import HTTPException
 from app.schemas import schema_game
 from app.models import model_game
 from app.config import settings
+from bgameb import Game, Player, Deck, Card, Steps, Step, Dice
+from dataclasses import dataclass, field
+from dataclasses_json import dataclass_json, Undefined
 
 
 def make_game_data(login: str) -> schema_game.CurrentGameData:
@@ -100,7 +102,59 @@ def chek_phase_conditions_before_next(
                 )
 
 
-class GameProcessor:
+@dataclass_json(undefined=Undefined.INCLUDE)
+@dataclass(repr=False)
+class MyGame(Game):
+    mission_card: Optional[str] = None
+    game_turn: int = 0
+    turn_phase: Optional[str] = None
+    is_game_end: bool = False
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+
+@dataclass_json(undefined=Undefined.INCLUDE)
+@dataclass(repr=False)
+class MyPlayer(Player):
+    has_priority: Optional[bool] = None
+    is_bot: Optional[bool] = None
+    score: int = 0
+    faction: Optional[str] = None
+    player_cards: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
+    login: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+
+@dataclass_json(undefined=Undefined.INCLUDE)
+@dataclass(repr=False)
+class GroupCard(Card):
+
+    name: Optional[str] = None
+    faction: Optional[str] = None
+    influence: Optional[int] = None
+    power: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+
+@dataclass_json(undefined=Undefined.INCLUDE)
+@dataclass(repr=False)
+class ObjectiveCard(Card):
+
+    name: Optional[str] = None
+    faction: Optional[str] = None
+    influence: Optional[int] = None
+    power: Optional[str] = None
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+
+class GameProcessor_:
     """Create the game object to manipulation of game tools
 
     Args:
@@ -113,7 +167,7 @@ class GameProcessor:
         cards: Dict[str, List[Dict[str, Union[str, int]]]],
         current_data: Optional[model_game.CurrentGameData]
             ) -> None:
-        self.game = bgameb.Game('Cold War Game')
+        self.G: MyGame = MyGame('Cold War Game')
         self.cards = cards
         self._check_if_current(current_data)
 
@@ -129,6 +183,104 @@ class GameProcessor:
                         )
         else:
             self.current_data = current_data
+
+    def fill(self) -> 'GameProcessor_':
+        """Init new objective deck
+
+        Returns:
+            GameProcessor: initet game processor
+        """
+
+        # init ptayers
+        for p in self.current_data.players:
+            data: dict = p.to_mongo().to_dict()
+            name = 'player' if data['is_bot'] == False else 'bot'
+            player = MyPlayer(name, **data)
+            self.G.add(player)
+
+        # init group deck
+        self.G.add(Deck('groups'))
+        for c in self.cards['group_cards']:
+            card = GroupCard(
+                c['name'],
+                **c
+                )
+            self.G.t.groups.add(card)
+
+        # init objective deck
+        self.G.add(Deck('objectives'))
+        for c in self.cards['objective_cards']:
+            card = ObjectiveCard(
+                c['name'],
+                **c
+                )
+            self.G.t.objectives.add(card)
+
+        # merge objective current
+        if self.current_data.game_decks.objective_deck.current:
+            self.G.t.objectives.deal(
+                self.current_data.game_decks.objective_deck.current
+                    )
+        m = self.current_data.game_decks.mission_card
+
+        # merge current mission card
+        self.G.mission_card = m if m else None
+
+        # init game steps
+        self.G.add(Steps('steps'))
+        for num, val in enumerate(settings.phases):
+            step = Step(val, priority=num)
+            self.G.t.steps.add(step)
+
+        # merge steps current
+        if self.current_data.game_steps.turn_phases_left:
+            self.G.t.steps.deal(self.current_data.game_steps.turn_phases_left)
+
+        # init coin for random choice
+        self.G.add(Dice('coin'))
+
+        return self
+
+    def flush(self) -> None:
+        """Save the game data to db"""
+
+
+
+
+
+import bgameb
+
+
+class GameProcessor:
+    """Create the game object to manipulation of game tools
+
+    Args:
+        cards (Dict[str, List[Dict[str, Union[str, int]]]])
+        current_data (Optional[model_game.CurrentGameData])
+    """
+
+    def __init__(
+        self,
+        cards: Dict[str, List[Dict[str, Union[str, int]]]],
+        current_data: Optional[model_game.CurrentGameData]
+            ) -> None:
+        self.game: bgameb.Game = bgameb.Game('Cold War Game')
+        self.cards = cards
+        self._check_if_current(current_data)
+
+    def _check_if_current(
+        self,
+        current_data: Optional[model_game.CurrentGameData]
+            ):
+        if not current_data:
+            raise HTTPException(
+                status_code=404,
+                detail="Cant find current game data in db. For start "
+                    "new game use /game/create endpoint",
+                        )
+        else:
+            self.current_data = current_data
+
 
     def init_game_data(self):
         """Init new objective deck

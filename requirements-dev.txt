@@ -4,7 +4,7 @@ asttokens==2.0.8
 attrs==22.1.0
 autoflake==1.4
 backcall==0.2.0
-bgameb==0.0.28
+bgameb==0.0.32
 black==21.12b0
 blinker==1.5
 cachetools==5.2.0

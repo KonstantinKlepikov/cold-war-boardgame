@@ -62,67 +62,70 @@ class TestGameProcessor:
     """Test GameProcessor class
     """
 
-    def test_create_game(self, game_proc: game_logic.GameProcessor) -> None:
+    def test_create_game(self, game_proc: game_logic.GameProcessor_) -> None:
         """Test game is created
         """
-        assert isinstance(game_proc.game, bgameb.Game), 'wrong game'
+        assert isinstance(game_proc.G, bgameb.Game), 'wrong game'
         assert isinstance(game_proc.cards, dict), 'not a cards'
 
-    def _check_if_current_raise_exception(
+    def test_check_if_current_raise_exception(
         self,
-        game_proc: game_logic.GameProcessor
+        game_proc: game_logic.GameProcessor_
             ) -> None:
         """Exception is raised if player not starts any games
         """
         with pytest.raises(
             HTTPException,
             ):
-            game_proc._check_if_current()
+            game_proc._check_if_current(None)
 
-    def test_init_game_data(
+    def test_fill_data(
         self,
-        game: crud_game.CRUDGame,
-        game_proc: game_logic.GameProcessor
+        game_proc: game_logic.GameProcessor_
             ) -> None:
         """Test init new deck init deck in Game objects
         """
-        game_proc = game_proc.init_game_data()
-        assert isinstance(game_proc, game_logic.GameProcessor), 'wrong proc'
+        game_proc = game_proc.fill()
+        assert isinstance(game_proc, game_logic.GameProcessor_), 'wrong proc'
 
         # players
-        assert game_proc.game.player, 'player not inited'
-        assert game_proc.game.player.has_priority is None, 'wrong turn priority'
-        assert game_proc.game.player.faction is None, 'wrong faction'
-        assert game_proc.game.player.score == 0, 'wrong score'
-        assert len(game_proc.game.player.other) > 0, 'empty player other'
-        assert game_proc.game.bot, 'bot not inited'
-        assert game_proc.game.bot.has_priority is None, 'wrong turn priority'
-        assert game_proc.game.bot.faction is None, 'wrong faction'
-        assert game_proc.game.bot.score == 0, 'wrong score'
-        assert len(game_proc.game.bot.other) > 0, 'empty bot other'
+        assert game_proc.G.p.player, 'player not inited'
+        assert game_proc.G.p.player.login == 'DonaldTrump', 'wrong login'
+        assert game_proc.G.p.player.is_bot == False, 'wrong bot status'
+        assert game_proc.G.p.player.has_priority is None, 'wrong turn priority'
+        assert game_proc.G.p.player.faction is None, 'wrong faction'
+        assert game_proc.G.p.player.score == 0, 'wrong score'
+        assert game_proc.G.p.player.login == 'DonaldTrump', 'wrong login'
+        assert len(game_proc.G.p.player.other) == 0, 'empty player other'
 
-        # steps
-        assert game_proc.game.game_turn == 0, 'wrong turn'
-        assert game_proc.game.turn_phase is None, 'wrong phase'
-        assert game_proc.game.is_game_end == False, 'game is end'
-        assert len(game_proc.game.game_steps.current) == 6, 'wrong current'
-
-        # coin
-        assert isinstance(game_proc.game.coin, bgameb.Dice), 'wrong coin'
-        assert game_proc.game.coin.sides == 2, 'wrong sides'
+        assert game_proc.G.p.bot, 'bot not inited'
+        assert game_proc.G.p.bot.is_bot == True, 'wrong bot status'
+        assert game_proc.G.p.bot.has_priority is None, 'wrong turn priority'
+        assert game_proc.G.p.bot.faction is None, 'wrong faction'
+        assert game_proc.G.p.bot.score == 0, 'wrong score'
+        assert game_proc.G.p.bot.login is None, 'wrong login'
+        assert len(game_proc.G.p.bot.other) == 0, 'empty bot other'
 
         # objectives
-        assert len(game_proc.game.objective_deck) == 24, 'wrong objective args len' # TODO: change len definition in bgameb
-        assert game_proc.game.mission_card is None, 'wrong mission card'
-        assert not game_proc.game.objective_deck.current, 'nonempty objective current'
-        with pytest.raises(AttributeError):
-            game_proc.game.objective_deck.other._id
+        assert len(game_proc.G.t.objectives.i) == 21, 'wrong objective len'
+        assert game_proc.G.mission_card is None, 'wrong mission card'
+        assert not game_proc.G.t.objectives.current, 'nonempty objective current'
 
         # groups
-        assert len(game_proc.game.group_deck) == 27, 'wrong group args len' # TODO: change len definition in bgameb
-        assert not game_proc.game.group_deck.current, 'group current'
-        with pytest.raises(AttributeError):
-            game_proc.game.group_deck.other._id
+        assert len(game_proc.G.t.groups.i) == 24, 'wrong group len'
+        assert not game_proc.G.t.groups.current, 'group current'
+
+        # steps
+        assert game_proc.G.game_turn == 0, 'wrong turn'
+        assert game_proc.G.turn_phase is None, 'wrong phase'
+        assert game_proc.G.is_game_end == False, 'game is end'
+        assert len(game_proc.G.t.steps.i) == 6, 'wrong len'
+        assert len(game_proc.G.t.steps.current) == 6, 'wrong current'
+        assert not game_proc.G.t.steps.last, 'wrong last'
+
+        # coin
+        assert isinstance(game_proc.G.i.coin, bgameb.Dice), 'wrong coin'
+        assert game_proc.G.i.coin.sides == 2, 'wrong sides'
 
 
 class TestCheckPhaseConditions:

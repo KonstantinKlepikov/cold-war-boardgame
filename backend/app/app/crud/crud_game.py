@@ -1,13 +1,9 @@
-# import random
 from typing import Optional
 from fastapi.encoders import jsonable_encoder
-from fastapi import HTTPException
 from app.core import game_logic
 from app.crud import crud_base, crud_card, crud_game
 from app.models import model_game
 from app.schemas import schema_game
-# from app.constructs import Priority, Faction
-from app.config import settings
 
 
 class CRUDGame(

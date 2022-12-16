@@ -1,8 +1,10 @@
+import random
 from typing import Dict, List, Union, Optional, Any
 from fastapi import HTTPException
 from app.schemas import schema_game
 from app.models import model_game
 from app.config import settings
+from app.constructs import Priority, Faction
 from bgameb import Game, Player, Deck, Card, Steps, Step, Dice
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, Undefined
@@ -41,66 +43,6 @@ def make_game_data(login: str) -> schema_game.CurrentGameData:
                 }
 
     return schema_game.CurrentGameData(**new_game)
-
-
-def chek_phase_conditions_before_next(
-    current_data: Optional[model_game.CurrentGameData],
-        ) -> None:
-    """Check game conition before push to next phase
-    and raise exception if any check fails
-
-    Args:
-        current_data (str): current game data for check
-    """
-    if current_data.game_steps.is_game_end:
-        raise HTTPException(
-            status_code=409,
-            detail="Something can't be changed, because game is end."
-                )
-
-    phase = current_data.game_steps.turn_phase
-
-    # briefing
-    if phase == settings.phases[0]:
-
-        # players has priority
-        if not current_data.players[0].has_priority \
-                and not current_data.players[1].has_priority:
-            raise HTTPException(
-                status_code=409,
-                detail="No one player has priority. Cant push to next phase."
-                    )
-
-        # objective card defined
-        if not current_data.game_decks.mission_card:
-            raise HTTPException(
-                status_code=409,
-                detail="Mission card undefined. Cant push to next phase."
-                    )
-
-    # planning
-    elif phase == settings.phases[1]:
-        pass
-
-    # influence_struggle
-    elif phase == settings.phases[2]:
-        pass
-
-    # ceasefire
-    elif phase == settings.phases[3]:
-        pass
-
-    # debriefing
-    elif phase == settings.phases[4]:
-        pass
-
-    # detente
-    elif phase == settings.phases[5]:
-        raise HTTPException(
-            status_code=409,
-            detail="This phase is last in a turn. Change turn number "
-                    "before get next phase"
-                )
 
 
 @dataclass_json(undefined=Undefined.INCLUDE)
@@ -256,9 +198,10 @@ class GameProcessor:
                 self.current_data.game_steps.turn_phases_left
                     )
         if self.current_data.game_steps.turn_phase:
-            self.G.turn_phase = self.G.t.steps.i.by_id(
+            self.G.t.steps.last = self.G.t.steps.i.by_id(
                 self.current_data.game_steps.turn_phase
                     )
+            self.G.turn_phase = self.G.t.steps.last.id
 
         self.G.game_turn = self.current_data.game_steps.game_turn
         self.G.is_game_end = self.current_data.game_steps.is_game_end
@@ -279,8 +222,7 @@ class GameProcessor:
 
         # flush game steps
         self.current_data.game_steps.game_turn = self.G.game_turn
-        if self.G.t.steps.last:
-            self.current_data.game_steps.turn_phase = self.G.t.steps.last.id
+        self.current_data.game_steps.turn_phase = self.G.t.steps.last.id if self.G.t.steps.last else None
         self.current_data.game_steps.is_game_end = self.G.is_game_end
         self.current_data.game_steps.turn_phases_left = self.G.t.steps.current_ids()
 
@@ -299,111 +241,222 @@ class GameProcessor:
 
         return self.current_data
 
+    def deal_and_shuffle_decks(self) -> 'GameProcessor':
+        """Shuffle objective and group decks
 
+        Returns:
+            GameProcessor
+        """
+        self.G.t.groups.deal().shuffle()
+        self.G.t.objectives.deal().shuffle()
 
+        return self
 
+    def set_faction(self, faction: Faction) -> 'GameProcessor':
+        """Set player and opponent faction
 
-# import bgameb
+        Args:
+            faction (Literal['kgb', 'cia']): player faction
 
+        Returns:
+            GameProcessor
+        """
 
-# class GameProcessor:
-#     """Create the game object to manipulation of game tools
+        if self.G.p.player.faction:
+            raise HTTPException(
+                status_code=409,
+                detail="Factions is setted yet for this game"
+                    )
 
-#     Args:
-#         cards (Dict[str, List[Dict[str, Union[str, int]]]])
-#         current_data (Optional[model_game.CurrentGameData])
-#     """
+        self.G.p.player.faction = faction.value
+        self.G.p.bot.faction = 'kgb' if faction == Faction.CIA else 'cia'
 
-#     def __init__(
-#         self,
-#         cards: Dict[str, List[Dict[str, Union[str, int]]]],
-#         current_data: Optional[model_game.CurrentGameData]
-#             ) -> None:
-#         self.game: bgameb.Game = bgameb.Game('Cold War Game')
-#         self.cards = cards
-#         self._check_if_current(current_data)
+        return self
 
-#     def _check_if_current(
-#         self,
-#         current_data: Optional[model_game.CurrentGameData]
-#             ):
-#         if not current_data:
-#             raise HTTPException(
-#                 status_code=404,
-#                 detail="Cant find current game data in db. For start "
-#                     "new game use /game/create endpoint",
-#                         )
-#         else:
-#             self.current_data = current_data
+    def set_priority(self, priority: Priority) -> 'GameProcessor':
+        """Set priority for player
 
+        Args:
+            priority (Priority): priority.
 
-#     def init_game_data(self):
-#         """Init new objective deck
+        Returns:
+            game_logic.GameProcessor
+        """
+        if self.G.p.player.has_priority \
+                or self.G.p.bot.has_priority:
+            raise HTTPException(
+                status_code=409,
+                detail="Priority yet setted for this game"
+                    )
 
-#         Returns:
-#             GameProcessor: initet game processor
-#         """
+        if priority == Priority.TRUE:
+            val = True
+        elif priority == Priority.FALSE:
+            val = False
+        elif priority == Priority.RANDOM:
+            val = random.choice([True, False]) # TODO: move to processor
 
-#         # init ptayers
-#         for p in self.current_data.players:
-#             data: dict = p.to_mongo().to_dict()
-#             name = 'bot' if data['is_bot'] == True else 'player'
-#             player = bgameb.Player(name, **data)
-#             self.game.add(player)
+        self.G.p.player.has_priority = val
+        self.G.p.bot.has_priority = not val
 
-#         # init group deck
-#         self.game.add(bgameb.Deck('Group Deck'))
-#         for c in self.cards['group_cards']:
-#             c.pop('_id', None)
-#             card = bgameb.Card(
-#                 c['name'],
-#                 **c
-#                 )
-#             self.game.group_deck.add(card)
+        return self
 
-#         # init objective deck
-#         self.game.add(bgameb.Deck('Objective Deck'))
-#         for c in self.cards['objective_cards']:
-#             c.pop('_id', None)
-#             card = bgameb.Card(
-#                 c['name'],
-#                 **c
-#                 )
-#             self.game.objective_deck.add(card)
+    def set_next_turn(self) -> 'GameProcessor':
+        """Set next turn
 
-#         # init game steps
-#         self.game.add(bgameb.Steps('game_steps'))
-#         for num, val in enumerate(settings.phases):
-#             step = bgameb.Step(val, priority=num)
-#             self.game.game_steps.add(step)
+        Returns:
+            GameProcessor
+        """
+        if self.G.is_game_end:
+            raise HTTPException(
+                status_code=409,
+                detail="Something can't be changed, because game is end"
+                    )
 
-#         # init coin for random choice
-#         self.game.add(bgameb.Dice('coin'))
+        self.G.game_turn += 1
+        self.G.t.steps.deal()
+        self.G.t.steps.last = None
 
-#         #  fill players
-#         self.game.player.faction = self.current_data.players[0].faction
-#         self.game.bot.faction = self.current_data.players[1].faction
-#         self.game.player.score = self.current_data.players[0].score
-#         self.game.bot.score = self.current_data.players[1].score
+        return self
 
-#         # fill game steps
-#         self.game.game_turn = self.current_data.game_steps.game_turn
-#         self.game.turn_phase = self.current_data.game_steps.turn_phase
-#         self.game.is_game_end = self.current_data.game_steps.is_game_end
-#         self.game.game_steps.deal(self.current_data.game_steps.turn_phases_left)
+    def set_next_phase(self) -> 'GameProcessor':
+        """Set next phase
 
-#         # fill objective deck
-#         if self.current_data.game_decks.objective_deck.current:
-#             self.game.objective_deck.deal(
-#                 self.current_data.game_decks.objective_deck.current
-#                     )
-#         m = self.current_data.game_decks.mission_card
+        Returns:
+            game_logic.GameProcessor
+        """
+        if not self.G.t.steps.last or self.G.t.steps.last.id != settings.phases[5]:
+            self.G.t.steps.pull()
+            self.G.turn_phase = self.G.t.steps.last.id
 
-#         # fill mission card
-#         self.game.mission_card = m if m else None
+        return self
 
-#         # from pprint import pprint
-#         # pprint(self.game.to_dict())
-#         # print('---'*20)
+    def set_mission_card(self) -> 'GameProcessor':
+        """Set mission card on a turn
 
-#         return self
+        Returns:
+            game_logic.GameProcessor
+        """
+        try:
+            self.G.mission_card = self.G.t.objectives.pop().id
+        except IndexError:
+            raise HTTPException(
+                status_code=409,
+                detail="Objective deck is empty."
+                    )
+
+        return self
+
+    def set_turn_priority(self) -> 'GameProcessor':
+        """Set priority to the turn. It used in influence struggle.
+
+        Returns:
+            game_logic.GameProcessor
+        """
+        if self.G.game_turn == 0:
+            val = True if self.G.i.coin.roll()[0] == 1 else False
+        elif self.G.p.player.score > self.G.p.bot.score:
+            val = True
+        elif self.G.p.player.score < self.G.p.bot.score:
+            val = False
+        else:
+            return self
+
+        self.G.p.player.has_priority = val
+        self.G.p.bot.has_priority = not val
+
+        return self
+
+    def chek_phase_conditions_before_next(self) -> 'GameProcessor':
+        """Check game conition before push to next phase
+        and raise exception if any check fails
+        Returns:
+            game_logic.GameProcessor
+        """
+        if self.G.is_game_end:
+            raise HTTPException(
+                status_code=409,
+                detail="Something can't be changed, because game is end"
+                    )
+
+        phase = self.G.turn_phase
+
+        # briefing
+        if phase == settings.phases[0]:
+
+            # players has priority
+            if not self.G.p.player.has_priority \
+                    and not self.G.p.bot.has_priority:
+                raise HTTPException(
+                    status_code=409,
+                    detail="No one player has priority. Cant push to next phase."
+                        )
+
+            # objective card defined
+            if not self.G.mission_card:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Mission card undefined. Cant push to next phase."
+                        )
+
+        # planning
+        elif phase == settings.phases[1]:
+            pass
+
+        # influence_struggle
+        elif phase == settings.phases[2]:
+            pass
+
+        # ceasefire
+        elif phase == settings.phases[3]:
+            pass
+
+        # debriefing
+        elif phase == settings.phases[4]:
+            pass
+
+        # detente
+        elif phase == settings.phases[5]:
+            raise HTTPException(
+                status_code=409,
+                detail="This phase is last in a turn. Change turn number "
+                        "before get next phase"
+                    )
+
+        return self
+
+    def set_phase_conditions_after_next(self) -> 'GameProcessor':
+        """Set som phase conditions after push phase
+
+        Returns:
+            game_logic.GameProcessor
+        """
+        phase = self.G.turn_phase
+
+        # set briefing states after next
+        if phase == settings.phases[0]:
+
+            self.set_mission_card()
+            self.set_turn_priority()
+
+        # planning
+        elif phase == settings.phases[1]:
+            pass
+
+        # influence_struggle
+        elif phase == settings.phases[2]:
+            pass
+
+        # ceasefire
+        elif phase == settings.phases[3]:
+            pass
+
+        # debriefing
+        elif phase == settings.phases[4]:
+            pass
+
+        # detente
+        elif phase == settings.phases[5]:
+            pass
+
+        return self

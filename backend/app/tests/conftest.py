@@ -163,41 +163,22 @@ def cards(connection: Generator) -> crud_card.CRUDCards:
         connection['ObjectiveCard'],
             )
 
-# @pytest.fixture(scope="function")
-# def game_proc(
-#     game: crud_game.CRUDGame,
-#     cards: crud_card.CRUDCards,
-#         ) -> game_logic.GameProcessor:
-#     """Get game processor object
-#     """
-#     current_data = game.get_current_game_data(settings.user0_login)
-#     return game_logic.GameProcessor(cards.get_all_cards(), current_data)
-
 
 @pytest.fixture(scope="function")
 def game_proc(
     game: crud_game.CRUDGame,
     cards: crud_card.CRUDCards,
-        ) -> game_logic.GameProcessor_:
+        ) -> game_logic.GameProcessor:
     """Get game processor object
     """
     current_data = game.get_current_game_data(settings.user0_login)
-    return game_logic.GameProcessor_(cards.get_all_cards(), current_data)
-
-
-# @pytest.fixture(scope="function")
-# def inited_game_proc(
-#     game_proc: game_logic.GameProcessor,
-#         ) -> game_logic.GameProcessor:
-#     """Get game processor object
-#     """
-#     return game_proc.init_game_data()
+    return game_logic.GameProcessor(cards.get_all_cards(), current_data)
 
 
 @pytest.fixture(scope="function")
 def inited_game_proc(
-    game_proc: game_logic.GameProcessor_,
-        ) -> game_logic.GameProcessor_:
+    game_proc: game_logic.GameProcessor,
+        ) -> game_logic.GameProcessor:
     """Get game processor object
     """
     return game_proc.fill()
@@ -219,7 +200,7 @@ def inited_game_proc(
 @pytest.fixture(scope="function")
 def started_game_proc(
     game: crud_game.CRUDGame,
-        ) -> game_logic.GameProcessor_:
+        ) -> game_logic.GameProcessor:
     """Init the game and return processor
     """
     obj_in = game_logic.make_game_data(settings.user0_login)

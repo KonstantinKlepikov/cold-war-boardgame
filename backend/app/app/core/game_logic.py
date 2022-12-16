@@ -6,6 +6,7 @@ from app.config import settings
 from bgameb import Game, Player, Deck, Card, Steps, Step, Dice
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, Undefined
+from fastapi.encoders import jsonable_encoder
 
 
 def make_game_data(login: str) -> schema_game.CurrentGameData:
@@ -130,6 +131,14 @@ class MyPlayer(Player):
 
 @dataclass_json(undefined=Undefined.INCLUDE)
 @dataclass(repr=False)
+class GameDeck(Deck):
+    pile: List[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+@dataclass_json(undefined=Undefined.INCLUDE)
+@dataclass(repr=False)
 class GroupCard(Card):
 
     name: Optional[str] = None
@@ -146,15 +155,17 @@ class GroupCard(Card):
 class ObjectiveCard(Card):
 
     name: Optional[str] = None
-    faction: Optional[str] = None
-    influence: Optional[int] = None
-    power: Optional[str] = None
+    bias_icons: List[str] = field(default_factory=list)
+    population: Optional[int] = None
+    special_ability: Optional[str] = None
+    stability: Optional[int] = None
+    victory_points: Optional[int] = None
 
     def __post_init__(self) -> None:
         super().__post_init__()
 
 
-class GameProcessor_:
+class GameProcessor:
     """Create the game object to manipulation of game tools
 
     Args:
@@ -174,7 +185,7 @@ class GameProcessor_:
     def _check_if_current(
         self,
         current_data: Optional[model_game.CurrentGameData]
-            ):
+            ) -> None:
         if not current_data:
             raise HTTPException(
                 status_code=404,
@@ -184,13 +195,12 @@ class GameProcessor_:
         else:
             self.current_data = current_data
 
-    def fill(self) -> 'GameProcessor_':
+    def fill(self) -> 'GameProcessor':
         """Init new objective deck
 
         Returns:
             GameProcessor: initet game processor
         """
-
         # init ptayers
         for p in self.current_data.players:
             data: dict = p.to_mongo().to_dict()
@@ -199,7 +209,7 @@ class GameProcessor_:
             self.G.add(player)
 
         # init group deck
-        self.G.add(Deck('groups'))
+        self.G.add(GameDeck('groups'))
         for c in self.cards['group_cards']:
             card = GroupCard(
                 c['name'],
@@ -208,7 +218,7 @@ class GameProcessor_:
             self.G.t.groups.add(card)
 
         # init objective deck
-        self.G.add(Deck('objectives'))
+        self.G.add(GameDeck('objectives'))
         for c in self.cards['objective_cards']:
             card = ObjectiveCard(
                 c['name'],
@@ -216,11 +226,19 @@ class GameProcessor_:
                 )
             self.G.t.objectives.add(card)
 
+        # merge group current
+        if self.current_data.game_decks.group_deck.current:
+            self.G.t.groups.deal(
+                self.current_data.game_decks.group_deck.current
+                    )
+        self.G.t.groups.pile = self.current_data.game_decks.group_deck.pile
+
         # merge objective current
         if self.current_data.game_decks.objective_deck.current:
             self.G.t.objectives.deal(
                 self.current_data.game_decks.objective_deck.current
                     )
+        self.G.t.objectives.pile = self.current_data.game_decks.objective_deck.pile
         m = self.current_data.game_decks.mission_card
 
         # merge current mission card
@@ -232,123 +250,160 @@ class GameProcessor_:
             step = Step(val, priority=num)
             self.G.t.steps.add(step)
 
-        # merge steps current
+        # merge steps current and last
         if self.current_data.game_steps.turn_phases_left:
-            self.G.t.steps.deal(self.current_data.game_steps.turn_phases_left)
+            self.G.t.steps.deal(
+                self.current_data.game_steps.turn_phases_left
+                    )
+        if self.current_data.game_steps.turn_phase:
+            self.G.turn_phase = self.G.t.steps.i.by_id(
+                self.current_data.game_steps.turn_phase
+                    )
+
+        self.G.game_turn = self.current_data.game_steps.game_turn
+        self.G.is_game_end = self.current_data.game_steps.is_game_end
 
         # init coin for random choice
         self.G.add(Dice('coin'))
 
         return self
 
-    def flush(self) -> None:
+    def flush(self) -> model_game.CurrentGameData:
         """Save the game data to db"""
 
+        # flush plauers
+        for num, val in enumerate(self.G.p.values()):
+            schema = schema_game.Player(**val.to_dict())
+            db_data = jsonable_encoder(schema)
+            self.current_data.players[num] = model_game.Player(**db_data)
+
+        # flush game steps
+        self.current_data.game_steps.game_turn = self.G.game_turn
+        if self.G.t.steps.last:
+            self.current_data.game_steps.turn_phase = self.G.t.steps.last.id
+        self.current_data.game_steps.is_game_end = self.G.is_game_end
+        self.current_data.game_steps.turn_phases_left = self.G.t.steps.current_ids()
+
+        # flush objectives
+        self.current_data.game_decks.mission_card = self.G.mission_card
+        ids = self.G.t.objectives.current_ids()
+        self.current_data.game_decks.objective_deck.current = ids
+        self.current_data.game_decks.objective_deck.deck_len = len(ids)
+        self.current_data.game_decks.objective_deck.pile = self.G.t.objectives.pile
+
+        # flush groups
+        ids = self.G.t.groups.current_ids()
+        self.current_data.game_decks.group_deck.current = ids
+        self.current_data.game_decks.group_deck.deck_len = len(ids)
+        self.current_data.game_decks.group_deck.pile = self.G.t.groups.pile
+
+        return self.current_data
 
 
 
 
-import bgameb
+
+# import bgameb
 
 
-class GameProcessor:
-    """Create the game object to manipulation of game tools
+# class GameProcessor:
+#     """Create the game object to manipulation of game tools
 
-    Args:
-        cards (Dict[str, List[Dict[str, Union[str, int]]]])
-        current_data (Optional[model_game.CurrentGameData])
-    """
+#     Args:
+#         cards (Dict[str, List[Dict[str, Union[str, int]]]])
+#         current_data (Optional[model_game.CurrentGameData])
+#     """
 
-    def __init__(
-        self,
-        cards: Dict[str, List[Dict[str, Union[str, int]]]],
-        current_data: Optional[model_game.CurrentGameData]
-            ) -> None:
-        self.game: bgameb.Game = bgameb.Game('Cold War Game')
-        self.cards = cards
-        self._check_if_current(current_data)
+#     def __init__(
+#         self,
+#         cards: Dict[str, List[Dict[str, Union[str, int]]]],
+#         current_data: Optional[model_game.CurrentGameData]
+#             ) -> None:
+#         self.game: bgameb.Game = bgameb.Game('Cold War Game')
+#         self.cards = cards
+#         self._check_if_current(current_data)
 
-    def _check_if_current(
-        self,
-        current_data: Optional[model_game.CurrentGameData]
-            ):
-        if not current_data:
-            raise HTTPException(
-                status_code=404,
-                detail="Cant find current game data in db. For start "
-                    "new game use /game/create endpoint",
-                        )
-        else:
-            self.current_data = current_data
+#     def _check_if_current(
+#         self,
+#         current_data: Optional[model_game.CurrentGameData]
+#             ):
+#         if not current_data:
+#             raise HTTPException(
+#                 status_code=404,
+#                 detail="Cant find current game data in db. For start "
+#                     "new game use /game/create endpoint",
+#                         )
+#         else:
+#             self.current_data = current_data
 
 
-    def init_game_data(self):
-        """Init new objective deck
+#     def init_game_data(self):
+#         """Init new objective deck
 
-        Returns:
-            GameProcessor: initet game processor
-        """
+#         Returns:
+#             GameProcessor: initet game processor
+#         """
 
-        # init ptayers
-        for p in self.current_data.players:
-            data: dict = p.to_mongo().to_dict()
-            name = 'bot' if data['is_bot'] == True else 'player'
-            player = bgameb.Player(name, **data)
-            self.game.add(player)
+#         # init ptayers
+#         for p in self.current_data.players:
+#             data: dict = p.to_mongo().to_dict()
+#             name = 'bot' if data['is_bot'] == True else 'player'
+#             player = bgameb.Player(name, **data)
+#             self.game.add(player)
 
-        # init group deck
-        self.game.add(bgameb.Deck('Group Deck'))
-        for c in self.cards['group_cards']:
-            c.pop('_id', None)
-            card = bgameb.Card(
-                c['name'],
-                **c
-                )
-            self.game.group_deck.add(card)
+#         # init group deck
+#         self.game.add(bgameb.Deck('Group Deck'))
+#         for c in self.cards['group_cards']:
+#             c.pop('_id', None)
+#             card = bgameb.Card(
+#                 c['name'],
+#                 **c
+#                 )
+#             self.game.group_deck.add(card)
 
-        # init objective deck
-        self.game.add(bgameb.Deck('Objective Deck'))
-        for c in self.cards['objective_cards']:
-            c.pop('_id', None)
-            card = bgameb.Card(
-                c['name'],
-                **c
-                )
-            self.game.objective_deck.add(card)
+#         # init objective deck
+#         self.game.add(bgameb.Deck('Objective Deck'))
+#         for c in self.cards['objective_cards']:
+#             c.pop('_id', None)
+#             card = bgameb.Card(
+#                 c['name'],
+#                 **c
+#                 )
+#             self.game.objective_deck.add(card)
 
-        # init game steps
-        self.game.add(bgameb.Steps('game_steps'))
-        for num, val in enumerate(settings.phases):
-            step = bgameb.Step(val, priority=num)
-            self.game.game_steps.add(step)
+#         # init game steps
+#         self.game.add(bgameb.Steps('game_steps'))
+#         for num, val in enumerate(settings.phases):
+#             step = bgameb.Step(val, priority=num)
+#             self.game.game_steps.add(step)
 
-        # init coin for random choice
-        self.game.add(bgameb.Dice('coin'))
+#         # init coin for random choice
+#         self.game.add(bgameb.Dice('coin'))
 
-        #  fill players
-        self.game.player.faction = self.current_data.players[0].faction
-        self.game.bot.faction = self.current_data.players[1].faction
-        self.game.player.score = self.current_data.players[0].score
-        self.game.bot.score = self.current_data.players[1].score
+#         #  fill players
+#         self.game.player.faction = self.current_data.players[0].faction
+#         self.game.bot.faction = self.current_data.players[1].faction
+#         self.game.player.score = self.current_data.players[0].score
+#         self.game.bot.score = self.current_data.players[1].score
 
-        # fill game steps
-        self.game.game_turn = self.current_data.game_steps.game_turn
-        self.game.turn_phase = self.current_data.game_steps.turn_phase
-        self.game.is_game_end = self.current_data.game_steps.is_game_end
-        self.game.game_steps.deal(self.current_data.game_steps.turn_phases_left)
+#         # fill game steps
+#         self.game.game_turn = self.current_data.game_steps.game_turn
+#         self.game.turn_phase = self.current_data.game_steps.turn_phase
+#         self.game.is_game_end = self.current_data.game_steps.is_game_end
+#         self.game.game_steps.deal(self.current_data.game_steps.turn_phases_left)
 
-        # fill objective deck
-        if self.current_data.game_decks.objective_deck.current:
-            self.game.objective_deck.deal(
-                self.current_data.game_decks.objective_deck.current
-                    )
-        m = self.current_data.game_decks.mission_card
+#         # fill objective deck
+#         if self.current_data.game_decks.objective_deck.current:
+#             self.game.objective_deck.deal(
+#                 self.current_data.game_decks.objective_deck.current
+#                     )
+#         m = self.current_data.game_decks.mission_card
 
-        # fill mission card
-        self.game.mission_card = m if m else None
+#         # fill mission card
+#         self.game.mission_card = m if m else None
 
-        # from pprint import pprint
-        # pprint(self.game.to_dict())
-        # print('---'*20)
+#         # from pprint import pprint
+#         # pprint(self.game.to_dict())
+#         # print('---'*20)
 
-        return self
+#         return self

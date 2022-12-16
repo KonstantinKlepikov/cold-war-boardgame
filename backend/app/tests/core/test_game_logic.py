@@ -62,7 +62,7 @@ class TestGameProcessor:
     """Test GameProcessor class
     """
 
-    def test_create_game(self, game_proc: game_logic.GameProcessor_) -> None:
+    def test_create_game(self, game_proc: game_logic.GameProcessor) -> None:
         """Test game is created
         """
         assert isinstance(game_proc.G, bgameb.Game), 'wrong game'
@@ -70,7 +70,7 @@ class TestGameProcessor:
 
     def test_check_if_current_raise_exception(
         self,
-        game_proc: game_logic.GameProcessor_
+        game_proc: game_logic.GameProcessor
             ) -> None:
         """Exception is raised if player not starts any games
         """
@@ -81,12 +81,12 @@ class TestGameProcessor:
 
     def test_fill_data(
         self,
-        game_proc: game_logic.GameProcessor_
+        game_proc: game_logic.GameProcessor
             ) -> None:
         """Test init new deck init deck in Game objects
         """
         game_proc = game_proc.fill()
-        assert isinstance(game_proc, game_logic.GameProcessor_), 'wrong proc'
+        assert isinstance(game_proc, game_logic.GameProcessor), 'wrong proc'
 
         # players
         assert game_proc.G.p.player, 'player not inited'
@@ -110,10 +110,22 @@ class TestGameProcessor:
         assert len(game_proc.G.t.objectives.i) == 21, 'wrong objective len'
         assert game_proc.G.mission_card is None, 'wrong mission card'
         assert not game_proc.G.t.objectives.current, 'nonempty objective current'
+        assert len(game_proc.G.t.objectives.pile) == 0, 'wrong pile'
+        assert game_proc.G.t.objectives.i.egypt.id == 'Egypt', 'wrong card field'
+        assert game_proc.G.t.objectives.i.egypt.name == 'Egypt', 'wrong card field'
+        assert len(game_proc.G.t.objectives.i.egypt.bias_icons) == 4, 'wrong card field'
+        assert game_proc.G.t.objectives.i.egypt.stability == 11, 'wrong card field'
+        assert game_proc.G.t.objectives.i.egypt.victory_points == 20, 'wrong card field'
 
         # groups
         assert len(game_proc.G.t.groups.i) == 24, 'wrong group len'
         assert not game_proc.G.t.groups.current, 'group current'
+        assert len(game_proc.G.t.groups.pile) == 0, 'wrong pile'
+        assert game_proc.G.t.groups.i.guerilla.id == 'Guerilla', 'wrong card field'
+        assert game_proc.G.t.groups.i.guerilla.name == 'Guerilla', 'wrong card field'
+        assert game_proc.G.t.groups.i.guerilla.faction == 'Military', 'wrong card field'
+        assert game_proc.G.t.groups.i.guerilla.influence == 1, 'wrong card field'
+        assert isinstance(game_proc.G.t.groups.i.guerilla.power, str), 'wrong card field'
 
         # steps
         assert game_proc.G.game_turn == 0, 'wrong turn'
@@ -126,6 +138,33 @@ class TestGameProcessor:
         # coin
         assert isinstance(game_proc.G.i.coin, bgameb.Dice), 'wrong coin'
         assert game_proc.G.i.coin.sides == 2, 'wrong sides'
+
+    def test_flush_change_player(
+        self,
+        inited_game_proc: game_logic.GameProcessor
+            ) -> None:
+        """Test flush() can change player
+        """
+        inited_game_proc.G.p.player.is_bot = True
+        inited_game_proc.G.p.bot.is_bot = False
+        current = inited_game_proc.flush()
+        assert current.players[0].is_bot == True, 'player isnt changed'
+        assert current.players[1].is_bot == False, 'bot isnt changed'
+
+    def test_flush_steps(
+        self,
+        inited_game_proc: game_logic.GameProcessor
+            ) -> None:
+        """Test flush() can change steps
+        """
+        inited_game_proc.G.t.steps.pull()
+        inited_game_proc.G.game_turn += 1
+        inited_game_proc.G.is_game_end = True
+        current = inited_game_proc.flush()
+        assert current.game_steps.game_turn == 1, 'wrong turn'
+        assert current.game_steps.turn_phase == 'briefing', 'wrong phase'
+        assert current.game_steps.is_game_end == True, 'game not end'
+        assert len(current.game_steps.turn_phases_left) == 5, 'wrong phases left'
 
 
 class TestCheckPhaseConditions:

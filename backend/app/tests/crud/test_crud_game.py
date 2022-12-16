@@ -93,8 +93,8 @@ class TestCRUDGame:
         assert len(connection['CurrentGameData'].objects[0].game_decks.group_deck.current) == 24, \
             'wrong group current'
         assert isinstance(game_proc, game_logic.GameProcessor), 'wrong return'
-        assert len(game_proc.game.objective_deck.current) == 21, 'wrong proc objective len'
-        assert len(game_proc.game.group_deck.current) == 24, 'wrong proc group len'
+        assert len(game_proc.G.t.objectives.current) == 21, 'wrong proc objective len'
+        assert len(game_proc.G.t.groups.current) == 24, 'wrong proc group len'
 
     @pytest.mark.parametrize("test_input,expected", [
         (crud_game.Faction.KGB, ('kgb', 'cia')), (crud_game.Faction.CIA, ('cia', 'kgb')),

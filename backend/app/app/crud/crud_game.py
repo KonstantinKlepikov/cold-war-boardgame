@@ -47,7 +47,7 @@ class CRUDGame(
             crud_card.cards.get_all_cards(),
             crud_game.game.get_current_game_data(login)
                 )
-        return game_proc.init_game_data()
+        return game_proc.fill()
 
     def create_new_game(self, obj_in: schema_game.CurrentGameData) -> None:
         """Create new game
@@ -68,21 +68,20 @@ class CRUDGame(
         Returns:
             game_logic.GameProcessor
         """
-        game_proc.game.group_deck.deal()
-        game_proc.game.group_deck.shuffle()
+        game_proc.G.t.groups.deal().shuffle()
+        game_proc.G.t.objectives.deal().shuffle()
+        game_proc.flush().save()
 
-        game_proc.game.objective_deck.deal()
-        game_proc.game.objective_deck.shuffle()
 
-        obj_current = game_proc.game.objective_deck.get_current_ids()
-        game_proc.current_data.game_decks.objective_deck.current = obj_current
-        game_proc.current_data.game_decks.objective_deck.deck_len = len(obj_current)
+        # obj_current = game_proc.game.objective_deck.get_current_ids()
+        # game_proc.current_data.game_decks.objective_deck.current = obj_current
+        # game_proc.current_data.game_decks.objective_deck.deck_len = len(obj_current)
 
-        group_current = game_proc.game.group_deck.get_current_ids()
-        game_proc.current_data.game_decks.group_deck.current = group_current
-        game_proc.current_data.game_decks.group_deck.deck_len = len(group_current)
+        # group_current = game_proc.game.group_deck.get_current_ids()
+        # game_proc.current_data.game_decks.group_deck.current = group_current
+        # game_proc.current_data.game_decks.group_deck.deck_len = len(group_current)
 
-        game_proc.current_data.save()
+        # game_proc.current_data.save()
 
         return game_proc
 

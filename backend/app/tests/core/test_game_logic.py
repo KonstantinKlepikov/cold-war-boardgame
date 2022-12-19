@@ -96,7 +96,8 @@ class TestGameProcessor:
         assert game_proc.G.p.player.faction is None, 'wrong faction'
         assert game_proc.G.p.player.score == 0, 'wrong score'
         assert game_proc.G.p.player.login == 'DonaldTrump', 'wrong login'
-        assert len(game_proc.G.p.player.other) == 0, 'empty player other'
+        # assert game_proc.G.p.player.abilities == [], 'wrong abilities'
+        # assert len(game_proc.G.p.player.other) == 0, 'empty player other'
 
         assert game_proc.G.p.bot, 'bot not inited'
         assert game_proc.G.p.bot.is_bot == True, 'wrong bot status'
@@ -104,7 +105,8 @@ class TestGameProcessor:
         assert game_proc.G.p.bot.faction is None, 'wrong faction'
         assert game_proc.G.p.bot.score == 0, 'wrong score'
         assert game_proc.G.p.bot.login is None, 'wrong login'
-        assert len(game_proc.G.p.bot.other) == 0, 'empty bot other'
+        # assert game_proc.G.p.bot.abilities == [], 'wrong abilities'
+        # assert len(game_proc.G.p.bot.other) == 0, 'empty bot other'
 
         # objectives
         assert len(game_proc.G.t.objectives.i) == 21, 'wrong objective len'
@@ -128,9 +130,10 @@ class TestGameProcessor:
         assert isinstance(game_proc.G.t.groups.i.guerilla.power, str), 'wrong card field'
 
         # steps
-        assert game_proc.G.game_turn == 0, 'wrong turn'
-        assert game_proc.G.turn_phase is None, 'wrong phase'
-        assert game_proc.G.is_game_end == False, 'game is end'
+        assert game_proc.G.t.steps.game_turn == 0, 'wrong turn'
+        assert game_proc.G.t.steps.turn_phase is None, 'wrong phase'
+        assert game_proc.G.t.steps.is_game_end == False, 'game is end'
+        assert len(game_proc.G.t.steps.turn_phases_left) == 6, 'wrong turn phases left'
         assert len(game_proc.G.t.steps.i) == 6, 'wrong len'
         assert len(game_proc.G.t.steps.current) == 6, 'wrong current'
         assert not game_proc.G.t.steps.last, 'wrong last'
@@ -158,8 +161,10 @@ class TestGameProcessor:
         """Test flush() can change steps
         """
         inited_game_proc.G.t.steps.pull()
-        inited_game_proc.G.game_turn += 1
-        inited_game_proc.G.is_game_end = True
+        inited_game_proc.G.t.steps.game_turn += 1
+        inited_game_proc.G.t.steps.turn_phase = inited_game_proc.G.t.steps.last.id
+        inited_game_proc.G.t.steps.turn_phases_left = inited_game_proc.G.t.steps.current_ids()
+        inited_game_proc.G.t.steps.is_game_end = True
         current = inited_game_proc.flush()
         assert current.game_steps.game_turn == 1, 'wrong turn'
         assert current.game_steps.turn_phase == 'briefing', 'wrong phase'
@@ -234,7 +239,7 @@ class TestGameProcessor:
         """
         game_proc = inited_game_proc.set_next_turn()
 
-        assert game_proc.G.game_turn == 1, 'wrong proc turn'
+        assert game_proc.G.t.steps.game_turn == 1, 'wrong proc turn'
         assert game_proc.G.t.steps.last is None, 'wrong last'
         assert len(game_proc.G.t.steps.current) == 6, 'wrong current'
 
@@ -244,7 +249,7 @@ class TestGameProcessor:
             ) -> None:
         """Test set_next_turn() cant change turn if game end
         """
-        inited_game_proc.G.is_game_end = True
+        inited_game_proc.G.t.steps.is_game_end = True
 
         with pytest.raises(HTTPException):
             inited_game_proc.set_next_turn()
@@ -268,7 +273,7 @@ class TestGameProcessor:
             ) -> None:
         """Test set_next_phase() cant change detente
         """
-        inited_game_proc.G.turn_phase = settings.phases[5]
+        inited_game_proc.G.t.steps.turn_phase = settings.phases[5]
         inited_game_proc.G.t.steps.last = inited_game_proc.G.t.steps.i.by_id(settings.phases[5])
 
         game_proc = inited_game_proc.set_next_phase()
@@ -289,7 +294,7 @@ class TestCheckPhaseConditions:
         """Test chek_phase_conditions_before_next() if no player has
         priority in briefing
         """
-        inited_game_proc.G.turn_phase = settings.phases[0]
+        inited_game_proc.G.t.steps.turn_phase = settings.phases[0]
 
         with pytest.raises(
             HTTPException,
@@ -303,7 +308,7 @@ class TestCheckPhaseConditions:
         """Test chek_phase_conditions_before_next() if last phase
         and needed push to next tun
         """
-        inited_game_proc.G.turn_phase = settings.phases[5]
+        inited_game_proc.G.t.steps.turn_phase = settings.phases[5]
 
         with pytest.raises(
             HTTPException,
@@ -316,7 +321,7 @@ class TestCheckPhaseConditions:
             ) -> None:
         """Test chek_phase_conditions_before_next() if game end
         """
-        inited_game_proc.G.is_game_end = True
+        inited_game_proc.G.t.steps.is_game_end = True
 
         with pytest.raises(
             HTTPException,
@@ -357,8 +362,8 @@ class TestCRUDGamePhaseConditions:
         assert isinstance(game_proc.G.p.bot.has_priority, bool), 'wrong priority'
 
     @pytest.mark.parametrize("test_input,expected", [
-        ((30, 0), (True, False)),
-        ((0, 30), (False, True)),
+        ((30, 0), (False, True)),
+        ((0, 30), (True, False)),
         ((0, 0), (None, None)),
             ])
     def test_set_turn_priority(
@@ -371,7 +376,7 @@ class TestCRUDGamePhaseConditions:
         """
         started_game_proc.G.p.player.score = test_input[0]
         started_game_proc.G.p.bot.score = test_input[1]
-        started_game_proc.G.game_turn = 1
+        started_game_proc.G.t.steps.game_turn = 1
 
         game_proc = started_game_proc.set_turn_priority()
 
@@ -386,7 +391,7 @@ class TestCRUDGamePhaseConditions:
         """Test set_phase_conditions_after_next() set mission card
         in briefing
         """
-        started_game_proc.G.turn_phase = settings.phases[0]
+        started_game_proc.G.t.steps.turn_phase = settings.phases[0]
 
         game_proc = started_game_proc.set_phase_conditions_after_next()
 

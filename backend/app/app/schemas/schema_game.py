@@ -20,6 +20,24 @@ class GameSteps(BaseModel):
         }
 
 
+class CurrentGameSteps(GameSteps):
+    """Current game steps
+    """
+    turn_phases_left: List[str] = []
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "game_turn": 0,
+                "turn_phase": "briefing",
+                "is_game_end": False,
+                "turn_phases_left": [
+                    "detente",
+                    ],
+            }
+        }
+
+
 class PlayerAgentCard(BaseModel):
     """Agent card owned by player
     """
@@ -105,6 +123,7 @@ class Player(BaseModel):
     faction: Optional[Literal['kgb', 'cia']] = None
     player_cards: PlayerCards
     login: Optional[str] = None
+    # abilities: List[str] = []
 
     class Config:
         schema_extra = {
@@ -143,6 +162,9 @@ class Player(BaseModel):
                         ],
                     },
                 "login": "DonaldTrump",
+                # "abilities": [
+                #     "Analyst",
+                #     ]
                 }
             }
 

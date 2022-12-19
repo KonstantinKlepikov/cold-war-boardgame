@@ -63,6 +63,7 @@ class Player(EmbeddedDocument):
     faction = StringField(null=True)
     player_cards = EmbeddedDocumentField(PlayerCards)
     login = StringField(null=True)
+    # abilities = ListField(StringField())
 
 
 class GameDeck(EmbeddedDocument):

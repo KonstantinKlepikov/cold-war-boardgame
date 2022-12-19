@@ -1,4 +1,3 @@
-import random
 from typing import Dict, List, Union, Optional, Any
 from fastapi import HTTPException
 from app.schemas import schema_game
@@ -45,44 +44,82 @@ def make_game_data(login: str) -> schema_game.CurrentGameData:
     return schema_game.CurrentGameData(**new_game)
 
 
-@dataclass_json(undefined=Undefined.INCLUDE)
+@dataclass_json(undefined=Undefined.EXCLUDE)
 @dataclass(repr=False)
-class MyGame(Game):
+class CustomGame(Game):
     mission_card: Optional[str] = None
-    game_turn: int = 0
-    turn_phase: Optional[str] = None
-    is_game_end: bool = False
 
     def __post_init__(self) -> None:
         super().__post_init__()
 
 
-@dataclass_json(undefined=Undefined.INCLUDE)
+@dataclass_json(undefined=Undefined.EXCLUDE)
 @dataclass(repr=False)
-class MyPlayer(Player):
+class CustomSteps(Steps):
+    game_turn: int = 0
+    turn_phase: Optional[str] = None
+    turn_phases_left: List[str] = field(default_factory=list)
+    is_game_end: bool = False
+
+
+@dataclass_json(undefined=Undefined.EXCLUDE)
+# @dataclass_json(undefined=Undefined.INCLUDE)
+@dataclass(repr=False)
+class CustomPlayer(Player):
     has_priority: Optional[bool] = None
     is_bot: Optional[bool] = None
     score: int = 0
     faction: Optional[str] = None
     player_cards: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
     login: Optional[str] = None
+    # abilities: List[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         super().__post_init__()
 
 
-@dataclass_json(undefined=Undefined.INCLUDE)
+@dataclass_json(undefined=Undefined.EXCLUDE)
+# @dataclass_json(undefined=Undefined.INCLUDE)
 @dataclass(repr=False)
-class GameDeck(Deck):
+class CustomDeck(Deck):
     pile: List[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         super().__post_init__()
 
-@dataclass_json(undefined=Undefined.INCLUDE)
+
+@dataclass_json(undefined=Undefined.EXCLUDE)
+# @dataclass_json(undefined=Undefined.INCLUDE)
+@dataclass(repr=False)
+class PlayerAgentCard(Card):
+    name: Optional[str] = None
+    is_dead: bool = False
+    is_in_play: bool = False
+    is_in_vacation: bool = False
+    is_revealed: bool = False
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+
+@dataclass_json(undefined=Undefined.EXCLUDE)
+# @dataclass_json(undefined=Undefined.INCLUDE)
+@dataclass(repr=False)
+class PlayerGroupObjCard(Card):
+    name: Optional[str] = None
+    is_in_deck: bool = True
+    is_in_play: bool = False
+    is_active: Optional[bool] = None
+    pos_in_deck: Optional[int] = None
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+
+@dataclass_json(undefined=Undefined.EXCLUDE)
+# @dataclass_json(undefined=Undefined.INCLUDE)
 @dataclass(repr=False)
 class GroupCard(Card):
-
     name: Optional[str] = None
     faction: Optional[str] = None
     influence: Optional[int] = None
@@ -92,10 +129,10 @@ class GroupCard(Card):
         super().__post_init__()
 
 
-@dataclass_json(undefined=Undefined.INCLUDE)
+@dataclass_json(undefined=Undefined.EXCLUDE)
+# @dataclass_json(undefined=Undefined.INCLUDE)
 @dataclass(repr=False)
 class ObjectiveCard(Card):
-
     name: Optional[str] = None
     bias_icons: List[str] = field(default_factory=list)
     population: Optional[int] = None
@@ -120,7 +157,7 @@ class GameProcessor:
         cards: Dict[str, List[Dict[str, Union[str, int]]]],
         current_data: Optional[model_game.CurrentGameData]
             ) -> None:
-        self.G: MyGame = MyGame('Cold War Game')
+        self.G: CustomGame = CustomGame('Cold War Game')
         self.cards = cards
         self._check_if_current(current_data)
 
@@ -147,11 +184,11 @@ class GameProcessor:
         for p in self.current_data.players:
             data: dict = p.to_mongo().to_dict()
             name = 'player' if data['is_bot'] == False else 'bot'
-            player = MyPlayer(name, **data)
+            player = CustomPlayer(name, **data)
             self.G.add(player)
 
         # init group deck
-        self.G.add(GameDeck('groups'))
+        self.G.add(CustomDeck('groups'))
         for c in self.cards['group_cards']:
             card = GroupCard(
                 c['name'],
@@ -160,13 +197,23 @@ class GameProcessor:
             self.G.t.groups.add(card)
 
         # init objective deck
-        self.G.add(GameDeck('objectives'))
+        self.G.add(CustomDeck('objectives'))
         for c in self.cards['objective_cards']:
             card = ObjectiveCard(
                 c['name'],
                 **c
                 )
             self.G.t.objectives.add(card)
+
+        # init game steps
+        data: dict = self.current_data.game_steps.to_mongo().to_dict()
+        self.G.add(CustomSteps('steps', **data))
+        for num, val in enumerate(settings.phases):
+            step = Step(val, priority=num)
+            self.G.t.steps.add(step)
+
+        # init coin for random choice
+        self.G.add(Dice('coin'))
 
         # merge group current
         if self.current_data.game_decks.group_deck.current:
@@ -186,28 +233,20 @@ class GameProcessor:
         # merge current mission card
         self.G.mission_card = m if m else None
 
-        # init game steps
-        self.G.add(Steps('steps'))
-        for num, val in enumerate(settings.phases):
-            step = Step(val, priority=num)
-            self.G.t.steps.add(step)
-
-        # merge steps current and last
-        if self.current_data.game_steps.turn_phases_left:
+        # merge steps
+        if self.G.t.steps.turn_phases_left:
             self.G.t.steps.deal(
-                self.current_data.game_steps.turn_phases_left
+                self.G.t.steps.turn_phases_left
                     )
-        if self.current_data.game_steps.turn_phase:
+        else:
+            self.G.t.steps.clear()
+
+        if self.G.t.steps.turn_phase:
             self.G.t.steps.last = self.G.t.steps.i.by_id(
-                self.current_data.game_steps.turn_phase
+                self.G.t.steps.turn_phase
                     )
-            self.G.turn_phase = self.G.t.steps.last.id
-
-        self.G.game_turn = self.current_data.game_steps.game_turn
-        self.G.is_game_end = self.current_data.game_steps.is_game_end
-
-        # init coin for random choice
-        self.G.add(Dice('coin'))
+        else:
+            self.G.t.steps.last = None
 
         return self
 
@@ -221,10 +260,9 @@ class GameProcessor:
             self.current_data.players[num] = model_game.Player(**db_data)
 
         # flush game steps
-        self.current_data.game_steps.game_turn = self.G.game_turn
-        self.current_data.game_steps.turn_phase = self.G.t.steps.last.id if self.G.t.steps.last else None
-        self.current_data.game_steps.is_game_end = self.G.is_game_end
-        self.current_data.game_steps.turn_phases_left = self.G.t.steps.current_ids()
+        schema = schema_game.CurrentGameSteps(**self.G.t.steps.to_dict())
+        db_data = jsonable_encoder(schema)
+        self.current_data.game_steps = model_game.GameSteps(**db_data)
 
         # flush objectives
         self.current_data.game_decks.mission_card = self.G.mission_card
@@ -294,7 +332,7 @@ class GameProcessor:
         elif priority == Priority.FALSE:
             val = False
         elif priority == Priority.RANDOM:
-            val = random.choice([True, False]) # TODO: move to processor
+            val = True if self.G.i.coin.roll()[0] == 1 else False
 
         self.G.p.player.has_priority = val
         self.G.p.bot.has_priority = not val
@@ -307,15 +345,15 @@ class GameProcessor:
         Returns:
             GameProcessor
         """
-        if self.G.is_game_end:
+        if self.G.t.steps.is_game_end:
             raise HTTPException(
                 status_code=409,
                 detail="Something can't be changed, because game is end"
                     )
 
-        self.G.game_turn += 1
-        self.G.t.steps.deal()
-        self.G.t.steps.last = None
+        self.G.t.steps.game_turn += 1
+        self.G.t.steps.turn_phases_left = self.G.t.steps.deal().current_ids()
+        self.G.t.steps.turn_phase = self.G.t.steps.last = None # NOTE: change in bgameb - when deal, last to None
 
         return self
 
@@ -323,11 +361,11 @@ class GameProcessor:
         """Set next phase
 
         Returns:
-            game_logic.GameProcessor
+            GameProcessor
         """
         if not self.G.t.steps.last or self.G.t.steps.last.id != settings.phases[5]:
             self.G.t.steps.pull()
-            self.G.turn_phase = self.G.t.steps.last.id
+            self.G.t.steps.turn_phase = self.G.t.steps.last.id
 
         return self
 
@@ -335,7 +373,7 @@ class GameProcessor:
         """Set mission card on a turn
 
         Returns:
-            game_logic.GameProcessor
+            GameProcessor
         """
         try:
             self.G.mission_card = self.G.t.objectives.pop().id
@@ -351,15 +389,18 @@ class GameProcessor:
         """Set priority to the turn. It used in influence struggle.
 
         Returns:
-            game_logic.GameProcessor
+            GameProcessor
         """
-        if self.G.game_turn == 0:
+        if self.G.t.steps.game_turn == 0:
             val = True if self.G.i.coin.roll()[0] == 1 else False
-        elif self.G.p.player.score > self.G.p.bot.score:
-            val = True
         elif self.G.p.player.score < self.G.p.bot.score:
+            val = True
+        elif self.G.p.player.score > self.G.p.bot.score:
             val = False
         else:
+            # TODO: change condition:
+            # if loose previous seas fire phase -> True
+            # if both loose -> return self
             return self
 
         self.G.p.player.has_priority = val
@@ -367,19 +408,44 @@ class GameProcessor:
 
         return self
 
+    def play_analyst_for_look_the_top(self) -> 'GameProcessor':
+        """Play annalyt abylity
+
+        Returns:
+            GameProcessor
+        """
+        if self.G.t.steps.turn_phase != settings.phases[0]:
+            raise HTTPException(
+                status_code=409,
+                detail="Ability can't be played in any phases except 'briefing'."
+                    )
+
+        # if not 'Analyst' in self.G.p.player.abilitie:
+        #     raise HTTPException(
+        #         status_code=409,
+        #         detail="You havent access to olay ability of Analyst agent card."
+        #             )
+
+        top = self.G.t.groups.current[0:2]
+        check = set()
+        for card in top:
+            pass
+
+
     def chek_phase_conditions_before_next(self) -> 'GameProcessor':
         """Check game conition before push to next phase
         and raise exception if any check fails
+
         Returns:
-            game_logic.GameProcessor
+            GameProcessor
         """
-        if self.G.is_game_end:
+        if self.G.t.steps.is_game_end:
             raise HTTPException(
                 status_code=409,
                 detail="Something can't be changed, because game is end"
                     )
 
-        phase = self.G.turn_phase
+        phase = self.G.t.steps.turn_phase
 
         # briefing
         if phase == settings.phases[0]:
@@ -429,9 +495,9 @@ class GameProcessor:
         """Set som phase conditions after push phase
 
         Returns:
-            game_logic.GameProcessor
+            GameProcessor
         """
-        phase = self.G.turn_phase
+        phase = self.G.t.steps.turn_phase
 
         # set briefing states after next
         if phase == settings.phases[0]:

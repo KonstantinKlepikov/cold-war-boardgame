@@ -62,11 +62,11 @@ def db_game_data() -> Dict[str, Union[str, bool]]:
         'game_decks':
             {
                 'group_deck': {
-                    'current': group_cards,
+                    'deck': group_cards,
                     'deck_len': 24,
                         },
                 'objective_deck': {
-                    'current': objective_cards,
+                    'deck': objective_cards,
                     'deck_len': 21,
                         }
             },

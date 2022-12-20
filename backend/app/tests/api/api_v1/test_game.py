@@ -277,3 +277,49 @@ class TestNextPhase:
         response = client.patch(f"{settings.api_v1_str}/game/next_phase")
         assert response.status_code == 401, 'wrong status'
         assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
+
+
+class TestAnalyst:
+    """Test /phase/briefing/analyst_look
+    """
+
+    @pytest.fixture(scope="function")
+    def mock_return(
+        self,
+        user: crud_user.CRUDUser,
+        game: crud_game.CRUDGame,
+        monkeypatch,
+            ) -> None:
+        """Mock user and game
+        """
+
+        def mock_user(*args, **kwargs) -> Callable:
+            return user.get_by_login(settings.user0_login)
+
+        def mock_process(*args, **kwargs) -> Callable:
+            return game.get_game_processor(args[0]) \
+                .deal_and_shuffle_decks()
+
+        monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
+        monkeypatch.setattr(crud_game.game, "get_game_processor", mock_process)
+
+    def test_analyst_get_return_200(
+        self,
+        mock_return,
+        connection: Generator,
+        client: TestClient,
+            ) -> None:
+        """Test /phase/briefing/analyst_look returns 200
+        """
+        current = connection['CurrentGameData'].objects().first()
+        current.game_steps.turn_phase = settings.phases[0]
+        current.players[0].abilities = ['Analyst', ]
+        current.save()
+
+        response = client.patch(
+            f"{settings.api_v1_str}/game/phase/briefing/analyst_look",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 200, 'wrong status'

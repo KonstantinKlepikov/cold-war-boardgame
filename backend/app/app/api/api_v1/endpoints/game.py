@@ -26,7 +26,7 @@ def create_new_game(
     crud_game.game.create_new_game(obj_in)
     crud_game.game.get_game_processor(user.login) \
         .deal_and_shuffle_decks() \
-        .flush() \
+        .flusсh() \
         .save()
 
 
@@ -47,7 +47,7 @@ def preset_faction(
     """
     crud_game.game.get_game_processor(user.login) \
         .set_faction(q) \
-        .flush() \
+        .flusсh() \
         .save()
 
 
@@ -65,7 +65,7 @@ def next_turn(
     """
     crud_game.game.get_game_processor(user.login) \
         .set_next_turn() \
-        .flush() \
+        .flusсh() \
         .save()
 
 
@@ -85,5 +85,23 @@ def next_phase(
         .chek_phase_conditions_before_next() \
         .set_next_phase() \
         .set_phase_conditions_after_next() \
-        .flush() \
+        .flusсh() \
+        .save()
+
+
+@router.patch(
+    "/phase/briefing/analyst_look",
+    status_code=status.HTTP_200_OK,
+    responses=settings.NEXT_ERRORS,
+    summary='Look top three cards of group deck',
+    response_description="Ok. Data is changed",
+        )
+def analyst_get(
+    user: schema_user.User = Depends(security_user.get_current_active_user),
+        ) -> None:
+    """Look top three cards of group deck and change current game data
+    """
+    crud_game.game.get_game_processor(user.login) \
+        .play_analyst_for_look_the_top() \
+        .flusсh() \
         .save()

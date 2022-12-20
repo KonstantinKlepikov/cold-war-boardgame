@@ -134,14 +134,14 @@ typecheck = ["mypy"]
 
 [[package]]
 name = "bgameb"
-version = "0.0.32"
+version = "0.0.33"
 description = "Board Game Builder"
 category = "main"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "bgameb-0.0.32-py3-none-any.whl", hash = "sha256:ec93ed51cf5726d4e51767ff455cd45b271abf5bc4fe05179d5cca8038df67f7"},
-    {file = "bgameb-0.0.32.tar.gz", hash = "sha256:516767452b56a4d8f2a17b802ebbd80be408c39cf16cb4f022687f4d366aeab1"},
+    {file = "bgameb-0.0.33-py3-none-any.whl", hash = "sha256:49e4af5495c7a996f9a05e6d76077e6c56f0df9adddf6f345ae0f5046e1b7378"},
+    {file = "bgameb-0.0.33.tar.gz", hash = "sha256:94bc0fd04ef309aea4f5122521b07cf01064e7825ee277c769d48a23804670a5"},
 ]
 
 [package.dependencies]
@@ -1910,4 +1910,4 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "3.9.16"
-content-hash = "339e60d5a5a0e81dd92196ded6c090e81af0d5798e8e3ae325cdf99635f23d81"
+content-hash = "43814b0b5af9f3740d03c6cbd49fe545f91613646757901ceaa0ffc424595fa2"

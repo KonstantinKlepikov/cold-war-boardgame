@@ -1,5 +1,5 @@
 from typing import Literal, Optional, List, Union
-from pydantic import BaseModel, NonNegativeInt, conint
+from pydantic import BaseModel, NonNegativeInt, NonPositiveInt, conint
 from app.constructs import Phase
 
 
@@ -20,8 +20,8 @@ class GameSteps(BaseModel):
         }
 
 
-class CurrentGameSteps(GameSteps):
-    """Current game steps
+class GameStepsDb(GameSteps):
+    """Game steps in db
     """
     turn_phases_left: List[str] = []
 
@@ -66,7 +66,7 @@ class PlayerGroupOrObjectivreCard(BaseModel):
     is_in_deck: bool = True
     is_in_play: bool = False
     is_active: Optional[bool]
-    position: Optional[NonNegativeInt]
+    pos_in_deck: Optional[NonPositiveInt]
     name: str
 
     class Config:
@@ -75,7 +75,7 @@ class PlayerGroupOrObjectivreCard(BaseModel):
                 "is_in_deck": True,
                 "is_in_play": False,
                 "is_active": None,
-                "position": 0,
+                "pos_in_deck": 0,
                 "name": "Master Spy",
                 }
             }
@@ -106,6 +106,25 @@ class GameDeck(BaseModel):
         }
 
 
+class GameDeckDb(GameDeck):
+    """Game deck in db
+    """
+    deck: List[str] = []
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "deck_len": 0,
+                "pile": [
+                    "Ukranian War", "Something Else",
+                ],
+                "deck": [
+                    "Some Great Card",
+                ],
+            }
+        }
+
+
 class GameDecks(BaseModel):
     """Game decks and mission card
     """
@@ -123,7 +142,7 @@ class Player(BaseModel):
     faction: Optional[Literal['kgb', 'cia']] = None
     player_cards: PlayerCards
     login: Optional[str] = None
-    # abilities: List[str] = []
+    abilities: List[str] = []
 
     class Config:
         schema_extra = {
@@ -162,9 +181,9 @@ class Player(BaseModel):
                         ],
                     },
                 "login": "DonaldTrump",
-                # "abilities": [
-                #     "Analyst",
-                #     ]
+                "abikities": [
+                    "Analist",
+                    ],
                 }
             }
 

@@ -323,3 +323,19 @@ class TestAnalyst:
                 }
             )
         assert response.status_code == 200, 'wrong status'
+        assert len(response.json()["top_cards"]) == 3, 'no top cards in result'
+
+        current = connection['CurrentGameData'].objects().first()
+        assert len(current.players[0].player_cards.group_cards) == 3, \
+            'wrong player groups'
+
+    # TODO: here test 409
+
+    def test_analyst_get_return_401(self, client: TestClient) -> None:
+        """Test analyst_look return 401 for unauthorized
+        """
+        response = client.patch(
+            f"{settings.api_v1_str}/game/phase/briefing/analyst_look"
+                )
+        assert response.status_code == 401, 'wrong status'
+        assert response.json()['detail'] == 'Not authenticated', 'wrong detail'

@@ -1,5 +1,5 @@
 from fastapi import status, Depends, APIRouter, Query
-from app.schemas import schema_user
+from app.schemas import schema_user, schema_game
 from app.crud import crud_game
 from app.core import security_user
 from app.constructs import Faction
@@ -98,10 +98,11 @@ def next_phase(
         )
 def analyst_get(
     user: schema_user.User = Depends(security_user.get_current_active_user),
-        ) -> None:
+        ) -> schema_game.TopDeck:
     """Look top three cards of group deck and change current game data
     """
-    crud_game.game.get_game_processor(user.login) \
+    proc = crud_game.game.get_game_processor(user.login) \
         .play_analyst_for_look_the_top() \
-        .flusсh() \
-        .save()
+
+    proc.flusсh().save()
+    return { "top_cards": proc.G.c.groups.temp_group }

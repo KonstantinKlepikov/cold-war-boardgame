@@ -1,12 +1,14 @@
-from typing import Dict, List, Union, Optional, Any
+from typing import Dict, List, Union, Optional
 from fastapi import HTTPException
 from app.schemas import schema_game
 from app.models import model_game
 from app.config import settings
 from app.constructs import Priority, Faction
-from bgameb import Game, Player, Deck, Card, Steps, Step, Dice, Bag
-from dataclasses import dataclass, field
-from dataclasses_json import dataclass_json, Undefined
+from app.core.game_definition import (
+    CustomGame, CustomDeck, CustomPlayer, CustomSteps, PlayerAgentCard,
+    PlayerGroupObjCard, GroupCard, ObjectiveCard
+        )
+from bgameb import Step, Dice, Bag
 from fastapi.encoders import jsonable_encoder
 
 
@@ -42,102 +44,6 @@ def make_game_data(login: str) -> schema_game.CurrentGameData:
                 }
 
     return schema_game.CurrentGameData(**new_game)
-
-
-@dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(repr=False)
-class CustomGame(Game):
-    mission_card: Optional[str] = None
-
-    def __post_init__(self) -> None:
-        super().__post_init__()
-
-
-@dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(repr=False)
-class CustomSteps(Steps):
-    game_turn: int = 0
-    turn_phase: Optional[str] = None
-    turn_phases_left: List[str] = field(default_factory=list)
-    is_game_end: bool = False
-
-
-@dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(repr=False)
-class CustomPlayer(Player):
-    has_priority: Optional[bool] = None
-    is_bot: Optional[bool] = None
-    score: int = 0
-    faction: Optional[str] = None
-    player_cards: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
-    login: Optional[str] = None
-    abilities: List[str] = field(default_factory=list)
-
-    def __post_init__(self) -> None:
-        super().__post_init__()
-
-
-@dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(repr=False)
-class CustomDeck(Deck):
-    deck_len: int = 0
-    pile: List[str] = field(default_factory=list)
-    deck: List[str] = field(default_factory=list)
-
-    def __post_init__(self) -> None:
-        super().__post_init__()
-
-
-@dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(repr=False)
-class PlayerAgentCard(Card):
-    name: Optional[str] = None
-    is_dead: bool = False
-    is_in_play: bool = False
-    is_in_vacation: bool = False
-    is_revealed: bool = False
-
-    def __post_init__(self) -> None:
-        super().__post_init__()
-
-
-@dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(repr=False)
-class PlayerGroupObjCard(Card):
-    name: Optional[str] = None
-    is_in_deck: bool = True
-    is_in_play: bool = False
-    is_active: Optional[bool] = None
-    pos_in_deck: Optional[int] = None
-
-    def __post_init__(self) -> None:
-        super().__post_init__()
-
-
-@dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(repr=False)
-class GroupCard(Card):
-    name: Optional[str] = None
-    faction: Optional[str] = None
-    influence: Optional[int] = None
-    power: Optional[str] = None
-
-    def __post_init__(self) -> None:
-        super().__post_init__()
-
-
-@dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(repr=False)
-class ObjectiveCard(Card):
-    name: Optional[str] = None
-    bias_icons: List[str] = field(default_factory=list)
-    population: Optional[int] = None
-    special_ability: Optional[str] = None
-    stability: Optional[int] = None
-    victory_points: Optional[int] = None
-
-    def __post_init__(self) -> None:
-        super().__post_init__()
 
 
 class GameProcessor:
@@ -435,23 +341,27 @@ class GameProcessor:
 
         return self
 
-    def play_analyst_for_look_the_top(self) -> 'GameProcessor':
-        """Play analyst abylity for look the top cards
-
-        Returns:
-            GameProcessor
+    def _check_analyct_confition(self) -> None:
+        """Check conditions for play analyst ability
         """
         if self.G.c.steps.turn_phase != settings.phases[0]:
             raise HTTPException(
                 status_code=409,
                 detail="Ability can't be played in any phases except 'briefing'."
                     )
-
         if not 'Analyst' in self.G.c.player.abilities:
             raise HTTPException(
                 status_code=409,
                 detail="No access to play ability of Analyst agent card."
                     )
+
+    def play_analyst_for_look_the_top(self) -> 'GameProcessor':
+        """Play analyst abylity for look the top cards
+
+        Returns:
+            GameProcessor
+        """
+        self._check_analyct_confition()
 
         if len([
             card.id for card
@@ -463,6 +373,8 @@ class GameProcessor:
                 detail="Top 3 group cards is yet revealed for player."
                     )
 
+        self.G.c.groups.temp_group = []
+
         for pos in range(-3, 0):
             card = self.G.c.groups.current[pos]
             try:
@@ -471,9 +383,45 @@ class GameProcessor:
                 pass
             self.G.c.player.c.groups.append(card)
             self.G.c.player.c.groups.current[-1].pos_in_deck = pos
+            self.G.c.groups.temp_group.append(card.id)
 
         return self
 
+    def play_analyst_for_arrange_the_top(
+        self, top: List[str]) -> 'GameProcessor':
+        """Play analyst abylity for rearrange the top cards
+
+        Args:
+            top (List[str]): arranged cards
+
+        Returns:
+            GameProcessor
+        """
+        self._check_analyct_confition()
+
+        current = {}
+        check = set()
+        for _ in range(3):
+            card = self.G.c.groups.pop()
+            check.add([card.id, ])
+            current[card.id] = card
+
+        if not check == set(top):
+
+            for card in current.values():
+                self.G.c.groups.append(card)
+
+            raise HTTPException(
+                status_code=409,
+                detail="Your list of cards and top cards not match."
+                    )
+        else:
+            for card in top:
+                self.G.c.groups.append(current[card])
+
+        self.G.c.player.abilities.remove('Analyst')
+
+        return self
 
     def chek_phase_conditions_before_next(self) -> 'GameProcessor':
         """Check game conition before push to next phase
@@ -493,7 +441,7 @@ class GameProcessor:
         # briefing
         if phase == settings.phases[0]:
 
-            # players has priority
+            # players has't priority
             if not self.G.c.player.has_priority \
                     and not self.G.c.bot.has_priority:
                 raise HTTPException(
@@ -501,11 +449,18 @@ class GameProcessor:
                     detail="No one player has priority. Cant push to next phase."
                         )
 
-            # objective card defined
+            # objective card not defined
             if not self.G.mission_card:
                 raise HTTPException(
                     status_code=409,
                     detail="Mission card undefined. Cant push to next phase."
+                        )
+
+            # analyst not used
+            if 'Analyst' in self.G.c.player.abilities:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Anlyst ability must be used."
                         )
 
         # planning

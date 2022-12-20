@@ -181,6 +181,10 @@ class TestGameProcessor:
         assert current.game_steps.is_game_end == True, 'game not end'
         assert len(current.game_steps.turn_phases_left) == 5, 'wrong phases left'
 
+class TestGameProcessorLogic:
+    """Test GameProcessor class
+    """
+
     def test_deal_and_shuffle_decks(
         self,
         inited_game_proc: game_logic.GameProcessor,
@@ -292,7 +296,7 @@ class TestGameProcessor:
             'phase changed if game end'
         assert len(game_proc.G.c.steps.current) == 6, 'wrong tep len'
 
-    def test_play_analyst_for_look_the_top_raise_wrong_phase(
+    def test_check_analyct_confition_raise_wrong_phase(
         self,
         inited_game_proc: game_logic.GameProcessor,
             ) -> None:
@@ -300,9 +304,9 @@ class TestGameProcessor:
         """
         inited_game_proc.G.c.steps.turn_phase = settings.phases[5]
         with pytest.raises(HTTPException):
-            inited_game_proc.play_analyst_for_look_the_top()
+            inited_game_proc._check_analyct_confition()
 
-    def test_play_analyst_for_look_the_top_raise_wrong_access(
+    def test__check_analyct_confition_raise_wrong_access(
         self,
         inited_game_proc: game_logic.GameProcessor,
             ) -> None:
@@ -311,7 +315,7 @@ class TestGameProcessor:
         """
         inited_game_proc.G.c.steps.turn_phase = settings.phases[0]
         with pytest.raises(HTTPException):
-            inited_game_proc.play_analyst_for_look_the_top()
+            inited_game_proc._check_analyct_confition()
 
     def test_play_analyst_for_look_the_top(
         self,

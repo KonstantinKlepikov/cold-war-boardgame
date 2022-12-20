@@ -58,6 +58,7 @@ class PlayerAgentCard(BaseModel):
                 }
             }
 
+
 class PlayerGroupOrObjectivreCard(BaseModel):
     """Known or own by player nonagent card.
     Position here - is any nonegative integer from 0 to len of deck.
@@ -77,6 +78,22 @@ class PlayerGroupOrObjectivreCard(BaseModel):
                 "is_active": None,
                 "pos_in_deck": 0,
                 "name": "Master Spy",
+                }
+            }
+
+
+class TopDeck(BaseModel):
+    """List of id of top cards of any deck. The top card
+    is a last card in list.
+    """
+    top_cards: List[str]
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "top_cards": [
+                    "Master Spy",
+                    ],
                 }
             }
 
@@ -181,7 +198,7 @@ class Player(BaseModel):
                         ],
                     },
                 "login": "DonaldTrump",
-                "abikities": [
+                "abilities": [
                     "Analist",
                     ],
                 }

@@ -1,4 +1,4 @@
-from fastapi import status, Depends, APIRouter, Query
+from fastapi import status, Depends, APIRouter, Query, HTTPException
 from app.schemas import schema_user, schema_game
 from app.crud import crud_game
 from app.core import security_user
@@ -26,8 +26,7 @@ def create_new_game(
     crud_game.game.create_new_game(obj_in)
     crud_game.game.get_game_processor(user.login) \
         .deal_and_shuffle_decks() \
-        .flusсh() \
-        .save()
+        .flusсh().save()
 
 
 @router.patch(
@@ -47,8 +46,7 @@ def preset_faction(
     """
     crud_game.game.get_game_processor(user.login) \
         .set_faction(q) \
-        .flusсh() \
-        .save()
+        .flusсh().save()
 
 
 @router.patch(
@@ -65,8 +63,7 @@ def next_turn(
     """
     crud_game.game.get_game_processor(user.login) \
         .set_next_turn() \
-        .flusсh() \
-        .save()
+        .flusсh().save()
 
 
 @router.patch(
@@ -85,15 +82,14 @@ def next_phase(
         .chek_phase_conditions_before_next() \
         .set_next_phase() \
         .set_phase_conditions_after_next() \
-        .flusсh() \
-        .save()
+        .flusсh().save()
 
 
 @router.patch(
     "/phase/briefing/analyst_look",
     status_code=status.HTTP_200_OK,
     responses=settings.NEXT_ERRORS,
-    summary='Look top three cards of group deck',
+    summary='Look top three cards of group deck with analist ability',
     response_description="Ok. Data is changed",
         )
 def analyst_get(
@@ -106,3 +102,27 @@ def analyst_get(
 
     proc.flusсh().save()
     return { "top_cards": proc.G.c.groups.temp_group }
+
+
+@router.patch(
+    "/phase/briefing/analyst_arrange",
+    status_code=status.HTTP_200_OK,
+    responses=settings.NEXT_ERRORS,
+    summary='Arrange top three cards of group deck with analist ability',
+    response_description="Ok. Data is changed",
+        )
+def analyst_arrnge(
+    top: schema_game.TopDeck,
+    user: schema_user.User = Depends(security_user.get_current_active_user),
+        ) -> None:
+    """Arrange top three cards of group deck and change current game data
+    """
+    if len(top.top_cards) != 3:
+        raise HTTPException(
+            status_code=409,
+            detail="You must give exactly tree cards id "
+                   f"in list to rearrange top deck. You given {len(top.top_cards)}."
+                )
+    crud_game.game.get_game_processor(user.login) \
+        .play_analyst_for_arrange_the_top(top.top_cards) \
+        .flusсh().save()

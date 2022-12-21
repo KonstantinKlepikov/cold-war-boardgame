@@ -121,7 +121,7 @@ class TestGameProcessor:
         # objectives
         assert len(game_proc.G.c.objectives.c) == 21, 'wrong objective len'
         assert game_proc.G.mission_card is None, 'wrong mission card'
-        assert not game_proc.G.c.objectives.current, 'nonempty objective current'
+        assert len(game_proc.G.c.objectives.current) == 21, 'empty objective current'
         assert len(game_proc.G.c.objectives.pile) == 0, 'wrong pile'
         assert game_proc.G.c.objectives.c.egypt.id == 'Egypt', 'wrong card field'
         assert game_proc.G.c.objectives.c.egypt.name == 'Egypt', 'wrong card field'
@@ -131,7 +131,7 @@ class TestGameProcessor:
 
         # groups
         assert len(game_proc.G.c.groups.c) == 24, 'wrong group len'
-        assert not game_proc.G.c.groups.current, 'group current'
+        assert len(game_proc.G.c.groups.current) == 24, 'empty group current'
         assert len(game_proc.G.c.groups.pile) == 0, 'wrong pile'
         assert game_proc.G.c.groups.c.guerilla.id == 'Guerilla', 'wrong card field'
         assert game_proc.G.c.groups.c.guerilla.name == 'Guerilla', 'wrong card field'
@@ -296,7 +296,7 @@ class TestGameProcessorLogic:
             'phase changed if game end'
         assert len(game_proc.G.c.steps.current) == 6, 'wrong tep len'
 
-    def test_check_analyct_confition_raise_wrong_phase(
+    def test_check_analyct_condition_raise_wrong_phase(
         self,
         inited_game_proc: game_logic.GameProcessor,
             ) -> None:
@@ -304,9 +304,9 @@ class TestGameProcessorLogic:
         """
         inited_game_proc.G.c.steps.turn_phase = settings.phases[5]
         with pytest.raises(HTTPException):
-            inited_game_proc._check_analyct_confition()
+            inited_game_proc._check_analyct_condition()
 
-    def test__check_analyct_confition_raise_wrong_access(
+    def test_check_analyct_condition_raise_wrong_access(
         self,
         inited_game_proc: game_logic.GameProcessor,
             ) -> None:
@@ -315,7 +315,7 @@ class TestGameProcessorLogic:
         """
         inited_game_proc.G.c.steps.turn_phase = settings.phases[0]
         with pytest.raises(HTTPException):
-            inited_game_proc._check_analyct_confition()
+            inited_game_proc._check_analyct_condition()
 
     def test_play_analyst_for_look_the_top(
         self,
@@ -352,10 +352,81 @@ class TestGameProcessorLogic:
         assert game_proc.G.c.player.c.groups.current[0].pos_in_deck == -3, \
             'wrong position'
 
+    def test_play_analyst_for_arrange_the_top(
+        self,
+        started_game_proc: game_logic.GameProcessor,
+            ) -> None:
+        """Test play analyst for arrange the top
+        """
+        started_game_proc.G.c.steps.turn_phase = settings.phases[0]
+        started_game_proc.G.c.player.abilities.append('Analyst')
+        top = [
+            started_game_proc.G.c.groups.current[-3].id,
+            started_game_proc.G.c.groups.current[-2].id,
+            started_game_proc.G.c.groups.current[-1].id,
+                ]
+        rev = top[::-1]
+        assert len(started_game_proc.G.c.groups.current) == 24, 'wrong current'
+
+        game_proc = started_game_proc.play_analyst_for_arrange_the_top(rev)
+        assert game_proc.G.c.player.abilities == [], 'wrong abilities'
+        assert len(game_proc.G.c.groups.current) == 24, 'wrong current'
+        top = [
+            game_proc.G.c.groups.current[-3].id,
+            game_proc.G.c.groups.current[-2].id,
+            game_proc.G.c.groups.current[-1].id,
+                ]
+        assert top == rev, 'not reordered'
+
+    def test_play_analyst_for_arrange_the_top_not_match(
+        self,
+        started_game_proc: game_logic.GameProcessor,
+            ) -> None:
+        """Test play analyst for arrange the top not match the top
+        """
+        started_game_proc.G.c.steps.turn_phase = settings.phases[0]
+        started_game_proc.G.c.player.abilities.append('Analyst')
+        old = [
+            started_game_proc.G.c.groups.current[-3].id,
+            started_game_proc.G.c.groups.current[-2].id,
+            started_game_proc.G.c.groups.current[-1].id,
+                ]
+        wrong = [
+            started_game_proc.G.c.groups.current[-10].id,
+            started_game_proc.G.c.groups.current[-2].id,
+            started_game_proc.G.c.groups.current[-1].id,
+                ]
+        wrong.reverse()
+
+        with pytest.raises(HTTPException):
+            started_game_proc.play_analyst_for_arrange_the_top(wrong)
+
+        assert started_game_proc.G.c.player.abilities == ['Analyst'], 'wrong abilities'
+        assert len(started_game_proc.G.c.groups.current) == 24, 'wrong current'
+        new = [
+            started_game_proc.G.c.groups.current[-3].id,
+            started_game_proc.G.c.groups.current[-2].id,
+            started_game_proc.G.c.groups.current[-1].id,
+                ]
+        assert old == new, 'reordered'
+
 
 class TestCheckPhaseConditions:
     """Test chek_phase_conditions_before_next()
     """
+
+    def test_chek_phase_conditions_before_next_if_game_end(
+        self,
+        inited_game_proc: game_logic.GameProcessor,
+            ) -> None:
+        """Test chek_phase_conditions_before_next() if game end
+        """
+        inited_game_proc.G.c.steps.is_game_end = True
+
+        with pytest.raises(
+            HTTPException,
+            ):
+            inited_game_proc.chek_phase_conditions_before_next()
 
     def test_chek_phase_conditions_before_next_raise_if_no_priority(
         self,
@@ -371,6 +442,38 @@ class TestCheckPhaseConditions:
             ):
             inited_game_proc.chek_phase_conditions_before_next()
 
+    def test_chek_phase_conditions_before_next_if_no_mission(
+        self,
+        inited_game_proc: game_logic.GameProcessor,
+            ) -> None:
+        """Test chek_phase_conditions_before_next() if no mission card set
+        """
+        inited_game_proc.G.c.steps.turn_phase = settings.phases[0]
+        inited_game_proc.G.mission_card = 'some mission card'
+
+        with pytest.raises(
+            HTTPException,
+                ):
+            inited_game_proc.chek_phase_conditions_before_next()
+
+    def test_chek_phase_conditions_before_next_if_analyst_not_used(
+        self,
+        inited_game_proc: game_logic.GameProcessor,
+            ) -> None:
+        """Test chek_phase_conditions_before_next() if analyst
+        bility not used
+        """
+        inited_game_proc.G.c.steps.turn_phase = settings.phases[0]
+        inited_game_proc.G.c.player.abilities.append('Analyst')
+        inited_game_proc.G.c.player.has_priority = True
+        inited_game_proc.G.c.bot.has_priority = False
+        inited_game_proc.G.mission_card = 'some mission card'
+
+        with pytest.raises(
+            HTTPException,
+                ):
+            inited_game_proc.chek_phase_conditions_before_next()
+
     def test_chek_phase_conditions_before_next_if_last_phase(
         self,
         inited_game_proc: game_logic.GameProcessor,
@@ -383,19 +486,6 @@ class TestCheckPhaseConditions:
         with pytest.raises(
             HTTPException,
                 ):
-            inited_game_proc.chek_phase_conditions_before_next()
-
-    def test_chek_phase_conditions_before_next_if_game_end(
-        self,
-        inited_game_proc: game_logic.GameProcessor,
-            ) -> None:
-        """Test chek_phase_conditions_before_next() if game end
-        """
-        inited_game_proc.G.c.steps.is_game_end = True
-
-        with pytest.raises(
-            HTTPException,
-            ):
             inited_game_proc.chek_phase_conditions_before_next()
 
 

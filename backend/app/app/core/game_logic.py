@@ -146,6 +146,8 @@ class GameProcessor:
             self.G.c.groups.deal(self.G.c.groups.deck)
         else:
             self.G.c.groups.clear()
+        print(self.G.c.groups.deck) # NOTE:
+        print(self.G.c.groups.c.keys()) # NOTE:
 
         # objective deck
         data: dict = self.current_data.game_decks.objective_deck.to_mongo().to_dict()
@@ -341,7 +343,7 @@ class GameProcessor:
 
         return self
 
-    def _check_analyct_confition(self) -> None:
+    def _check_analyct_condition(self) -> None:
         """Check conditions for play analyst ability
         """
         if self.G.c.steps.turn_phase != settings.phases[0]:
@@ -361,7 +363,7 @@ class GameProcessor:
         Returns:
             GameProcessor
         """
-        self._check_analyct_confition()
+        self._check_analyct_condition()
 
         if len([
             card.id for card
@@ -397,18 +399,20 @@ class GameProcessor:
         Returns:
             GameProcessor
         """
-        self._check_analyct_confition()
+        self._check_analyct_condition()
+
+        print(f'{self.G.c.groups.current_ids()=}')
 
         current = {}
         check = set()
         for _ in range(3):
             card = self.G.c.groups.pop()
-            check.add([card.id, ])
+            check.add(card.id)
             current[card.id] = card
 
-        if not check == set(top):
+        if check ^ set(top):
 
-            for card in current.values():
+            for card in reversed(current.values()):
                 self.G.c.groups.append(card)
 
             raise HTTPException(

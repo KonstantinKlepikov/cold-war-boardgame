@@ -1,4 +1,5 @@
 import pytest
+import json
 from typing import Callable, Generator
 from fastapi.testclient import TestClient
 from app.crud import crud_game, crud_user
@@ -297,8 +298,7 @@ class TestAnalyst:
             return user.get_by_login(settings.user0_login)
 
         def mock_process(*args, **kwargs) -> Callable:
-            return game.get_game_processor(args[0]) \
-                .deal_and_shuffle_decks()
+            return game.get_game_processor(args[0])
 
         monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
         monkeypatch.setattr(crud_game.game, "get_game_processor", mock_process)
@@ -339,3 +339,33 @@ class TestAnalyst:
                 )
         assert response.status_code == 401, 'wrong status'
         assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
+
+    def test_analyst_arrange_return_200(
+        self,
+        mock_return,
+        connection: Generator,
+        client: TestClient,
+            ) -> None:
+        """Test /phase/briefing/analyst_look returns 200
+        """
+        current = connection['CurrentGameData'].objects().first()
+        current.game_steps.turn_phase = settings.phases[0]
+        current.players[0].abilities = ['Analyst', ]
+        current.save()
+        top = current.game_decks.group_deck.deck[-3:]
+        top.reverse()
+
+        print(current.game_decks.group_deck.deck) # NOTE:
+
+        response = client.patch(
+            f"{settings.api_v1_str}/game/phase/briefing/analyst_arrange",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                },
+            json={"top_cards": top},
+            )
+        assert response.status_code == 200, 'wrong status'
+
+        current = connection['CurrentGameData'].objects().first()
+        assert current.game_decks.group_deck.deck[-3:] == top, \
+            'not arranged'

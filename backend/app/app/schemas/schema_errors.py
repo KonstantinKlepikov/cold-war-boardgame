@@ -64,7 +64,7 @@ class HttpError409(HttpErrorMessage):
             "example": {
                 "end game error": {
                     "detail":
-                        "Something can't be changed, because game is end",
+                        "Something wrong with client or server data",
                         },
                     }
                 }

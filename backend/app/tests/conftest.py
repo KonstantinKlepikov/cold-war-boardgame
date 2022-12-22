@@ -62,11 +62,11 @@ def db_game_data() -> Dict[str, Union[str, bool]]:
         'game_decks':
             {
                 'group_deck': {
-                    'current': group_cards,
+                    'deck': group_cards,
                     'deck_len': 24,
                         },
                 'objective_deck': {
-                    'current': objective_cards,
+                    'deck': objective_cards,
                     'deck_len': 21,
                         }
             },
@@ -163,6 +163,7 @@ def cards(connection: Generator) -> crud_card.CRUDCards:
         connection['ObjectiveCard'],
             )
 
+
 @pytest.fixture(scope="function")
 def game_proc(
     game: crud_game.CRUDGame,
@@ -180,7 +181,7 @@ def inited_game_proc(
         ) -> game_logic.GameProcessor:
     """Get game processor object
     """
-    return game_proc.init_game_data()
+    return game_proc.fill()
 
 
 @pytest.fixture(scope="function")
@@ -191,6 +192,4 @@ def started_game_proc(
     """
     obj_in = game_logic.make_game_data(settings.user0_login)
     game.create_new_game(obj_in)
-    game_proc = game.get_game_processor(settings.user0_login)
-    game_proc = game.deal_and_shuffle_decks(game_proc)
-    return game_proc
+    return game.get_game_processor(settings.user0_login).deal_and_shuffle_decks()

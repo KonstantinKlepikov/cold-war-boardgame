@@ -1,0 +1,843 @@
+{
+    "id": "Cold War Game",
+    "counter": {},
+    "player": {
+        "id": "player",
+        "counter": {},
+        "is_active": null,
+        "has_priority": null,
+        "team": null,
+        "is_bot": false,
+        "score": 0,
+        "faction": null,
+        "player_cards": {
+            "agent_cards": [{
+                "is_dead": false,
+                "is_in_play": false,
+                "is_in_vacation": false,
+                "is_revealed": false,
+                "name": "Master Spy"
+            }, {
+                "is_dead": false,
+                "is_in_play": false,
+                "is_in_vacation": false,
+                "is_revealed": false,
+                "name": "Deputy Director"
+            }, {
+                "is_dead": false,
+                "is_in_play": false,
+                "is_in_vacation": false,
+                "is_revealed": false,
+                "name": "Double Agent"
+            }, {
+                "is_dead": false,
+                "is_in_play": false,
+                "is_in_vacation": false,
+                "is_revealed": false,
+                "name": "Analyst"
+            }, {
+                "is_dead": false,
+                "is_in_play": false,
+                "is_in_vacation": false,
+                "is_revealed": false,
+                "name": "Assassin"
+            }, {
+                "is_dead": false,
+                "is_in_play": false,
+                "is_in_vacation": false,
+                "is_revealed": false,
+                "name": "Director"
+            }],
+            "group_cards": [],
+            "objective_cards": []
+        },
+        "login": "DonaldTrump"
+    },
+    "bot": {
+        "id": "bot",
+        "counter": {},
+        "is_active": null,
+        "has_priority": null,
+        "team": null,
+        "is_bot": true,
+        "score": 0,
+        "faction": null,
+        "player_cards": {
+            "agent_cards": [{
+                "is_dead": false,
+                "is_in_play": false,
+                "is_in_vacation": false,
+                "is_revealed": false,
+                "name": "Master Spy"
+            }, {
+                "is_dead": false,
+                "is_in_play": false,
+                "is_in_vacation": false,
+                "is_revealed": false,
+                "name": "Deputy Director"
+            }, {
+                "is_dead": false,
+                "is_in_play": false,
+                "is_in_vacation": false,
+                "is_revealed": false,
+                "name": "Double Agent"
+            }, {
+                "is_dead": false,
+                "is_in_play": false,
+                "is_in_vacation": false,
+                "is_revealed": false,
+                "name": "Analyst"
+            }, {
+                "is_dead": false,
+                "is_in_play": false,
+                "is_in_vacation": false,
+                "is_revealed": false,
+                "name": "Assassin"
+            }, {
+                "is_dead": false,
+                "is_in_play": false,
+                "is_in_vacation": false,
+                "is_revealed": false,
+                "name": "Director"
+            }],
+            "group_cards": [],
+            "objective_cards": []
+        },
+        "login": null
+    },
+    "group_deck": {
+        "id": "Group Deck",
+        "counter": {},
+        "guerilla": {
+            "id": "Guerilla",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Guerilla",
+            "faction": "Military",
+            "influence": 1,
+            "power": "Send any other group card, whether ready or mobilized, to the discard pile"
+        },
+        "militia": {
+            "id": "Militia",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Militia",
+            "faction": "Military",
+            "influence": 2,
+            "power": "Send any other group card, whether ready or mobilized, to the discard pile"
+        },
+        "mercenaries": {
+            "id": "Mercenaries",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Mercenaries",
+            "faction": "Military",
+            "influence": 3,
+            "power": "Send any other group card, whether ready or mobilized, to the discard pile"
+        },
+        "police": {
+            "id": "Police",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Police",
+            "faction": "Military",
+            "influence": 4,
+            "power": "Send any other group card, whether ready or mobilized, to the discard pile"
+        },
+        "infantry": {
+            "id": "Infantry",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Infantry",
+            "faction": "Military",
+            "influence": 5,
+            "power": "Send any other group card, whether ready or mobilized, to the discard pile"
+        },
+        "generals": {
+            "id": "Generals",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Generals",
+            "faction": "Military",
+            "influence": 6,
+            "power": "Send any other group card, whether ready or mobilized, to the discard pile"
+        },
+        "workers": {
+            "id": "Workers",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Workers",
+            "faction": "Economic",
+            "influence": 1,
+            "power": "Mobilize any ready group or ready any mobilized group. You may not affect an economic card with this power"
+        },
+        "mafia": {
+            "id": "Mafia",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Mafia",
+            "faction": "Economic",
+            "influence": 2,
+            "power": "Mobilize any ready group or ready any mobilized group. You may not affect an economic card with this power"
+        },
+        "food_companies": {
+            "id": "Food companies",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Food companies",
+            "faction": "Economic",
+            "influence": 3,
+            "power": "Mobilize any ready group or ready any mobilized group. You may not affect an economic card with this power"
+        },
+        "industry": {
+            "id": "Industry",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Industry",
+            "faction": "Economic",
+            "influence": 4,
+            "power": "Mobilize any ready group or ready any mobilized group. You may not affect an economic card with this power"
+        },
+        "oil_tycoons": {
+            "id": "Oil Tycoons",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Oil Tycoons",
+            "faction": "Economic",
+            "influence": 5,
+            "power": "Mobilize any ready group or ready any mobilized group. You may not affect an economic card with this power"
+        },
+        "bankers": {
+            "id": "Bankers",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Bankers",
+            "faction": "Economic",
+            "influence": 6,
+            "power": "Mobilize any ready group or ready any mobilized group. You may not affect an economic card with this power"
+        },
+        "students": {
+            "id": "Students",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Students",
+            "faction": "Political",
+            "influence": 1,
+            "power": "Steal a group your opponent or give him one of yours. You may not make either player exceed the objective's population limit, nor make your opponent exceed the objective's Stability"
+        },
+        "trade_union": {
+            "id": "Trade Union",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Trade Union",
+            "faction": "Political",
+            "influence": 2,
+            "power": "Steal a group your opponent or give him one of yours. You may not make either player exceed the objective's population limit, nor make your opponent exceed the objective's Stability"
+        },
+        "nationalists": {
+            "id": "Nationalists",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Nationalists",
+            "faction": "Political",
+            "influence": 3,
+            "power": "Steal a group your opponent or give him one of yours. You may not make either player exceed the objective's population limit, nor make your opponent exceed the objective's Stability"
+        },
+        "fundamentalists": {
+            "id": "Fundamentalists",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Fundamentalists",
+            "faction": "Political",
+            "influence": 4,
+            "power": "Steal a group your opponent or give him one of yours. You may not make either player exceed the objective's population limit, nor make your opponent exceed the objective's Stability"
+        },
+        "opposition": {
+            "id": "Opposition",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Opposition",
+            "faction": "Political",
+            "influence": 5,
+            "power": "Steal a group your opponent or give him one of yours. You may not make either player exceed the objective's population limit, nor make your opponent exceed the objective's Stability"
+        },
+        "government": {
+            "id": "Government",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Government",
+            "faction": "Political",
+            "influence": 6,
+            "power": "Steal a group your opponent or give him one of yours. You may not make either player exceed the objective's population limit, nor make your opponent exceed the objective's Stability"
+        },
+        "artists": {
+            "id": "Artists",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Artists",
+            "faction": "Media",
+            "influence": 1,
+            "power": "Look at the top card on the group deck, then recruit it, discard it, or leave it where it was"
+        },
+        "ngos": {
+            "id": "NGOs",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "NGOs",
+            "faction": "Media",
+            "influence": 2,
+            "power": "Look at the top card on the group deck, then recruit it, discard it, or leave it where it was"
+        },
+        "phone_company": {
+            "id": "Phone company",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Phone company",
+            "faction": "Media",
+            "influence": 3,
+            "power": "Look at the top card on the group deck, then recruit it, discard it, or leave it where it was"
+        },
+        "newspapers": {
+            "id": "Newspapers",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Newspapers",
+            "faction": "Media",
+            "influence": 4,
+            "power": "Look at the top card on the group deck, then recruit it, discard it, or leave it where it was"
+        },
+        "radio": {
+            "id": "Radio",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Radio",
+            "faction": "Media",
+            "influence": 5,
+            "power": "Look at the top card on the group deck, then recruit it, discard it, or leave it where it was"
+        },
+        "television": {
+            "id": "Television",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Television",
+            "faction": "Media",
+            "influence": 6,
+            "power": "Look at the top card on the group deck, then recruit it, discard it, or leave it where it was"
+        }
+    },
+    "objective_deck": {
+        "id": "Objective Deck",
+        "counter": {},
+        "nobel_peace_prize": {
+            "id": "Nobel Peace Prize",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Nobel Peace Prize",
+            "bias_icons": ["Media", "Political", "Economic", "Military"],
+            "population": 1,
+            "special_ability": "Cease-fire: Upon cansing civil disorder, discard this objective to prevent your Agent X from being terminated. He goes on leave instead.",
+            "stability": 6,
+            "victory_points": 5
+        },
+        "live_benefit": {
+            "id": "Live Benefit",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Live Benefit",
+            "bias_icons": ["Media", "Economic", "Political", "Military"],
+            "population": 1,
+            "special_ability": "Influence Struggle: Instead of recruiting a group normally, activating a group, or passing, discard this objective to recruit the group on top of the group discard pile.",
+            "stability": 6,
+            "victory_points": 5
+        },
+        "nuclear_escalation": {
+            "id": "Nuclear Escalation",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Nuclear Escalation",
+            "bias_icons": ["Media", "Military", "Political", "Economic"],
+            "population": 1,
+            "special_ability": "Influence Struggle: Instead of recruiting a group normally, activating a group, or passing, discard this objective to send all military cards in play to the group deck discard pile.",
+            "stability": 6,
+            "victory_points": 5
+        },
+        "space_race": {
+            "id": "Space Race",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Space Race",
+            "bias_icons": ["Media", "Military", "Economic", "Political"],
+            "population": 1,
+            "special_ability": "Detente: Discard this objective to look at the next three cards on the objective deck and then replace them in any order you choose.",
+            "stability": 6,
+            "victory_points": 5
+        },
+        "olympic_games": {
+            "id": "Olympic Games",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Olympic Games",
+            "bias_icons": ["Media", "Economic", "Military", "Political"],
+            "population": 1,
+            "special_ability": "Detente: Discard this objective to return a terminated agent to the game. It reurns on leave (i.e., not at headquarters).",
+            "stability": 6,
+            "victory_points": 5
+        },
+        "summit_meeting": {
+            "id": "Summit Meeting",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Summit Meeting",
+            "bias_icons": ["Media", "Political", "Military", "Economic"],
+            "population": 1,
+            "special_ability": "Influence Struggle: Discard this objective to force your opponent to reveal his Agent X's identity.",
+            "stability": 6,
+            "victory_points": 5
+        },
+        "egypt": {
+            "id": "Egypt",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Egypt",
+            "bias_icons": ["Political", "Economic", "Media", "Military"],
+            "population": 4,
+            "stability": 11,
+            "victory_points": 20
+        },
+        "vietnam": {
+            "id": "Vietnam",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Vietnam",
+            "bias_icons": ["Economic", "Political", "Media", "Military"],
+            "population": 5,
+            "stability": 9,
+            "victory_points": 20
+        },
+        "panama": {
+            "id": "Panama",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Panama",
+            "bias_icons": ["Economic", "Military", "Media", "Political"],
+            "population": 5,
+            "stability": 9,
+            "victory_points": 15
+        },
+        "angola": {
+            "id": "Angola",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Angola",
+            "bias_icons": ["Military", "Political", "Media", "Economic"],
+            "population": 5,
+            "stability": 9,
+            "victory_points": 10
+        },
+        "afghanistan": {
+            "id": "Afghanistan",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Afghanistan",
+            "bias_icons": ["Economic", "Political", "Military", "Media"],
+            "population": 5,
+            "stability": 9,
+            "victory_points": 15
+        },
+        "houndaras": {
+            "id": "Houndaras",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Houndaras",
+            "bias_icons": ["Military", "Economic", "Media", "Political"],
+            "population": 5,
+            "stability": 9,
+            "victory_points": 10
+        },
+        "libya": {
+            "id": "Libya",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Libya",
+            "bias_icons": ["Military", "Political", "Economic", "Media"],
+            "population": 4,
+            "stability": 11,
+            "victory_points": 15
+        },
+        "greece": {
+            "id": "Greece",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Greece",
+            "bias_icons": ["Political", "Military", "Media", "Economic"],
+            "population": 3,
+            "stability": 13,
+            "victory_points": 10
+        },
+        "turkey": {
+            "id": "Turkey",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Turkey",
+            "bias_icons": ["Political", "Media", "Economic", "Military"],
+            "population": 3,
+            "stability": 13,
+            "victory_points": 15
+        },
+        "iran": {
+            "id": "Iran",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Iran",
+            "bias_icons": ["Political", "Military", "Economic", "Media"],
+            "population": 4,
+            "stability": 11,
+            "victory_points": 15
+        },
+        "cuba": {
+            "id": "Cuba",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Cuba",
+            "bias_icons": ["Economic", "Military", "Political", "Media"],
+            "population": 5,
+            "stability": 9,
+            "victory_points": 10
+        },
+        "congo": {
+            "id": "Congo",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Congo",
+            "bias_icons": ["Military", "Economic", "Political", "Media"],
+            "population": 5,
+            "stability": 9,
+            "victory_points": 10
+        },
+        "czechoslovakia": {
+            "id": "Czechoslovakia",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Czechoslovakia",
+            "bias_icons": ["Political", "Media", "Military", "Economic"],
+            "population": 3,
+            "stability": 13,
+            "victory_points": 20
+        },
+        "chile": {
+            "id": "Chile",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Chile",
+            "bias_icons": ["Political", "Economic", "Military", "Media"],
+            "population": 4,
+            "stability": 11,
+            "victory_points": 10
+        },
+        "korea": {
+            "id": "Korea",
+            "counter": {},
+            "count": 1,
+            "opened": false,
+            "tapped": false,
+            "side": null,
+            "name": "Korea",
+            "bias_icons": ["Military", "Media", "Political", "Economic"],
+            "population": 4,
+            "stability": 11,
+            "victory_points": 10
+        }
+    },
+    "game_steps": {
+        "id": "game_steps",
+        "counter": {},
+        "briefing": {
+            "id": "briefing",
+            "counter": {},
+            "priority": 0
+        },
+        "planning": {
+            "id": "planning",
+            "counter": {},
+            "priority": 1
+        },
+        "influence_struggle": {
+            "id": "influence_struggle",
+            "counter": {},
+            "priority": 2
+        },
+        "ceasefire": {
+            "id": "ceasefire",
+            "counter": {},
+            "priority": 3
+        },
+        "debriefing": {
+            "id": "debriefing",
+            "counter": {},
+            "priority": 4
+        },
+        "detente": {
+            "id": "detente",
+            "counter": {},
+            "priority": 5
+        }
+    },
+    "coin": {
+        "id": "coin",
+        "counter": {},
+        "count": 1,
+        "sides": 2
+    }
+}
+
+{
+    "_id": {
+        "$oid": "63937eb476b8a38765a2e655"
+    },
+    "game_steps": {
+        "game_turn": 0,
+        "turn_phase": "detente",
+        "turn_phases_left": ["briefing", "planning", "influence_struggle", "ceasefire", "debriefing", "detente"],
+        "is_game_end": false
+    },
+    "players": [{
+        "has_priority": null,
+        "is_bot": false,
+        "score": 0,
+        "faction": null,
+        "player_cards": {
+            "agent_cards": [{
+                "is_dead": false,
+                "is_in_play": false,
+                "is_in_vacation": false,
+                "is_revealed": false,
+                "name": "Master Spy"
+            }, {
+                "is_dead": false,
+                "is_in_play": false,
+                "is_in_vacation": false,
+                "is_revealed": false,
+                "name": "Deputy Director"
+            }, {
+                "is_dead": false,
+                "is_in_play": false,
+                "is_in_vacation": false,
+                "is_revealed": false,
+                "name": "Double Agent"
+            }, {
+                "is_dead": false,
+                "is_in_play": false,
+                "is_in_vacation": false,
+                "is_revealed": false,
+                "name": "Analyst"
+            }, {
+                "is_dead": false,
+                "is_in_play": false,
+                "is_in_vacation": false,
+                "is_revealed": false,
+                "name": "Assassin"
+            }, {
+                "is_dead": false,
+                "is_in_play": false,
+                "is_in_vacation": false,
+                "is_revealed": false,
+                "name": "Director"
+            }],
+            "group_cards": [],
+            "objective_cards": []
+        },
+        "login": "DonaldTrump"
+    }, {
+        "has_priority": null,
+        "is_bot": true,
+        "score": 0,
+        "faction": null,
+        "player_cards": {
+            "agent_cards": [{
+                "is_dead": false,
+                "is_in_play": false,
+                "is_in_vacation": false,
+                "is_revealed": false,
+                "name": "Master Spy"
+            }, {
+                "is_dead": false,
+                "is_in_play": false,
+                "is_in_vacation": false,
+                "is_revealed": false,
+                "name": "Deputy Director"
+            }, {
+                "is_dead": false,
+                "is_in_play": false,
+                "is_in_vacation": false,
+                "is_revealed": false,
+                "name": "Double Agent"
+            }, {
+                "is_dead": false,
+                "is_in_play": false,
+                "is_in_vacation": false,
+                "is_revealed": false,
+                "name": "Analyst"
+            }, {
+                "is_dead": false,
+                "is_in_play": false,
+                "is_in_vacation": false,
+                "is_revealed": false,
+                "name": "Assassin"
+            }, {
+                "is_dead": false,
+                "is_in_play": false,
+                "is_in_vacation": false,
+                "is_revealed": false,
+                "name": "Director"
+            }],
+            "group_cards": [],
+            "objective_cards": []
+        },
+        "login": null
+    }],
+    "game_decks": {
+        "group_deck": {
+            "deck_len": 24,
+            "pile": [],
+            "current": ["Guerilla", "Militia", "Mercenaries", "Police", "Infantry", "Generals", "Workers", "Mafia", "Food companies", "Industry", "Oil Tycoons", "Bankers", "Students", "Trade Union", "Nationalists", "Fundamentalists", "Opposition", "Government", "Artists", "NGOs", "Phone company", "Newspapers", "Radio", "Television"]
+        },
+        "objective_deck": {
+            "deck_len": 21,
+            "pile": [],
+            "current": ["Nobel Peace Prize", "Live Benefit", "Nuclear Escalation", "Space Race", "Olympic Games", "Summit Meeting", "Egypt", "Vietnam", "Panama", "Angola", "Afghanistan", "Houndaras", "Libya", "Greece", "Turkey", "Iran", "Cuba", "Congo", "Czechoslovakia", "Chile", "Korea"]
+        },
+        "mission_card": null
+    }
+}

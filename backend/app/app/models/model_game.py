@@ -41,8 +41,8 @@ class PlayerGroupOrObjectivreCard(EmbeddedDocument):
     """
     is_in_deck = BooleanField(default=True)
     is_in_play = BooleanField(default=False)
-    is_active = BooleanField(default=True)
-    pos_in_deck = IntField(min_value=0, null=True)
+    is_active = BooleanField(null=True)
+    pos_in_deck = IntField(max_value=0, null=True)
     name = StringField()
 
 
@@ -63,6 +63,7 @@ class Player(EmbeddedDocument):
     faction = StringField(null=True)
     player_cards = EmbeddedDocumentField(PlayerCards)
     login = StringField(null=True)
+    abilities = ListField(StringField())
 
 
 class GameDeck(EmbeddedDocument):
@@ -70,7 +71,7 @@ class GameDeck(EmbeddedDocument):
     """
     deck_len = IntField(min_value=0, default=0)
     pile = ListField(StringField())
-    current = ListField(StringField())
+    deck = ListField(StringField())
 
 
 class GameDecks(EmbeddedDocument):

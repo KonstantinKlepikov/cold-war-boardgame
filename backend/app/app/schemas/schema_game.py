@@ -1,5 +1,5 @@
 from typing import Literal, Optional, List, Union
-from pydantic import BaseModel, NonNegativeInt, conint
+from pydantic import BaseModel, NonNegativeInt, NonPositiveInt, conint
 from app.constructs import Phase
 
 
@@ -16,6 +16,24 @@ class GameSteps(BaseModel):
                 "game_turn": 0,
                 "turn_phase": "briefing",
                 "is_game_end": False,
+            }
+        }
+
+
+class GameStepsDb(GameSteps):
+    """Game steps in db
+    """
+    turn_phases_left: List[str] = []
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "game_turn": 0,
+                "turn_phase": "briefing",
+                "is_game_end": False,
+                "turn_phases_left": [
+                    "detente",
+                    ],
             }
         }
 
@@ -40,6 +58,7 @@ class PlayerAgentCard(BaseModel):
                 }
             }
 
+
 class PlayerGroupOrObjectivreCard(BaseModel):
     """Known or own by player nonagent card.
     Position here - is any nonegative integer from 0 to len of deck.
@@ -47,8 +66,8 @@ class PlayerGroupOrObjectivreCard(BaseModel):
     """
     is_in_deck: bool = True
     is_in_play: bool = False
-    is_active: bool = True
-    position: Optional[NonNegativeInt]
+    is_active: Optional[bool]
+    pos_in_deck: Optional[NonPositiveInt]
     name: str
 
     class Config:
@@ -56,9 +75,25 @@ class PlayerGroupOrObjectivreCard(BaseModel):
             "example": {
                 "is_in_deck": True,
                 "is_in_play": False,
-                "is_active": True,
-                "position": 0,
+                "is_active": None,
+                "pos_in_deck": 0,
                 "name": "Master Spy",
+                }
+            }
+
+
+class TopDeck(BaseModel):
+    """List of id of top cards of any deck. The top card
+    is a last card in list.
+    """
+    top_cards: List[str]
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "top_cards": [
+                    "Master Spy",
+                    ],
                 }
             }
 
@@ -88,6 +123,25 @@ class GameDeck(BaseModel):
         }
 
 
+class GameDeckDb(GameDeck):
+    """Game deck in db
+    """
+    deck: List[str] = []
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "deck_len": 0,
+                "pile": [
+                    "Ukranian War", "Something Else",
+                ],
+                "deck": [
+                    "Some Great Card",
+                ],
+            }
+        }
+
+
 class GameDecks(BaseModel):
     """Game decks and mission card
     """
@@ -105,6 +159,7 @@ class Player(BaseModel):
     faction: Optional[Literal['kgb', 'cia']] = None
     player_cards: PlayerCards
     login: Optional[str] = None
+    abilities: List[str] = []
 
     class Config:
         schema_extra = {
@@ -143,6 +198,9 @@ class Player(BaseModel):
                         ],
                     },
                 "login": "DonaldTrump",
+                "abilities": [
+                    "Analist",
+                    ],
                 }
             }
 

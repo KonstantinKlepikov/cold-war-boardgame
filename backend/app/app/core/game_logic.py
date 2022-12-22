@@ -146,8 +146,6 @@ class GameProcessor:
             self.G.c.groups.deal(self.G.c.groups.deck)
         else:
             self.G.c.groups.clear()
-        print(self.G.c.groups.deck) # NOTE:
-        print(self.G.c.groups.c.keys()) # NOTE:
 
         # objective deck
         data: dict = self.current_data.game_decks.objective_deck.to_mongo().to_dict()
@@ -400,8 +398,6 @@ class GameProcessor:
             GameProcessor
         """
         self._check_analyct_condition()
-
-        print(f'{self.G.c.groups.current_ids()=}')
 
         current = {}
         check = set()

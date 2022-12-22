@@ -43,13 +43,6 @@ class TestCreateNewGame:
         assert response.status_code == 201, 'wrong status'
         assert connection['CurrentGameData'].objects().count() == 2, 'wrong count of data'
 
-    def test_game_create_return_401(self, client: TestClient) -> None:
-        """Test game create return 401 for unauthorized
-        """
-        response = client.post(f"{settings.api_v1_str}/game/create")
-        assert response.status_code == 401, 'wrong status'
-        assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
-
 
 class TestPresetFaction:
     """Test game/preset/faction
@@ -124,13 +117,6 @@ class TestPresetFaction:
             )
         assert response.status_code == 422, 'wrong status'
 
-    def test_preset_faction_return_401(self, client: TestClient) -> None:
-        """Test preset faction return 401
-        """
-        response = client.patch(f"{settings.api_v1_str}/game/preset/faction?q=kgb")
-        assert response.status_code == 401, 'wrong status'
-        assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
-
 
 class TestNextTurn:
     """Test game/next_turn
@@ -193,13 +179,6 @@ class TestNextTurn:
             )
         assert response.status_code == 409, 'wrong status'
         assert response.json()['detail'] == "Something can't be changed, because game is end"
-
-    def test_next_turn_return_401(self, client: TestClient) -> None:
-        """Test next turn return 401 for unauthorized
-        """
-        response = client.patch(f"{settings.api_v1_str}/game/next_turn")
-        assert response.status_code == 401, 'wrong status'
-        assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
 
 
 class TestNextPhase:
@@ -272,13 +251,6 @@ class TestNextPhase:
         assert response.status_code == 409, 'wrong status'
         assert response.json()['detail'] == "Something can't be changed, because game is end"
 
-    def test_next_turn_return_401(self, client: TestClient) -> None:
-        """Test next phase return 401 for unauthorized
-        """
-        response = client.patch(f"{settings.api_v1_str}/game/next_phase")
-        assert response.status_code == 401, 'wrong status'
-        assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
-
 
 class TestAnalyst:
     """Test /phase/briefing/analyst_look
@@ -331,15 +303,6 @@ class TestAnalyst:
 
     # TODO: here test 409
 
-    def test_analyst_get_return_401(self, client: TestClient) -> None:
-        """Test analyst_look return 401 for unauthorized
-        """
-        response = client.patch(
-            f"{settings.api_v1_str}/game/phase/briefing/analyst_look"
-                )
-        assert response.status_code == 401, 'wrong status'
-        assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
-
     def test_analyst_arrange_return_200(
         self,
         mock_return,
@@ -355,8 +318,6 @@ class TestAnalyst:
         top = current.game_decks.group_deck.deck[-3:]
         top.reverse()
 
-        print(current.game_decks.group_deck.deck) # NOTE:
-
         response = client.patch(
             f"{settings.api_v1_str}/game/phase/briefing/analyst_arrange",
             headers={
@@ -369,3 +330,57 @@ class TestAnalyst:
         current = connection['CurrentGameData'].objects().first()
         assert current.game_decks.group_deck.deck[-3:] == top, \
             'not arranged'
+
+    # TODO: here test 409
+
+
+class TestAutorizationError:
+    """Test not acessed unautorized user
+    """
+
+    def test_game_create_return_401(self, client: TestClient) -> None:
+        """Test game create return 401 for unauthorized
+        """
+        response = client.post(f"{settings.api_v1_str}/game/create")
+        assert response.status_code == 401, 'wrong status'
+        assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
+
+    def test_preset_faction_return_401(self, client: TestClient) -> None:
+        """Test preset faction return 401
+        """
+        response = client.patch(f"{settings.api_v1_str}/game/preset/faction?q=kgb")
+        assert response.status_code == 401, 'wrong status'
+        assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
+
+    def test_next_turn_return_401(self, client: TestClient) -> None:
+        """Test next turn return 401 for unauthorized
+        """
+        response = client.patch(f"{settings.api_v1_str}/game/next_turn")
+        assert response.status_code == 401, 'wrong status'
+        assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
+
+    def test_next_turn_return_401(self, client: TestClient) -> None:
+        """Test next phase return 401 for unauthorized
+        """
+        response = client.patch(f"{settings.api_v1_str}/game/next_phase")
+        assert response.status_code == 401, 'wrong status'
+        assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
+
+    def test_analyst_get_return_401(self, client: TestClient) -> None:
+        """Test analyst_look return 401 for unauthorized
+        """
+        response = client.patch(
+            f"{settings.api_v1_str}/game/phase/briefing/analyst_arrange",
+                )
+        assert response.status_code == 401, 'wrong status'
+        assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
+
+    def test_analyst_arrange_return_401(self, client: TestClient) -> None:
+        """Test analyst_arrnage return 401 for unauthorized
+        """
+        response = client.patch(
+            f"{settings.api_v1_str}/game/phase/briefing/analyst_arrange",
+            json={"top_cards": ['one', 'two', 'three']},
+                )
+        assert response.status_code == 401, 'wrong status'
+        assert response.json()['detail'] == 'Not authenticated', 'wrong detail'

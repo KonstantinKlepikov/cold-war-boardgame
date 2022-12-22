@@ -2,7 +2,10 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from mongoengine import connect
 from app.config import settings
-from app.db.init_db import check_db_init, init_db
+from app.db.init_db import (
+    check_db_cards_init, init_db_cards,
+    check_db_users_init, init_db_users
+        )
 from app.api.api_v1.api import api_router
 
 
@@ -12,8 +15,10 @@ connect(
     alias='default',
     )
 
-if not check_db_init('default'):
-    init_db('default')
+if not check_db_cards_init():
+    init_db_cards()
+if not check_db_users_init():
+    init_db_users()
 
 
 app = FastAPI(

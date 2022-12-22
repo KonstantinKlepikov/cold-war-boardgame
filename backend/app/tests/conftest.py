@@ -8,7 +8,7 @@ from app.config import settings
 from app.core import game_logic
 from app.models import model_user, model_game, model_cards
 from app.crud import crud_game, crud_card, crud_user
-from app.db.init_db import init_db
+from app.db.init_db import init_db_cards, init_db_users
 
 
 @pytest.fixture(scope="session")
@@ -94,7 +94,6 @@ def client() -> Generator:
 
 @pytest.fixture(scope="function")
 def connection(
-    db_user: Dict[str, str],
     db_game_data: Dict[str, Union[str, bool]],
         ) -> Generator:
     """Get mock mongodb
@@ -107,7 +106,8 @@ def connection(
             )
         conn.drop_database('test-db')
 
-        init_db('test-db-alias')
+        init_db_cards('test-db-alias')
+        init_db_users('test-db-alias')
 
         with switch_db(model_user.User, 'test-db-alias') as User, \
             switch_db(model_game.CurrentGameData, 'test-db-alias') as CurrentGameData, \
@@ -115,10 +115,6 @@ def connection(
             switch_db(model_cards.GroupCard, 'test-db-alias') as GroupCard, \
             switch_db(model_cards.ObjectiveCard, 'test-db-alias') as ObjectiveCard \
                 :
-
-            # init test users
-            user = User(**db_user)
-            user.save()
 
             # init test user current game
             game = CurrentGameData(**db_game_data)

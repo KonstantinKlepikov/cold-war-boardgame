@@ -64,6 +64,14 @@ class Settings(BaseSettings):
     user0_hashed_password: Optional[str] = None
     user0_token: Optional[str] = None
 
+    user1_login: Optional[str] = None
+    user1_password: Optional[str] = None
+    user1_hashed_password: Optional[str] = None
+
+    user2_login: Optional[str] = None
+    user2_password: Optional[str] = None
+    user2_hashed_password: Optional[str] = None
+
     # game constants
     phases = [
         'briefing', 'planning', 'influence_struggle',

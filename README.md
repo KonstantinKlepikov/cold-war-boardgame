@@ -46,7 +46,6 @@ SECRET_KEY=<this>
 ### Run or stop stack from root
 
 - `make serve` to run
-- `make serve-update` to run an update poetry.loc from pyproject without upgrade
 - `make down` to stop
 
 ### Use local resources to watch project

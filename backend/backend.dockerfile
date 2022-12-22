@@ -1,4 +1,4 @@
-FROM python:3.9
+FROM python:3.9.16
 
 # Keeps Python from generating .pyc files in the container
 ENV PYTHONDONTWRITEBYTECODE=1

@@ -3,6 +3,9 @@ name = "cold-war-back"
 version = "0.0.2"
 description = "ColdWar API backend"
 authors = ["Konstantin Klepikov <oformleno@gmail.com>"]
+[tool.poetry.group.dev.dependencies]
+pytest-bdd = "^6.1.1"
+
 
 [build-system]
 requires = [

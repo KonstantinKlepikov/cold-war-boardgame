@@ -3,9 +3,6 @@ name = "cold-war-back"
 version = "0.0.2"
 description = "ColdWar API backend"
 authors = ["Konstantin Klepikov <oformleno@gmail.com>"]
-[tool.poetry.group.dev.dependencies]
-pytest-bdd = "^6.1.1"
-
 
 [build-system]
 requires = [
@@ -40,6 +37,7 @@ flake8 = "^4.0.1"
 pytest-cov = "^3.0.0"
 Faker = "^13.2.0"
 mongomock = "^4.1.2"
+pytest-bdd = "^6.1.1"
 
 [tool.poe.tasks]
 

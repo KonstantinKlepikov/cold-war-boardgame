@@ -1,10 +1,10 @@
-from typing import Union, Literal
 from fastapi import status, Depends, APIRouter, Query, HTTPException
-from app.schemas import schema_user
+from app.schemas import schema_user, schema_game
 from app.crud import crud_game
-from app.core import security_user, game_data
-from app.constructs import Priority, Faction
+from app.core import security_user
+from app.constructs import Faction
 from app.config import settings
+from app.core import game_logic
 
 
 router = APIRouter()
@@ -22,57 +22,107 @@ def create_new_game(
         ) -> None:
     """Create new game.
     """
-    obj_in = game_data.make_game_data(user.login)
+    obj_in = game_logic.make_game_data(user.login)
     crud_game.game.create_new_game(obj_in)
+    crud_game.game.get_game_processor(user.login) \
+        .deal_and_shuffle_decks() \
+        .flusсh().save()
 
 
 @router.patch(
-    "/preset",
-    status_code=status.HTTP_200_OK,
-    responses=settings.ACCESS_ERRORS,
-    summary='Preset faction and priority before game start',
-    response_description="Ok. Data is changed if not seted before."
-        )
-def preset(
-    faction: Faction = Query(
-        title="Preset faction",
-            ),
-    priority: Priority = Query(
-        default=Priority.RANDOM,
-        title="Preset priority",
-        description="- true - set priority to player\n"
-                    "- false - set priority to bot\n"
-                    "- random - set priority at random\n"
-            ),
-    user: schema_user.User = Depends(security_user.get_current_active_user),
-        ) -> None:
-    """Preset faction and/or priotity for game
-    if not seted before in this game
-    """
-    crud_game.game.set_faction(user.login, faction)
-    crud_game.game.set_priority(user.login, priority)
-
-
-@router.patch(
-    "/next",
+    "/preset/faction",
     status_code=status.HTTP_200_OK,
     responses=settings.NEXT_ERRORS,
-    summary='Go to next turn or/and phase',
-    response_description="Ok."
+    summary='Preset faction before game start',
+    response_description="Ok. Faction is setted."
         )
-def next_turn(
-    turn: Union[Literal['push', ], None] = None,
-    phase: Union[Literal['push', ], None] = None,
+def preset_faction(
+    q: Faction = Query(
+        title="Preset faction",
+            ),
     user: schema_user.User = Depends(security_user.get_current_active_user),
         ) -> None:
-    """Change turn number or phase to next
+    """Preset faction of player
     """
-    if not turn and not phase:
-        raise HTTPException(
-            status_code=400,
-            detail='Need at least one query parameter for this request'
-                )
+    crud_game.game.get_game_processor(user.login) \
+        .set_faction(q) \
+        .flusсh().save()
 
-    crud_game.game.set_next_turn_phase(
-        user.login, bool(turn), bool(phase)
-            )
+
+@router.patch(
+    "/next_turn",
+    status_code=status.HTTP_200_OK,
+    responses=settings.NEXT_ERRORS,
+    summary='Go to next turn',
+    response_description="Ok.",
+        )
+def next_turn(
+    user: schema_user.User = Depends(security_user.get_current_active_user),
+        ) -> None:
+    """Change turn number to next
+    """
+    crud_game.game.get_game_processor(user.login) \
+        .set_next_turn() \
+        .flusсh().save()
+
+
+@router.patch(
+    "/next_phase",
+    status_code=status.HTTP_200_OK,
+    responses=settings.NEXT_ERRORS,
+    summary='Go to next phase',
+    response_description="Ok.",
+        )
+def next_phase(
+    user: schema_user.User = Depends(security_user.get_current_active_user),
+        ) -> None:
+    """Change phase to next
+    """
+    crud_game.game.get_game_processor(user.login) \
+        .chek_phase_conditions_before_next() \
+        .set_next_phase() \
+        .set_phase_conditions_after_next() \
+        .flusсh().save()
+
+
+@router.patch(
+    "/phase/briefing/analyst_look",
+    status_code=status.HTTP_200_OK,
+    responses=settings.NEXT_ERRORS,
+    summary='Look top three cards of group deck with analist ability',
+    response_description="Ok. Data is changed",
+        )
+def analyst_get(
+    user: schema_user.User = Depends(security_user.get_current_active_user),
+        ) -> schema_game.TopDeck:
+    """Look top three cards of group deck and change current game data
+    """
+    proc = crud_game.game.get_game_processor(user.login) \
+        .play_analyst_for_look_the_top() \
+
+    proc.flusсh().save()
+    return { "top_cards": proc.G.c.groups.temp_group }
+
+
+@router.patch(
+    "/phase/briefing/analyst_arrange",
+    status_code=status.HTTP_200_OK,
+    responses=settings.NEXT_ERRORS,
+    summary='Arrange top three cards of group deck with analist ability',
+    response_description="Ok. Data is changed",
+        )
+def analyst_arrnge(
+    top: schema_game.TopDeck,
+    user: schema_user.User = Depends(security_user.get_current_active_user),
+        ) -> None:
+    """Arrange top three cards of group deck and change current game data
+    """
+    if len(top.top_cards) != 3:
+        raise HTTPException(
+            status_code=409,
+            detail="You must give exactly tree cards id "
+                   f"in list to rearrange top deck. You given {len(top.top_cards)}."
+                )
+    crud_game.game.get_game_processor(user.login) \
+        .play_analyst_for_arrange_the_top(top.top_cards) \
+        .flusсh().save()

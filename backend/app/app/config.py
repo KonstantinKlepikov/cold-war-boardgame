@@ -53,8 +53,8 @@ class Settings(BaseSettings):
         404: {'model': schema_errors.HttpError404},
             }
     NEXT_ERRORS: ErrorType = {
-        400: {'model': schema_errors.HttpError400},
         401: {'model': schema_errors.HttpError401},
+        404: {'model': schema_errors.HttpError404},
         409: {'model': schema_errors.HttpError409},
             }
 

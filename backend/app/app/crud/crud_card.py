@@ -33,7 +33,7 @@ class CRUDCards(crud_base.CRUDBase[Union[
 
     @lru_cache
     def get_all_cards(self) -> Dict[str, List[Dict[str, Union[str, int]]]]:
-        """Get all cards data
+        """Get all cards data from db
 
         Returns:
             Dict[str, List[Dict[str, Union[str, int]]]]: game cards data
@@ -45,6 +45,32 @@ class CRUDCards(crud_base.CRUDBase[Union[
         }
 
         return db_cards
+
+    @lru_cache
+    def get_cards_names(self) -> Dict[str, List[str]]:
+        """Get cards names from db
+
+        Returns:
+            Dict[str, List[str]]: names of cards
+        """
+        db_cards = self.get_all_cards()
+        return {
+            key: [card['name'] for card in val]
+            for key, val in db_cards.items()
+                }
+
+    @lru_cache
+    def get_cards_dict(self) -> Dict[str, Dict[str, Union[str, int]]]:
+        """Get cards data as dict by his names
+
+        Returns:
+            Dict[str, Dict[str, Union[str, int]]]: cards dict
+        """
+        db_cards = self.get_all_cards()
+        return {
+            key: {card['name']: card for card in val}
+            for key, val in db_cards.items()
+                }
 
 
 cards = CRUDCards(

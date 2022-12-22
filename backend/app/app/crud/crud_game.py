@@ -1,12 +1,9 @@
-import random
 from typing import Optional
 from fastapi.encoders import jsonable_encoder
-from fastapi import HTTPException
-from app.crud import crud_base
+from app.core import game_logic
+from app.crud import crud_base, crud_card, crud_game
 from app.models import model_game
 from app.schemas import schema_game
-from app.constructs import Priority, Faction
-from app.config import settings
 
 
 class CRUDGame(
@@ -21,102 +18,39 @@ class CRUDGame(
     def get_current_game_data(self, login: str) -> Optional[model_game.CurrentGameData]:
         """Get current game data from db
 
+        Args:
+            login (str): player login
+
         Returns:
             CurrentGameData: bd data object
         """
         return self.model.objects(players__login=login).first()
 
+    def get_game_processor(
+        self,
+        login: str,
+            ) -> game_logic.GameProcessor:
+        """Get game processor
+
+        Args:
+            current_data (CurrentGameData): bd data object
+            login (str): user login
+
+        Returns:
+            game_logic.GameProcessor: processor
+        """
+        game_proc = game_logic.GameProcessor(
+            crud_card.cards.get_all_cards(),
+            crud_game.game.get_current_game_data(login)
+                )
+        return game_proc.fill()
+
     def create_new_game(self, obj_in: schema_game.CurrentGameData) -> None:
         """Create new game
         """
         db_data = jsonable_encoder(obj_in)
-        game = self.model(**db_data)
-        game.save()
-
-    def set_faction(self, login: str, faction: Faction) -> None:
-        """Set player and opponent faction
-
-        Args:
-            login (str): player login
-            faction (Literal['kgb', 'cia']): player faction
-        """
-        data = self.get_current_game_data(login)
-
-        if data.players[0].faction is None:
-            data.players[0].faction = faction.value
-            if faction == Faction.CIA:
-                data.players[1].faction = 'kgb'
-            else:
-                data.players[1].faction = 'cia'
-            data.save()
-
-    def set_priority(
-        self,
-        login: str,
-        priority: Priority
-            ) -> None:
-        """Set priority for player
-
-        Args:
-            login (str): player login
-            priority (Priority): priority.
-        """
-        data = self.get_current_game_data(login)
-
-        if data.players[0].has_priority is None:
-            val = None
-            if priority.value == Priority.TRUE:
-                val = True
-            elif priority.value == Priority.FALSE:
-                val = False
-            elif priority.value == Priority.RANDOM:
-                val = random.choice([True, False])
-                # TODO: use bgameb here
-
-            data.players[0].has_priority = val
-            data.players[1].has_priority = not val
-            data.save()
-
-    def set_next_turn_phase(
-        self,
-        login: str,
-        turn: bool,
-        phase: bool,
-            ):
-        """Set next turn or/and next phase
-
-        Args:
-            login (str): player login
-            turn (bool): push the turn
-            phase (bool): push the phase
-        """
-        data = self.get_current_game_data(login)
-        if data.game_steps.is_game_end:
-            raise HTTPException(
-                status_code=409,
-                detail="Something can't be changed, because game is end"
-                    )
-
-        if turn:
-            data.game_steps.game_turn += 1
-            data.game_steps.turn_phase = settings.phases[0]
-            data.save()
-
-        if phase:
-            if data.game_steps.turn_phase is None:
-                data.game_steps.turn_phase = settings.phases[0]
-                data.save()
-
-            elif data.game_steps.turn_phase == settings.phases[-1]:
-                raise HTTPException(
-                    status_code=409,
-                    detail="This phase is last in a turn. Change turn number "
-                           "before get next phase"
-                        )
-            else:
-                ind = settings.phases.index(data.game_steps.turn_phase) + 1
-                data.game_steps.turn_phase = settings.phases[ind]
-                data.save()
+        current_data = self.model(**db_data)
+        current_data.save()
 
 
 game = CRUDGame(model_game.CurrentGameData)

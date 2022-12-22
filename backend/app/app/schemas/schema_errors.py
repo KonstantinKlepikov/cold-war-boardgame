@@ -26,10 +26,6 @@ class HttpError400(HttpErrorMessage):
                     "detail":
                         "Wrong login or password",
                         },
-                "next turn phase error": {
-                    "detail":
-                        "Need at least one query parameter for this request",
-                        },
                     }
                 }
 
@@ -66,14 +62,9 @@ class HttpError409(HttpErrorMessage):
     class Config:
         schema_extra = {
             "example": {
-                "next turn phase error": {
-                    "detail":
-                        "This phase is last in a turn. Change turn number "
-                        "before get next phase",
-                        },
                 "end game error": {
                     "detail":
-                        "Something can't be changed, because game is end",
+                        "Something wrong with client or server data",
                         },
                     }
                 }

@@ -4,6 +4,7 @@ from mongoengine import (
     ValidationError, queryset_manager,
         )
 from app.constructs import Phase
+from app.config import settings
 
 
 def check_turn_phase(value: str) -> bool:
@@ -21,26 +22,27 @@ class GameSteps(EmbeddedDocument):
     """
     game_turn = IntField(min_value=0, default=0)
     turn_phase = StringField(null=True, validation=check_turn_phase)
+    turn_phases_left = ListField(StringField(), default=settings.phases)
     is_game_end = BooleanField(default=False)
 
 
 class PlayerAgentCard(EmbeddedDocument):
     """Player agent card
     """
-    is_dead = BooleanField()
-    is_in_play = BooleanField()
-    is_in_vacation = BooleanField()
-    is_revealed = BooleanField()
+    is_dead = BooleanField(default=False)
+    is_in_play = BooleanField(default=False)
+    is_in_vacation = BooleanField(default=False)
+    is_revealed = BooleanField(default=False)
     name = StringField()
 
 
 class PlayerGroupOrObjectivreCard(EmbeddedDocument):
     """Known or own by player nonagent card
     """
-    is_in_deck = BooleanField()
-    is_in_play = BooleanField()
-    is_active = BooleanField(default=True)
-    pos_in_deck = IntField(min_value=0, null=True)
+    is_in_deck = BooleanField(default=True)
+    is_in_play = BooleanField(default=False)
+    is_active = BooleanField(null=True)
+    pos_in_deck = IntField(max_value=0, null=True)
     name = StringField()
 
 
@@ -61,23 +63,25 @@ class Player(EmbeddedDocument):
     faction = StringField(null=True)
     player_cards = EmbeddedDocumentField(PlayerCards)
     login = StringField(null=True)
+    abilities = ListField(StringField())
 
 
 class GameDeck(EmbeddedDocument):
     """Deck in play difinition
     """
-    deck_len = IntField(min_value=0)
+    deck_len = IntField(min_value=0, default=0)
     pile = ListField(StringField())
+    deck = ListField(StringField())
 
 
 class GameDecks(EmbeddedDocument):
     """Game decks and mission card
     """
     group_deck = EmbeddedDocumentField(
-        GameDeck, default=GameDeck(deck_len=24)
+        GameDeck, default=GameDeck()
         )
     objective_deck = EmbeddedDocumentField(
-        GameDeck, default=GameDeck(deck_len=21)
+        GameDeck, default=GameDeck()
         )
     mission_card = StringField(null=True)
 

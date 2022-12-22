@@ -5,7 +5,9 @@ from mongoengine.context_managers import switch_db
 from fastapi.testclient import TestClient
 from app.main import app
 from app.config import settings
+from app.core import game_logic
 from app.models import model_user, model_game, model_cards
+from app.crud import crud_game, crud_card, crud_user
 from app.db.init_db import init_db
 
 
@@ -42,8 +44,32 @@ def db_game_data() -> Dict[str, Union[str, bool]]:
         {'name': 'Assassin'},
         {'name': 'Director'},
         ]
+    group_cards = [
+        'Guerilla', 'Militia', 'Mercenaries', 'Police', 'Infantry', 'Generals',
+        'Workers', 'Mafia', 'Food companies', 'Industry', 'Oil Tycoons',
+        'Bankers', 'Students', 'Trade Union', 'Nationalists', 'Fundamentalists',
+        'Opposition', 'Government', 'Artists', 'NGOs', 'Phone company',
+        'Newspapers', 'Radio', 'Television',
+            ]
+    objective_cards = [
+        'Nobel Peace Prize', 'Live Benefit', 'Nuclear Escalation', 'Space Race',
+        'Olympic Games', 'Summit Meeting', 'Egypt', 'Vietnam', 'Panama', 'Angola',
+        'Afghanistan', 'Houndaras', 'Libya', 'Greece', 'Turkey', 'Iran', 'Cuba',
+        'Congo', 'Czechoslovakia', 'Chile', 'Korea',
+            ]
 
     return {
+        'game_decks':
+            {
+                'group_deck': {
+                    'deck': group_cards,
+                    'deck_len': 24,
+                        },
+                'objective_deck': {
+                    'deck': objective_cards,
+                    'deck_len': 21,
+                        }
+            },
         'players':
             [
                 {
@@ -111,3 +137,59 @@ def connection(
     finally:
         conn.drop_database('test-db')
         disconnect(alias='test-db-alias')
+
+
+@pytest.fixture(scope="function")
+def game(connection: Generator) -> crud_game.CRUDGame:
+    """Get crud game object
+    """
+    return crud_game.CRUDGame(connection['CurrentGameData'])
+
+
+@pytest.fixture(scope="function")
+def user(connection: Generator) -> crud_user.CRUDUser:
+    """Get crud game object
+    """
+    return crud_user.CRUDUser(connection['User'])
+
+
+@pytest.fixture(scope="function")
+def cards(connection: Generator) -> crud_card.CRUDCards:
+    """Get game processor object
+    """
+    return crud_card.CRUDCards(
+        connection['AgentCard'],
+        connection['GroupCard'],
+        connection['ObjectiveCard'],
+            )
+
+
+@pytest.fixture(scope="function")
+def game_proc(
+    game: crud_game.CRUDGame,
+    cards: crud_card.CRUDCards,
+        ) -> game_logic.GameProcessor:
+    """Get game processor object
+    """
+    current_data = game.get_current_game_data(settings.user0_login)
+    return game_logic.GameProcessor(cards.get_all_cards(), current_data)
+
+
+@pytest.fixture(scope="function")
+def inited_game_proc(
+    game_proc: game_logic.GameProcessor,
+        ) -> game_logic.GameProcessor:
+    """Get game processor object
+    """
+    return game_proc.fill()
+
+
+@pytest.fixture(scope="function")
+def started_game_proc(
+    game: crud_game.CRUDGame,
+        ) -> game_logic.GameProcessor:
+    """Init the game and return processor
+    """
+    obj_in = game_logic.make_game_data(settings.user0_login)
+    game.create_new_game(obj_in)
+    return game.get_game_processor(settings.user0_login).deal_and_shuffle_decks()

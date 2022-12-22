@@ -57,6 +57,7 @@ SECRET_KEY=<this>
 
 ### Test inside backend container
 
-`pytest -v -s -x`
+`pytest -v -s -x` for all tests
+`pytest tests/step_defs/ -x -s -v` only for functional tests
 
 use `python -m IPython` to check code

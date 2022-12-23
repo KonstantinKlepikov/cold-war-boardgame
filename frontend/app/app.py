@@ -11,42 +11,56 @@ API_VERSION: str = "api/v1"
 
 st.set_page_config(page_title='Dashboard', layout="wide")
 
+left, right = st.columns([3, 1])
 
 # main
-clear_all = st.empty()
-with clear_all.container():
-    access_token = None
+# clear_all = st.empty()
+# with clear_all.container():
+    # st.session_state['access_token'] = None
+    # left, right = st.columns([3, 1])
 
-    with st.form("login_form"):
-        st.write('Login to get game data.')
-        login = st.text_input(label='login:')
-        password = st.text_input(label='password:')
-        submit = st.form_submit_button(label='login')
+with left:
+    st.write('me')
 
-        if submit:
-            url = os.path.join(API_ROOT, API_VERSION, 'user/login')
-            r = requests.post(
-                url,
-                headers = {
-                    'accept': 'application/json',
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                        },
-                data={"username": f"{login}", "password": f"{password}"}
-                )
+with right:
 
-            if r.status_code == 200:
-                access_token=r.json()['access_token']
-                clear_all.empty()
+    clear_all = st.empty()
+    with clear_all.container():
 
-            elif r.status_code == 400:
-                st.text(r.json()['detail'])
+        if st.session_state.get('access_token') is None:
 
-            else:
-                st.text(r.text)
+            with st.form("login_form"):
+                login = st.text_input(label='login:')
+                password = st.text_input(label='password:')
+                submit = st.form_submit_button(label='login')
 
-if access_token:
-    st.balloons()
-    st.write(f'{access_token=}')
-    logout = st.button(f'{login} logout')
-    if logout:
-        access_token = None
+                if submit:
+                    url = os.path.join(API_ROOT, API_VERSION, 'user/login')
+                    r = requests.post(
+                        url,
+                        headers = {
+                            'accept': 'application/json',
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                                },
+                        data={"username": f"{login}", "password": f"{password}"}
+                        )
+
+                    if r.status_code == 200:
+                        st.session_state['login'] = login
+                        st.session_state['access_token'] = r.json()['access_token']
+                        clear_all.empty()
+
+                    elif r.status_code == 400:
+                        st.text(r.json()['detail'])
+
+                    else:
+                        st.text(r.text)
+
+        if st.session_state.get('access_token'):
+
+            logout = st.button(f"{st.session_state['login']} logout")
+            if logout:
+                st.session_state['access_token'] = None
+
+
+        st.markdown(f"Login: **{st.session_state.get('login', 'not logged')}**")

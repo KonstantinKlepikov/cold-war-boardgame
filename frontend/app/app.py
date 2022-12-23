@@ -11,21 +11,17 @@ API_VERSION: str = "api/v1"
 
 st.set_page_config(page_title='Dashboard', layout="wide")
 
+main = st.empty()
 left, right = st.columns([3, 1])
 
-# main
-# clear_all = st.empty()
-# with clear_all.container():
-    # st.session_state['access_token'] = None
-    # left, right = st.columns([3, 1])
+with main.container():
 
-with left:
-    st.write('me')
+    with left:
+        st.write('me')
 
-with right:
+    with right:
 
-    clear_all = st.empty()
-    with clear_all.container():
+        st.markdown(f"Login: **{st.session_state.get('login', 'not logged')}**")
 
         if st.session_state.get('access_token') is None:
 
@@ -48,7 +44,7 @@ with right:
                     if r.status_code == 200:
                         st.session_state['login'] = login
                         st.session_state['access_token'] = r.json()['access_token']
-                        clear_all.empty()
+                        main.empty()
 
                     elif r.status_code == 400:
                         st.text(r.json()['detail'])
@@ -58,9 +54,6 @@ with right:
 
         if st.session_state.get('access_token'):
 
-            logout = st.button(f"{st.session_state['login']} logout")
+            logout = st.button(f"logout")
             if logout:
                 st.session_state['access_token'] = None
-
-
-        st.markdown(f"Login: **{st.session_state.get('login', 'not logged')}**")

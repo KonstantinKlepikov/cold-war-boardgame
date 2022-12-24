@@ -4,7 +4,7 @@ asttokens==2.0.8
 attrs==22.1.0
 autoflake==1.4
 backcall==0.2.0
-bgameb==0.0.32
+bgameb==0.0.33
 black==21.12b0
 blinker==1.5
 cachetools==5.2.0
@@ -45,6 +45,7 @@ jupyter-client==7.3.4
 jupyter-core==4.11.1
 jupyterlab-widgets==3.0.2
 loguru==0.6.0
+Mako==1.2.4
 MarkupSafe==2.1.1
 marshmallow==3.19.0
 marshmallow-enum==1.5.1
@@ -58,6 +59,8 @@ nest-asyncio==1.5.5
 numpy==1.23.2
 packaging==21.3
 pandas==1.4.3
+parse==1.19.0
+parse-type==0.6.0
 parso==0.8.3
 passlib==1.7.4
 pastel==0.2.1
@@ -88,6 +91,7 @@ Pympler==1.0.1
 pyparsing==3.0.9
 pyrsistent==0.18.1
 pytest==7.1.2
+pytest-bdd==6.1.1
 pytest-cov==3.0.0
 python-dateutil==2.8.2
 python-dotenv==0.19.2
@@ -106,7 +110,8 @@ smmap==5.0.0
 sniffio==1.2.0
 stack-data==0.4.0
 starlette==0.19.1
-streamlit==1.10.0
+streamlit==1.16.0
+streamlit-nested-layout==0.1.1
 toml==0.10.2
 tomli==1.2.3
 toolz==0.12.0

@@ -1,5 +1,7 @@
 import streamlit as st
-import requests, os, json
+import requests, os
+import streamlit_nested_layout
+from typing import Dict
 from requests import Response
 from streamlit.delta_generator import DeltaGenerator
 
@@ -24,8 +26,8 @@ def write_error(r: Response) -> None:
     st.stop()
 
 
-def get_state() -> None:
-    """Request for current state
+def get_current_data() -> None:
+    """Request for current data
     """
     token = st.session_state.get('access_token')
     url = os.path.join(API_ROOT, API_VERSION, 'game/data/current')
@@ -40,17 +42,73 @@ def get_state() -> None:
     else:
         write_error(r)
 
+@st.cache
+def get_static_data() -> None:
+    """Request for static data
+    """
+    url = os.path.join(API_ROOT, API_VERSION, 'game/data/static')
+    r = requests.get(url)
+    if r.status_code == 200:
+        st.session_state['static'] = r.json()
+    else:
+        write_error(r)
+
+@st.cache
+def get_static_objectives() -> Dict[str, dict]:
+    """Get dict of objectives cards
+
+    Returns:
+        Dict[str, dict]: objective mapping
+    """
+    return {card['name']: card for card in st.session_state['static']['objective_cards']}
+
 def show_current_data() -> None:
     """Display important game data in right side
     """
     current = st.session_state['current']
-    st.markdown("---")
     st.subheader("Current game")
     st.markdown(f"turn: **{current['game_steps']['game_turn']}**")
     st.markdown(f"step: **{current['game_steps']['turn_phase']}**")
     st.markdown(f"is_game_end: **{current['game_steps']['is_game_end']}**")
-    st.markdown(f"faction: **{current['players'][0]['faction']}**")
-    st.markdown(f"has_priority: **{current['players'][0]['has_priority']}**")
+    st.markdown(f"player faction: **{current['players'][0]['faction']}**")
+    st.markdown(f"player priority: **{current['players'][0]['has_priority']}**")
+    st.markdown("---")
+
+def show_objectives():
+    """Display objective deck and mission card
+    """
+    current = st.session_state['current']['game_decks']
+    st.subheader("Objective deck")
+    st.markdown(f"Deck len: **{current['objective_deck']['deck_len']}**")
+
+    with st.expander("Objectives pile"):
+        if current['objective_deck']['pile']:
+            for card in current['objective_deck']['pile']:
+                st.caption(card)
+        else:
+            st.caption('empty')
+
+    st.markdown(f"Mission card: **{current['mission_card']}**")
+    if current['mission_card'] is not None:
+        with st.expander("Mission card data"):
+            st.caption(get_static_objectives()[current['mission_card']])
+
+    st.markdown("---")
+
+def show_groups():
+    """Display group deck
+    """
+    current = st.session_state['current']['game_decks']['group_deck']
+    st.subheader("Group deck")
+    st.markdown(f"Deck len: **{current['deck_len']}**")
+
+    with st.expander("Groups pile"):
+        if current['pile']:
+            for card in current['pile']:
+                st.caption(card)
+        else:
+            st.caption('empty')
+
     st.markdown("---")
 
 def start_new_game() -> None:
@@ -100,19 +158,23 @@ def log_in(holder: DeltaGenerator) -> None:
 def autorized() -> None:
     """Right side autorized scenario
     """
-
+    st.caption('Login as:')
     st.header(f"**{st.session_state['login']}**")
-
-    load_game = st.button("load game")
-    new_game = st.button("new game")
-    logout = st.button("logout")
+    col1, col2, col3 = st.columns([1, 1, 1])
+    with col1:
+        load_game = st.button("load game")
+    with col2:
+        new_game = st.button("new game")
+    with col3:
+        logout = st.button("logout")
+    st.markdown("---")
 
     if load_game:
-        get_state()
+        get_current_data()
 
     if new_game:
         start_new_game()
-        get_state()
+        get_current_data()
 
     if logout:
         st.session_state['access_token'] = None
@@ -127,7 +189,6 @@ def choose_side(holder: DeltaGenerator) -> None:
     Args:
         holder (DeltaGenerator): holder for change and clear displayed data
     """
-    st.markdown("---")
     st.subheader("Choose your side")
     choice = st.radio(
         label='Choose your side:',
@@ -136,6 +197,7 @@ def choose_side(holder: DeltaGenerator) -> None:
         label_visibility='collapsed'
             )
     push = st.button("choose")
+    st.markdown("---")
 
     if push and choice:
         token = st.session_state.get('access_token')
@@ -147,7 +209,7 @@ def choose_side(holder: DeltaGenerator) -> None:
                     }
                 )
         if r.status_code == 200:
-            get_state()
+            get_current_data()
             holder.empty()
         else:
             write_error(r)
@@ -157,7 +219,10 @@ def main():
     left, right = st.columns([3, 1])
 
     with left:
-        st.write('me')
+        st.header("Opponent")
+        st.markdown("---")
+        st.markdown("---")
+        st.header("Player")
 
     with right:
 
@@ -167,6 +232,7 @@ def main():
                 log_in(holder1)
 
         if st.session_state.get('access_token'):
+            get_static_data()
             autorized()
 
             if st.session_state.get('current') is not None \
@@ -177,6 +243,8 @@ def main():
 
             if st.session_state.get('current'):
                 show_current_data()
+                show_objectives()
+                show_groups()
 
 
 if __name__ == '__main__':

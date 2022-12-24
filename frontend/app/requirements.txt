@@ -1,2 +1,3 @@
 streamlit==1.16.0
 requests==2.27.1
+streamlit-nested-layout==0.1.1

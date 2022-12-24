@@ -1,7 +1,7 @@
 import streamlit as st
 import requests, os
 import streamlit_nested_layout
-from typing import Dict
+from typing import Dict, Literal
 from requests import Response
 from streamlit.delta_generator import DeltaGenerator
 
@@ -16,7 +16,7 @@ API_VERSION: str = "api/v1"
 st.set_page_config(page_title='Dashboard', layout="wide")
 
 
-def write_error(r: Response) -> None:
+def show_api_error(r: Response) -> None:
     """Write error from response
 
     Args:
@@ -40,9 +40,8 @@ def get_current_data() -> None:
     if r.status_code == 200:
         st.session_state['current'] = r.json()
     else:
-        write_error(r)
+        show_api_error(r)
 
-@st.cache
 def get_static_data() -> None:
     """Request for static data
     """
@@ -51,7 +50,7 @@ def get_static_data() -> None:
     if r.status_code == 200:
         st.session_state['static'] = r.json()
     else:
-        write_error(r)
+        show_api_error(r)
 
 @st.cache
 def get_static_objectives() -> Dict[str, dict]:
@@ -67,11 +66,35 @@ def show_current_data() -> None:
     """
     current = st.session_state['current']
     st.subheader("Current game")
-    st.markdown(f"turn: **{current['game_steps']['game_turn']}**")
-    st.markdown(f"step: **{current['game_steps']['turn_phase']}**")
-    st.markdown(f"is_game_end: **{current['game_steps']['is_game_end']}**")
-    st.markdown(f"player faction: **{current['players'][0]['faction']}**")
-    st.markdown(f"player priority: **{current['players'][0]['has_priority']}**")
+
+    if current['game_steps']['is_game_end'] == True:
+        st.write("this game is end")
+
+    if current['players'][0]['faction'] is None:
+        p = 'waiting for choice faction'
+        st.markdown(f"turn: **{p}**")
+        st.markdown(f"phase: **{p}**")
+        st.markdown(f"player faction: **{p}**")
+        st.markdown(f"priority: **{p}**")
+
+    elif current['players'][0]['has_priority'] is None:
+        p = 'waiting for pushing next phase'
+        st.markdown(f"turn: **{p}**")
+        st.markdown(f"phase: **{p}**")
+        st.markdown(f"player faction: **{current['players'][0]['faction']}**")
+        st.markdown(f"priority: **{p}**")
+
+    else:
+        st.markdown(f"turn: **{current['game_steps']['game_turn'] + 1}**")
+        st.markdown(f"phase: **{current['game_steps']['turn_phase']}**")
+        st.markdown(f"player faction: **{current['players'][0]['faction']}**")
+        priority = current['players'][0]['has_priority']
+        if priority == True:
+            p = 'player'
+        elif priority == False:
+            p = 'opponent'
+        st.markdown(f"priority: **{p}**")
+
     st.markdown("---")
 
 def show_objectives():
@@ -89,9 +112,17 @@ def show_objectives():
             st.caption('empty')
 
     st.markdown(f"Mission card: **{current['mission_card']}**")
-    if current['mission_card'] is not None:
-        with st.expander("Mission card data"):
-            st.caption(get_static_objectives()[current['mission_card']])
+    with st.expander("Mission card data"):
+        if current['mission_card'] is None:
+            st.caption('empty')
+        else:
+            m = get_static_objectives()[current['mission_card']]
+            st.caption(f"name: {m['name']}")
+            st.caption(f"population: {m['population']}")
+            st.caption(f"stability: {m['stability']}")
+            st.caption(f"bias icons: {', '.join(m['bias_icons'])}")
+            st.caption(f"victory points: {m['victory_points']}")
+            st.caption(f"special ability: {m['special_ability']}")
 
     st.markdown("---")
 
@@ -123,10 +154,10 @@ def start_new_game() -> None:
                 }
             )
     if r.status_code != 201:
-        write_error(r)
+        show_api_error(r)
 
 
-def log_in(holder: DeltaGenerator) -> None:
+def show_log_in(holder: DeltaGenerator) -> None:
     """Right side log in scenario
 
     Args:
@@ -153,14 +184,14 @@ def log_in(holder: DeltaGenerator) -> None:
                 st.session_state['login'] = login
                 holder.empty()
             else:
-                write_error(r)
+                show_api_error(r)
 
-def autorized() -> None:
+def show_autorized() -> None:
     """Right side autorized scenario
     """
     st.caption('Login as:')
     st.header(f"**{st.session_state['login']}**")
-    col1, col2, col3 = st.columns([1, 1, 1])
+    col1, col2, col3, _ = st.columns([1, 1, 1, 1])
     with col1:
         load_game = st.button("load game")
     with col2:
@@ -183,7 +214,7 @@ def autorized() -> None:
         st.experimental_rerun()
 
 
-def choose_side(holder: DeltaGenerator) -> None:
+def show_choose_side(holder: DeltaGenerator) -> None:
     """Choise side scenario
 
     Args:
@@ -212,9 +243,46 @@ def choose_side(holder: DeltaGenerator) -> None:
             get_current_data()
             holder.empty()
         else:
-            write_error(r)
+            show_api_error(r)
+
+
+def next_step(step: Literal['turn', 'phase']) -> None:
+    """Get next phase or turn
+
+    Args:
+        step (str): typo of next
+    """
+    token = st.session_state.get('access_token')
+    url = os.path.join(API_ROOT, API_VERSION, f'game/next_{step}')
+    r = requests.patch(
+        url,
+        headers={
+            'Authorization': f'Bearer {token}'
+                }
+            )
+    if r.status_code == 200:
+        get_current_data()
+    else:
+        show_api_error(r)
+
+
+def show_next():
+    """Show next turn/phase scenario
+    """
+    col1, col2, _ = st.columns([1, 1, 2])
+
+    p = False if st.session_state['current']['game_steps']['turn_phase'] != 'detente' else True
+    t = not p
+
+    with col1:
+        st.button('next phase', disabled=p, on_click=next_step, args=('phase',))
+    with col2:
+        st.button('next turn', disabled=t, on_click=next_step, args=('turn',))
+
 
 def main():
+
+    get_static_data()
 
     left, right = st.columns([3, 1])
 
@@ -229,22 +297,22 @@ def main():
         holder1 = st.empty()
         with holder1.container():
             if st.session_state.get('access_token') is None:
-                log_in(holder1)
+                show_log_in(holder1)
 
         if st.session_state.get('access_token'):
-            get_static_data()
-            autorized()
+            show_autorized()
 
             if st.session_state.get('current') is not None \
                     and st.session_state['current']['players'][0]['faction'] is None:
                 holder2 = st.empty()
                 with holder2.container():
-                    choose_side(holder2)
+                    show_choose_side(holder2)
 
-            if st.session_state.get('current'):
+            if st.session_state.get('current') is not None:
                 show_current_data()
                 show_objectives()
                 show_groups()
+                show_next()
 
 
 if __name__ == '__main__':

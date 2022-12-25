@@ -1,5 +1,5 @@
 import streamlit as st
-import requests, os
+import requests, os, time
 import streamlit_nested_layout
 from typing import Dict, Literal
 from requests import Response
@@ -59,7 +59,10 @@ def get_static_objectives() -> Dict[str, dict]:
     Returns:
         Dict[str, dict]: objective mapping
     """
-    return {card['name']: card for card in st.session_state['static']['objective_cards']}
+    return {
+        card['name']: card for card
+        in st.session_state['static']['objective_cards']
+            }
 
 def show_current_data() -> None:
     """Display important game data in right side
@@ -246,7 +249,41 @@ def show_choose_side(holder: DeltaGenerator) -> None:
             show_api_error(r)
 
 
-def next_step(step: Literal['turn', 'phase']) -> None:
+def show_coin(holder: DeltaGenerator) -> None:
+    """Show image picture
+    """
+    holder.text(
+        """
+        wait a few seconds:
+
+        -> set priority randomly
+        -> deck shuffling
+        -> getting a mission card
+        -> and start the first turn
+
+        ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+        ⣿⣿⣿⣿⣿⡿⢿⣿⣿⣿⣟⣛⣛⣛⣉⣉⣛⠛⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+        ⣿⣿⣿⣟⡵⠞⠉⠀⢈⣿⣿⣿⠿⠟⠛⠛⠛⠻⡆⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+        ⣿⣿⣿⣿⡀⣀⣠⣴⣿⣿⣿⠁⣶⣿⣿⣿⠿⠛⣡⡋⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿
+        ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⣤⣭⣥⣤⣶⣾⣿⣿⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿
+        ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣇⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿
+        ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
+        ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠁⠈⠉⠉⢻⣿⡇⠀⠙⢿⣿⣿⣿⣿⣿⣿
+        ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠿⠶⣶⣶⣿⣿⣿⣄⠀⠀⠈⢻⣿⣿⣿⣿
+        ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⣤⣀⣀⡀⣹⡉⠙⠻⠀⠀⠀⠀⣿⣿⣿⣿
+        ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⠀⠉⠉⠙⣿⡇⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿
+        ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡟⠓⠶⠶⠤⣿⡇⠀⠀⠀⠀⠀⠀⠻⣿⣿⣿
+        ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⣀⣠⣾⡇⠀⠀⠀⠀⠀⠀⠀⠈⢻⣿
+        ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣶⣤⣉⣁⣀⣀⡀⠀⠀⠀⠀⠀⠀⢸⣿
+        ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣶⣶⣶⣶⣶⣾⣿
+        """
+            )
+
+
+def next_step(
+    step: Literal['turn', 'phase'],
+    holder: DeltaGenerator = None
+        ) -> None:
     """Get next phase or turn
 
     Args:
@@ -261,23 +298,40 @@ def next_step(step: Literal['turn', 'phase']) -> None:
                 }
             )
     if r.status_code == 200:
+        if holder is not None:
+            show_coin(holder)
+            time.sleep(7)
+            holder.empty()
         get_current_data()
     else:
         show_api_error(r)
 
 
-def show_next():
+def show_next(holder: DeltaGenerator):
     """Show next turn/phase scenario
     """
     col1, col2, _ = st.columns([1, 1, 2])
 
-    p = False if st.session_state['current']['game_steps']['turn_phase'] != 'detente' else True
-    t = not p
+    phase = st.session_state['current']['game_steps']['turn_phase']
+    faction = st.session_state['current']['players'][0]['faction']
+
+    p = False if phase != 'detente' and faction is not None else True
+    t = False if phase == 'detente' else True
 
     with col1:
-        st.button('next phase', disabled=p, on_click=next_step, args=('phase',))
+        st.button(
+            'next phase',
+            disabled=p,
+            on_click=next_step,
+            args=('phase', holder)
+                )
     with col2:
-        st.button('next turn', disabled=t, on_click=next_step, args=('turn',))
+        st.button(
+            'next turn',
+            disabled=t,
+            on_click=next_step,
+            args=('turn',)
+                )
 
 
 def main():
@@ -309,10 +363,11 @@ def main():
                     show_choose_side(holder2)
 
             if st.session_state.get('current') is not None:
+                holder3 = st.empty()
                 show_current_data()
                 show_objectives()
                 show_groups()
-                show_next()
+                show_next(holder3)
 
 
 if __name__ == '__main__':

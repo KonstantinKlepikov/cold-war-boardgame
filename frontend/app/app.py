@@ -64,6 +64,34 @@ def get_static_objectives() -> Dict[str, dict]:
         in st.session_state['static']['objective_cards']
             }
 
+
+@st.cache
+def get_static_objectives_actions() -> Dict[str, dict]:
+    """Get dict of objectives cards
+
+    Returns:
+        Dict[str, dict]: objective mapping
+    """
+    return {
+        key: value for key, value
+        in get_static_objectives().items()
+        if value['special_ability']
+            }
+
+
+@st.cache
+def get_static_groups() -> Dict[str, dict]:
+    """Get dict of groups cards
+
+    Returns:
+        Dict[str, dict]: groups mapping
+    """
+    return {
+        card['name']: card for card
+        in st.session_state['static']['group_cards']
+            }
+
+
 def show_current_data() -> None:
     """Display important game data in right side
     """
@@ -105,7 +133,7 @@ def show_objectives():
     """
     current = st.session_state['current']['game_decks']
     st.subheader("Objective deck")
-    st.markdown(f"Deck len: **{current['objective_deck']['deck_len']}**")
+    st.markdown(f"in deck now **{current['objective_deck']['deck_len']}** cards")
 
     with st.expander("Objectives pile"):
         if current['objective_deck']['pile']:
@@ -120,7 +148,6 @@ def show_objectives():
             st.caption('empty')
         else:
             m = get_static_objectives()[current['mission_card']]
-            st.caption(f"name: {m['name']}")
             st.caption(f"population: {m['population']}")
             st.caption(f"stability: {m['stability']}")
             st.caption(f"bias icons: {', '.join(m['bias_icons'])}")
@@ -134,7 +161,7 @@ def show_groups():
     """
     current = st.session_state['current']['game_decks']['group_deck']
     st.subheader("Group deck")
-    st.markdown(f"Deck len: **{current['deck_len']}**")
+    st.markdown(f"in deck now **{current['deck_len']}** cards")
 
     with st.expander("Groups pile"):
         if current['pile']:
@@ -333,18 +360,49 @@ def show_next(holder: DeltaGenerator):
             args=('turn',)
                 )
 
+def show_special_cards_of_opponent():
+
+    buttons = zip(
+        st.columns([1, 1, 1, 1, 1, 1]),
+        get_static_objectives_actions().keys()
+            )
+
+    for b in buttons:
+        with b[0]:
+            if b[1] in st.session_state['current']['players'][1]['abilities']:
+                st.write(b[1])
+            else:
+                st.caption(b[1])
+
+
+def show_special_cards_of_player():
+
+    buttons = zip(
+        st.columns([1, 1, 1, 1, 1, 1]),
+        get_static_objectives_actions().keys()
+            )
+
+    for b in buttons:
+        with b[0]:
+            p = False if b[1] in st.session_state['current']['players'][0]['abilities'] else True
+            st.button(b[1], disabled=p)
+
 
 def main():
 
     get_static_data()
 
-    left, right = st.columns([3, 1])
+    left, right = st.columns([3, 1], gap='medium')
 
     with left:
         st.header("Opponent")
+        if st.session_state.get('current') is not None:
+            show_special_cards_of_opponent()
         st.markdown("---")
         st.markdown("---")
         st.header("Player")
+        if st.session_state.get('current') is not None:
+            show_special_cards_of_player()
 
     with right:
 

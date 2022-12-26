@@ -4,6 +4,7 @@ from typing import Callable, Generator
 from fastapi.testclient import TestClient
 from app.crud import crud_game, crud_user
 from app.constructs import Priority, Faction
+from app.core import game_logic
 from app.config import settings
 
 
@@ -85,7 +86,7 @@ class TestPresetFaction:
                 }
             )
         assert response.status_code == 409, 'wrong status'
-        assert response.json()['detail'] == 'Factions is setted yet for this game', \
+        assert response.json()['detail'] == 'You cant change faction because is choosen yet', \
             'wrong detail'
 
     def test_preset_faction_return_422_404(
@@ -127,6 +128,7 @@ class TestNextTurn:
         self,
         user: crud_user.CRUDUser,
         game: crud_game.CRUDGame,
+        started_game_proc: game_logic.GameProcessor,
         monkeypatch,
             ) -> None:
         """Mock user and game
@@ -136,7 +138,7 @@ class TestNextTurn:
             return user.get_by_login(settings.user0_login)
 
         def mock_process(*args, **kwargs) -> Callable:
-            return game.get_game_processor(args[0])
+            return started_game_proc
 
         monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
         monkeypatch.setattr(crud_game.game, "get_game_processor", mock_process)
@@ -159,17 +161,15 @@ class TestNextTurn:
         assert connection['CurrentGameData'].objects().first() \
             .game_steps.game_turn == 1, 'wrong game_turn'
 
-    def test_next_if_game_end_return_409(
+    def test_next_turn_if_game_end_return_409(
         self,
         mock_return,
-        game: crud_game.CRUDGame,
+        started_game_proc: game_logic.GameProcessor,
         client: TestClient,
             ) -> None:
         """Test turn can't be pushed if game end
         """
-        data = game.get_current_game_data(settings.user0_login)
-        data.game_steps.is_game_end = True
-        data.save()
+        started_game_proc.G.c.steps.is_game_end = True
 
         response = client.patch(
             f"{settings.api_v1_str}/game/next_turn",
@@ -189,7 +189,7 @@ class TestNextPhase:
     def mock_return(
         self,
         user: crud_user.CRUDUser,
-        game: crud_game.CRUDGame,
+        started_game_proc_fact: game_logic.GameProcessor,
         monkeypatch,
             ) -> None:
         """Mock user and game
@@ -198,10 +198,7 @@ class TestNextPhase:
             return user.get_by_login(settings.user0_login)
 
         def mock_process(*args, **kwargs) -> Callable:
-            return game.get_game_processor(args[0]) \
-                .deal_and_shuffle_decks() \
-                .set_faction(Faction.KGB) \
-                .set_priority(Priority.TRUE)
+            return started_game_proc_fact
 
         monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
         monkeypatch.setattr(crud_game.game, "get_game_processor", mock_process)
@@ -230,17 +227,41 @@ class TestNextPhase:
         assert current.game_steps.turn_phase == settings.phases[0], 'wrong turn_phase'
         assert isinstance(current.game_decks.mission_card, str), 'wrong mission card'
 
+    def test_next_phase_return_200_and_get_from_briefing(
+        self,
+        mock_return,
+        connection: Generator,
+        client: TestClient,
+            ) -> None:
+        """Test game/next set next phase from briefing
+        """
+        client.patch(
+            f"{settings.api_v1_str}/game/next_phase",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        response = client.patch(
+            f"{settings.api_v1_str}/game/next_phase",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 200, 'wrong status'
+
+        current = connection['CurrentGameData'].objects().first()
+        assert current.game_steps.turn_phase == settings.phases[1], 'wrong turn_phase'
+        assert isinstance(current.game_decks.mission_card, str), 'wrong mission card'
+
     def test_next_phase_if_last_return_409(
         self,
         mock_return,
-        game: crud_game.CRUDGame,
+        started_game_proc_fact: game_logic.GameProcessor,
         client: TestClient,
             ) -> None:
         """Test last phases cant'be pushed
         """
-        data = game.get_current_game_data(settings.user0_login)
-        data.game_steps.is_game_end = True
-        data.save()
+        started_game_proc_fact.G.c.steps.is_game_end = True
 
         response = client.patch(
             f"{settings.api_v1_str}/game/next_phase",

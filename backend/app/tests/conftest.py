@@ -8,6 +8,7 @@ from app.config import settings
 from app.core import game_logic
 from app.models import model_user, model_game, model_cards
 from app.crud import crud_game, crud_card, crud_user
+from app.constructs import Priority, Faction
 from app.db.init_db import init_db_cards, init_db_users
 
 
@@ -189,3 +190,12 @@ def started_game_proc(
     obj_in = game_logic.make_game_data(settings.user0_login)
     game.create_new_game(obj_in)
     return game.get_game_processor(settings.user0_login).deal_and_shuffle_decks()
+
+
+@pytest.fixture(scope="function")
+def started_game_proc_fact(
+    started_game_proc: game_logic.GameProcessor,
+        ) -> game_logic.GameProcessor:
+    """Init the game with faction and return processor
+    """
+    return started_game_proc.set_faction(Faction.KGB)

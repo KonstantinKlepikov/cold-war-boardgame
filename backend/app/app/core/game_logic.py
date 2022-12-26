@@ -232,11 +232,10 @@ class GameProcessor:
         Returns:
             GameProcessor
         """
-
         if self.G.c.player.faction:
             raise HTTPException(
                 status_code=409,
-                detail="Factions is setted yet for this game"
+                detail="You cant change faction because is choosen yet"
                     )
 
         self.G.c.player.faction = faction.value
@@ -299,6 +298,7 @@ class GameProcessor:
         if not self.G.c.steps.last or self.G.c.steps.last.id != settings.phases[5]:
             self.G.c.steps.pull()
             self.G.c.steps.turn_phase = self.G.c.steps.last.id
+            self.G.c.steps.turn_phases_left = self.G.c.steps.current_ids()
 
         return self
 
@@ -460,7 +460,7 @@ class GameProcessor:
             if 'Analyst' in self.G.c.player.abilities:
                 raise HTTPException(
                     status_code=409,
-                    detail="Anlyst ability must be used."
+                    detail="Analyst ability must be used."
                         )
 
         # planning

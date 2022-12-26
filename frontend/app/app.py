@@ -99,21 +99,21 @@ def show_current_data() -> None:
     st.subheader("Current game")
 
     if current['game_steps']['is_game_end'] == True:
-        st.write("this game is end")
+        st.caption("this game is end")
 
     if current['players'][0]['faction'] is None:
-        p = 'waiting for choice faction'
-        st.markdown(f"turn: **{p}**")
-        st.markdown(f"phase: **{p}**")
-        st.markdown(f"player faction: **{p}**")
-        st.markdown(f"priority: **{p}**")
+
+        st.markdown(f"turn: -")
+        st.markdown(f"phase: -")
+        st.markdown(f"player faction: -")
+        st.markdown(f"priority: -")
 
     elif current['players'][0]['has_priority'] is None:
-        p = 'waiting for pushing next phase'
-        st.markdown(f"turn: **{p}**")
-        st.markdown(f"phase: **{p}**")
+        st.caption('Push next phase button')
+        st.markdown(f"turn: -")
+        st.markdown(f"phase: -")
         st.markdown(f"player faction: **{current['players'][0]['faction']}**")
-        st.markdown(f"priority: **{p}**")
+        st.markdown(f"priority: -")
 
     else:
         st.markdown(f"turn: **{current['game_steps']['game_turn'] + 1}**")
@@ -142,7 +142,8 @@ def show_objectives():
         else:
             st.caption('empty')
 
-    st.markdown(f"Mission card: **{current['mission_card']}**")
+    mission = current['mission_card'] if current['mission_card'] is not None else '-'
+    st.markdown(f"Mission card: **{mission}**")
     with st.expander("Mission card data"):
         if current['mission_card'] is None:
             st.caption('empty')
@@ -250,9 +251,9 @@ def show_choose_side(holder: DeltaGenerator) -> None:
     Args:
         holder (DeltaGenerator): holder for change and clear displayed data
     """
-    st.subheader("Choose your side")
+    st.subheader("Choose your faction")
     choice = st.radio(
-        label='Choose your side:',
+        label='Choose your faction:',
         options=['cia', 'kgb'],
         horizontal=True,
         label_visibility='collapsed'
@@ -276,45 +277,35 @@ def show_choose_side(holder: DeltaGenerator) -> None:
             show_api_error(r)
 
 
-def show_coin(holder: DeltaGenerator) -> None:
+def show_coin(holder: DeltaGenerator, text: str) -> None:
     """Show image picture
+
+    args:
+        holder (DeltaGenerator): holder for change and clear displayed data
     """
     holder.text(
-        """
-        wait a few seconds:
+    f"""
+    {text}
 
-        -> set priority randomly
-        -> deck shuffling
-        -> getting a mission card
-        -> and start the first turn
+    ------>  +====+  <------
+    ------>  |(::)|  <------
+    ------>  | )( |  <------
+    ------>  |(..)|  <------
+    ------>  +====+  <------
 
-        ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-        ⣿⣿⣿⣿⣿⡿⢿⣿⣿⣿⣟⣛⣛⣛⣉⣉⣛⠛⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-        ⣿⣿⣿⣟⡵⠞⠉⠀⢈⣿⣿⣿⠿⠟⠛⠛⠛⠻⡆⢸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-        ⣿⣿⣿⣿⡀⣀⣠⣴⣿⣿⣿⠁⣶⣿⣿⣿⠿⠛⣡⡋⠹⣿⣿⣿⣿⣿⣿⣿⣿⣿
-        ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣦⣤⣭⣥⣤⣶⣾⣿⣿⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿
-        ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣇⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿
-        ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿
-        ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠁⠈⠉⠉⢻⣿⡇⠀⠙⢿⣿⣿⣿⣿⣿⣿
-        ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠿⠶⣶⣶⣿⣿⣿⣄⠀⠀⠈⢻⣿⣿⣿⣿
-        ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣧⣤⣀⣀⡀⣹⡉⠙⠻⠀⠀⠀⠀⣿⣿⣿⣿
-        ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⠀⠉⠉⠙⣿⡇⠀⠀⠀⠀⠀⠀⣿⣿⣿⣿
-        ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡟⠓⠶⠶⠤⣿⡇⠀⠀⠀⠀⠀⠀⠻⣿⣿⣿
-        ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠀⠀⣀⣠⣾⡇⠀⠀⠀⠀⠀⠀⠀⠈⢻⣿
-        ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣷⣶⣤⣉⣁⣀⣀⡀⠀⠀⠀⠀⠀⠀⢸⣿
-        ⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣶⣶⣶⣶⣶⣶⣾⣿
-        """
+    """
             )
 
 
 def next_step(
     step: Literal['turn', 'phase'],
-    holder: DeltaGenerator = None
+    holder: DeltaGenerator
         ) -> None:
     """Get next phase or turn
 
     Args:
         step (str): typo of next
+        holder (DeltaGenerator): holder for change and clear displayed data
     """
     token = st.session_state.get('access_token')
     url = os.path.join(API_ROOT, API_VERSION, f'game/next_{step}')
@@ -325,11 +316,19 @@ def next_step(
                 }
             )
     if r.status_code == 200:
-        if holder is not None:
-            show_coin(holder)
-            time.sleep(7)
-            holder.empty()
+        if step == 'turn':
+            text = "-> go to next turn"
+        else:
+            if st.session_state['current']['game_steps']['turn_phase'] is None:
+                text = "-> set priority and mission card"
+            else:
+                text = "-> go to the next phase"
+        show_coin(holder, text)
+        time.sleep(2)
+        holder.empty()
         get_current_data()
+        if st.session_state['current']['game_steps']['turn_phase'] is None:
+            next_step('phase', holder)
     else:
         show_api_error(r)
 
@@ -357,7 +356,7 @@ def show_next(holder: DeltaGenerator):
             'next turn',
             disabled=t,
             on_click=next_step,
-            args=('turn',)
+            args=('turn', holder)
                 )
 
 def show_special_cards_of_opponent():

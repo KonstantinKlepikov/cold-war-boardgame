@@ -277,9 +277,15 @@ class TestGameProcessorLogic:
         game_proc = inited_game_proc.set_next_phase()
 
         assert isinstance(game_proc, game_logic.GameProcessor), 'wrong game_proce'
-        assert game_proc.G.c.steps.last.id == settings.phases[0], \
+        assert game_proc.G.c.steps.turn_phase == settings.phases[0], \
             'wrong proc phase'
         assert len(game_proc.G.c.steps.current) == 5, 'wrong tep len'
+        assert len(game_proc.G.c.steps.turn_phases_left ) == 5, 'wrong len'
+        game_proc = inited_game_proc.set_next_phase()
+        assert game_proc.G.c.steps.turn_phase == settings.phases[1], \
+            'wrong proc phase'
+        assert len(game_proc.G.c.steps.current) == 4, 'wrong tep len'
+        assert len(game_proc.G.c.steps.turn_phases_left ) == 4, 'wrong len'
 
     def test_set_next_phase_cant_change_detente(
         self,

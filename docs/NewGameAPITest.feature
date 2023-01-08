@@ -15,7 +15,7 @@ Feature: Creating new game
     And user get responses with status code '201' and '200'
     And user get 'data/static' of the game
     And user get 'data/current' of the game
-    And user proceed next
+    And user proceed in phase 'Briefing'
 
     Examples:
     | faction |

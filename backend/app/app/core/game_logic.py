@@ -1,4 +1,3 @@
-import json
 from typing import Dict, List, Union, Optional
 from fastapi import HTTPException
 from app.schemas import schema_game
@@ -77,98 +76,6 @@ class GameProcessor:
         else:
             self.current_data = current_data
 
-    # def fill(self) -> 'GameProcessor':
-    #     """Init new objective deck
-
-    #     Returns:
-    #         GameProcessor: initet game processor
-    #     """
-    #     # init game steps
-    #     data: dict = self.current_data.game_steps.to_mongo().to_dict()
-    #     self.G.add(CustomSteps('steps', **data))
-    #     for num, val in enumerate(settings.phases):
-    #         step = Step(val, priority=num)
-    #         self.G.c.steps.add(step)
-
-    #     if self.G.c.steps.turn_phases_left:
-    #         self.G.c.steps.deal(
-    #             self.G.c.steps.turn_phases_left
-    #                 )
-    #     # else: # TODO: remove
-    #     #     self.G.c.steps.clear()
-
-    #     if self.G.c.steps.turn_phase:
-    #         self.G.c.steps.last = self.G.c.steps.c.by_id(
-    #             self.G.c.steps.turn_phase
-    #                 )
-    #     # else: # TODO: remove
-    #     #     self.G.c.steps.last = None
-
-    #     # init ptayers
-    #     for p in self.current_data.players:
-    #         data: dict = p.to_mongo().to_dict()
-    #         name = 'player' if data['is_bot'] == False else 'bot'
-    #         player = CustomPlayer(name, **data)
-    #         self.G.add(player)
-
-    #         # player agents
-    #         self.G.c[name].add(Bag('agents'))
-    #         for c in p.player_cards.agent_cards:
-    #             data: dict = c.to_mongo().to_dict()
-    #             card = PlayerAgentCard(data['name'], **data)
-    #             self.G.c[name].c.agents.add(card)
-    #             self.G.c[name].c.agents.deal()
-
-    #         # player groups
-    #         self.G.c[name].add(Bag('groups'))
-    #         for c in p.player_cards.group_cards:
-    #             data: dict = c.to_mongo().to_dict()
-    #             card = PlayerGroupObjCard(data['name'], **data)
-    #             self.G.c[name].c.groups.add(card)
-    #             self.G.c[name].c.groups.deal()
-
-    #         # player groups
-    #         self.G.c[name].add(Bag('objectives'))
-    #         for c in p.player_cards.objective_cards:
-    #             data: dict = c.to_mongo().to_dict()
-    #             card = PlayerGroupObjCard(data['name'], **data)
-    #             self.G.c[name].c.objectives.add(card)
-    #             self.G.c[name].c.objectives.deal()
-
-    #     # init game decks
-    #     # group deck
-    #     data: dict = self.current_data.game_decks.group_deck.to_mongo().to_dict()
-    #     self.G.add(CustomDeck('groups', **data))
-    #     for c in self.cards['group_cards']:
-    #         card = GroupCard(c['name'], **c)
-    #         self.G.c.groups.add(card)
-
-    #     if self.G.c.groups.deck:
-    #         self.G.c.groups.deal(self.G.c.groups.deck)
-    #     # else:  # TODO: remove
-    #     #     self.G.c.groups.clear()
-
-    #     # objective deck
-    #     data: dict = self.current_data.game_decks.objective_deck.to_mongo().to_dict()
-    #     self.G.add(CustomDeck('objectives', **data))
-    #     for c in self.cards['objective_cards']:
-    #         card = ObjectiveCard(c['name'], **c)
-    #         self.G.c.objectives.add(card)
-
-    #     if self.G.c.objectives.deck:
-    #         self.G.c.objectives.deal(self.G.c.objectives.deck)
-    #     # else:  # TODO: remove
-    #     #     self.G.c.objectives.clear()
-
-    #     # mission card
-    #     m = self.current_data.game_decks.mission_card  # TODO: remove
-    #     self.G.mission_card = m if m else None  # TODO: remove
-
-    #     # init engines
-    #     self.G.add(Dice('coin'))
-
-    #     return self
-
     def fill(self) -> 'GameProcessor':
         """Init new objective deck
 
@@ -215,7 +122,7 @@ class GameProcessor:
                 self.G.c[name].c.groups.add(card)
                 self.G.c[name].c.groups.deal()
 
-            # player groups
+            # player objectives
             self.G.c[name].add(Bag('objectives'))
             for c in p.player_cards.objective_cards:
                 data: dict = c.to_mongo().to_dict()
@@ -249,59 +156,12 @@ class GameProcessor:
 
         return self
 
-    # def flusсh(self) -> model_game.CurrentGameData:
-    #     """Save the game data to db"""
-
-    #     # flusсh game steps
-    #     schema = schema_game.GameStepsDb(**self.G.c.steps.to_dict())
-    #     db_data = jsonable_encoder(schema)
-    #     self.current_data.game_steps = model_game.GameSteps(**db_data)
-
-    #     # flusсh players
-    #     for num, val in enumerate(self.G.get_players().values()):
-    #         schema = schema_game.Player(**val.to_dict())
-    #         db_data = jsonable_encoder(schema)
-    #         # cards
-    #         cards = {
-    #             'agent_cards': [c.to_dict() for c in val.c.agents.current],
-    #             'group_cards': [c.to_dict() for c in val.c.groups.current],
-    #             'objective_cards': [c.to_dict() for c in val.c.objectives.current],
-    #             }
-    #         schema = schema_game.PlayerCards(**cards)
-    #         db_data['player_cards'] = jsonable_encoder(schema)
-    #         self.current_data.players[num] = model_game.Player(**db_data)
-
-    #     # flusсh game decks
-    #     # objectives
-    #     ids = self.G.c.objectives.current_ids()
-    #     self.G.c.objectives.deck = ids
-    #     self.G.c.objectives.deck_len = len(ids)
-    #     schema = schema_game.GameDeckDb(**self.G.c.objectives.to_dict())
-    #     db_data = jsonable_encoder(schema)
-    #     self.current_data.game_decks.objective_deck = model_game.GameDeck(**db_data)
-
-    #     # groups
-    #     ids = self.G.c.groups.current_ids()
-    #     self.G.c.groups.deck = ids
-    #     self.G.c.groups.deck_len = len(ids)
-    #     schema = schema_game.GameDeckDb(**self.G.c.groups.to_dict())
-    #     db_data = jsonable_encoder(schema)
-    #     self.current_data.game_decks.group_deck = model_game.GameDeck(**db_data)
-
-    #     # mission card
-    #     self.current_data.game_decks.mission_card = self.G.mission_card
-
-    #     return self.current_data
-
-    def flusсh(self) -> model_game.CurrentGameData:
-        """Save the game data to db"""
+    def flush(self) -> model_game.CurrentGameData:
+        """Make ready to save game data object"""
         data = self.G.relocate_all().to_dict()
-        # data = data.to_dict()
-        # j = json.loads(data)
-        # schema = schema_game.CurrentGameData(**json.loads(data))
         schema = schema_game.CurrentGameDataDb(**data)
         db_data = jsonable_encoder(schema)
-        self.current_data = model_game.CurrentGameData(**db_data)
+        self.current_data.modify(**db_data)
 
         return self.current_data
 
@@ -377,7 +237,7 @@ class GameProcessor:
                     )
 
         self.G.c.steps.game_turn += 1
-        self.G.c.steps.turn_phases_left = self.G.c.steps.deal().current_ids()
+        self.G.c.steps.deal()
         self.G.c.steps.turn_phase = None
 
         return self
@@ -390,8 +250,6 @@ class GameProcessor:
         """
         if not self.G.c.steps.last or self.G.c.steps.last.id != settings.phases[5]:
             self.G.c.steps.pull()
-            self.G.c.steps.turn_phase = self.G.c.steps.last.id
-            self.G.c.steps.turn_phases_left = self.G.c.steps.current_ids()
 
         return self
 
@@ -402,7 +260,7 @@ class GameProcessor:
             GameProcessor
         """
         try:
-            self.G.mission_card = self.G.c.objectives.pop().id
+            self.G.c.objectives.pop()
         except IndexError:
             raise HTTPException(
                 status_code=409,
@@ -437,7 +295,7 @@ class GameProcessor:
     def _check_analyct_condition(self) -> None:
         """Check conditions for play analyst ability
         """
-        if self.G.c.steps.turn_phase != settings.phases[0]:
+        if self.G.c.steps.last is None or self.G.c.steps.last.id != settings.phases[0]:
             raise HTTPException(
                 status_code=409,
                 detail="Ability can't be played in any phases except 'briefing'."
@@ -529,7 +387,8 @@ class GameProcessor:
                 detail="Something can't be changed, because game is end"
                     )
 
-        phase = self.G.c.steps.turn_phase
+        # phase = self.G.c.steps.turn_phase
+        phase = self.G.c.steps.last.id if self.G.c.steps.last else None
 
         # briefing
         if phase == settings.phases[0]:
@@ -543,7 +402,7 @@ class GameProcessor:
                         )
 
             # objective card not defined
-            if not self.G.mission_card:
+            if self.G.c.objectives.last is None:
                 raise HTTPException(
                     status_code=409,
                     detail="Mission card undefined. Cant push to next phase."
@@ -588,7 +447,8 @@ class GameProcessor:
         Returns:
             GameProcessor
         """
-        phase = self.G.c.steps.turn_phase
+        # phase = self.G.c.steps.turn_phase
+        phase = self.G.c.steps.last.id if self.G.c.steps.last else None
 
         # set briefing states after next
         if phase == settings.phases[0]:

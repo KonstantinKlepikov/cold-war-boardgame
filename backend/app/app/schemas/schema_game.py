@@ -150,12 +150,11 @@ class GameDecks(BaseModel):
     mission_card: Optional[str] = None
 
 
-class GameDecksDb(BaseModel):
+class GameDecksDb(GameDecks):
     """Game decks and mission card
     """
     group_deck: GameDeckDb = GameDeckDb()
     objective_deck: GameDeckDb = GameDeckDb()
-    mission_card: Optional[str] = None
 
 
 class Player(BaseModel):
@@ -221,9 +220,8 @@ class CurrentGameData(BaseModel):
     game_decks: GameDecks = GameDecks()
 
 
-class CurrentGameDataDb(BaseModel):
+class CurrentGameDataDb(CurrentGameData):
     """Current game data
     """
     game_steps: GameStepsDb = GameStepsDb()
-    players: List[Player]
     game_decks: GameDecksDb = GameDecksDb()

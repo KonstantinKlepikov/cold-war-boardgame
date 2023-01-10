@@ -38,12 +38,6 @@ class CustomGame(Game):
         return f
 
 
-# @dataclass_json(undefined=Undefined.EXCLUDE)
-# @dataclass
-# class _CustomGame(Game):
-#     mission_card: Optional[str] = None
-
-
 @dataclass_json(undefined=Undefined.EXCLUDE)
 @dataclass
 class CustomSteps(Steps):
@@ -75,6 +69,22 @@ class CustomPlayer(Player):
     player_cards: Dict[str, List[Dict[str, Any]]] = field(default_factory=dict)
     login: Optional[str] = None
     abilities: List[str] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+        self._to_relocate = {
+            "player_cards": "player_cards_field",
+                }
+
+    def player_cards_field(self):
+        f = {}
+        tools = self.get_tools()
+        f['agent_cards'] = tools['agents'].current
+        f['group_cards'] = tools['groups'].current
+        f['objective_cards'] = tools['objectives'].current
+        return f
+
 
 
 @dataclass_json(undefined=Undefined.EXCLUDE)

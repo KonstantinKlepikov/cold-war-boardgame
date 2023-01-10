@@ -1,9 +1,9 @@
 import pytest
-import json
+# import json
 from typing import Callable, Generator
 from fastapi.testclient import TestClient
 from app.crud import crud_game, crud_user
-from app.constructs import Priority, Faction
+# from app.constructs import Priority, Faction
 from app.core import game_logic
 from app.config import settings
 
@@ -43,6 +43,7 @@ class TestCreateNewGame:
             )
         assert response.status_code == 201, 'wrong status'
         assert connection['CurrentGameData'].objects().count() == 2, 'wrong count of data'
+        # assert connection['CurrentGameData'].objects().count() == 3, 'wrong count of data'
 
 
 class TestPresetFaction:

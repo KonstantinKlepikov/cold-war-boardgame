@@ -46,6 +46,26 @@ class PlayerGroupOrObjectivreCard(EmbeddedDocument):
     name = StringField()
 
 
+# TODO: use this
+class PlayerAgentCards(EmbeddedDocument):
+    """Agent cards representation
+    """
+    dead: ListField(StringField())
+    in_play: StringField(null=True)
+    in_vacation: ListField(StringField())
+    revealed: ListField(StringField())
+    db_cards = EmbeddedDocumentListField(PlayerAgentCard)
+
+
+# TODO: use this
+class _PlayerCards(EmbeddedDocument):
+    """Array of player cards
+    """
+    agent_cards = EmbeddedDocumentField(PlayerAgentCards, default=PlayerAgentCards())
+    group_cards = EmbeddedDocumentListField(PlayerGroupOrObjectivreCard)
+    objective_cards = EmbeddedDocumentListField(PlayerGroupOrObjectivreCard)
+
+# TODO: remove this
 class PlayerCards(EmbeddedDocument):
     """Array of player cards
     """

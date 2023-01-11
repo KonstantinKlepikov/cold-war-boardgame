@@ -1,6 +1,6 @@
 from typing import Optional
 from fastapi.encoders import jsonable_encoder
-from app.core import game_logic
+from app.core import processor_game
 from app.crud import crud_base, crud_card, crud_game
 from app.models import model_game
 from app.schemas import schema_game
@@ -29,7 +29,7 @@ class CRUDGame(
     def get_game_processor(
         self,
         login: str,
-            ) -> game_logic.GameProcessor:
+            ) -> processor_game.GameProcessor:
         """Get game processor
 
         Args:
@@ -39,7 +39,7 @@ class CRUDGame(
         Returns:
             game_logic.GameProcessor: processor
         """
-        game_proc = game_logic.GameProcessor(
+        game_proc = processor_game.GameProcessor(
             crud_card.cards.get_all_cards(),
             crud_game.game.get_current_game_data(login)
                 )

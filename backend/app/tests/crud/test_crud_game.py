@@ -1,5 +1,5 @@
 from typing import Dict, Generator, Union
-from app.core import game_logic
+from app.core import processor_game
 from app.crud import crud_game
 from app.schemas import schema_game
 from app.config import settings
@@ -59,7 +59,7 @@ class TestCRUDGame:
         game_proc = game.get_game_processor(
             settings.user0_login
                 )
-        assert isinstance(game_proc, game_logic.GameProcessor), 'wrong return'
+        assert isinstance(game_proc, processor_game.GameProcessor), 'wrong return'
 
     def test_create_new_game(
         self,

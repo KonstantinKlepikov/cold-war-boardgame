@@ -1,10 +1,9 @@
 from fastapi import status, Depends, APIRouter, Query, HTTPException
 from app.schemas import schema_user, schema_game
 from app.crud import crud_game
-from app.core import security_user
+from app.core import security_user, processor_game
 from app.constructs import Faction
 from app.config import settings
-from app.core import game_logic
 
 
 router = APIRouter()
@@ -22,7 +21,7 @@ def create_new_game(
         ) -> None:
     """Create new game.
     """
-    obj_in = game_logic.make_game_data(user.login)
+    obj_in = processor_game.make_game_data(user.login)
     crud_game.game.create_new_game(obj_in)
     crud_game.game.get_game_processor(user.login) \
         .deal_and_shuffle_decks() \
@@ -102,7 +101,7 @@ def analyst_get(
 
     proc.flush().save()
 
-    return { "top_cards": proc.G.c.groups.temp_group }
+    return { "top_cards": proc.G.c.group_deck.temp_group }
 
 
 @router.patch(

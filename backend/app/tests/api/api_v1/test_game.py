@@ -1,10 +1,8 @@
 import pytest
-# import json
 from typing import Callable, Generator
 from fastapi.testclient import TestClient
 from app.crud import crud_game, crud_user
-# from app.constructs import Priority, Faction
-from app.core import game_logic
+from app.core import processor_game
 from app.config import settings
 
 
@@ -129,7 +127,7 @@ class TestNextTurn:
         self,
         user: crud_user.CRUDUser,
         game: crud_game.CRUDGame,
-        started_game_proc: game_logic.GameProcessor,
+        started_game_proc: processor_game.GameProcessor,
         monkeypatch,
             ) -> None:
         """Mock user and game
@@ -165,7 +163,7 @@ class TestNextTurn:
     def test_next_turn_if_game_end_return_409(
         self,
         mock_return,
-        started_game_proc: game_logic.GameProcessor,
+        started_game_proc: processor_game.GameProcessor,
         client: TestClient,
             ) -> None:
         """Test turn can't be pushed if game end
@@ -190,7 +188,7 @@ class TestNextPhase:
     def mock_return(
         self,
         user: crud_user.CRUDUser,
-        started_game_proc_fact: game_logic.GameProcessor,
+        started_game_proc_fact: processor_game.GameProcessor,
         monkeypatch,
             ) -> None:
         """Mock user and game
@@ -257,7 +255,7 @@ class TestNextPhase:
     def test_next_phase_if_last_return_409(
         self,
         mock_return,
-        started_game_proc_fact: game_logic.GameProcessor,
+        started_game_proc_fact: processor_game.GameProcessor,
         client: TestClient,
             ) -> None:
         """Test last phases cant'be pushed

@@ -4,7 +4,7 @@ from typing import Tuple
 from fastapi import HTTPException
 from app.config import settings
 from app.constructs import Priority, Faction
-from app.core import game_logic
+from app.core import processor_game
 
 
 class TestGameData:
@@ -14,7 +14,7 @@ class TestGameData:
     def test_make_game_data(self) -> None:
         """Test make_game_data()
         """
-        data = game_logic.make_game_data(settings.user0_login)
+        data = processor_game.make_game_data(settings.user0_login)
 
         assert data, 'empty state'
         assert data.game_steps.game_turn == 0, 'wrong game turn'
@@ -62,7 +62,7 @@ class TestGameProcessor:
     """Test GameProcessor class
     """
 
-    def test_create_game(self, game_proc: game_logic.GameProcessor) -> None:
+    def test_create_game(self, game_proc: processor_game.GameProcessor) -> None:
         """Test game is created
         """
         assert isinstance(game_proc.G, bgameb.Game), 'wrong game'
@@ -70,7 +70,7 @@ class TestGameProcessor:
 
     def test_check_if_current_raise_exception(
         self,
-        game_proc: game_logic.GameProcessor
+        game_proc: processor_game.GameProcessor
             ) -> None:
         """Exception is raised if player not starts any games
         """
@@ -81,12 +81,12 @@ class TestGameProcessor:
 
     def test_fill_data(
         self,
-        game_proc: game_logic.GameProcessor
+        game_proc: processor_game.GameProcessor
             ) -> None:
         """Test init new deck init deck in Game objects
         """
         game_proc = game_proc.fill()
-        assert isinstance(game_proc, game_logic.GameProcessor), 'wrong proc'
+        assert isinstance(game_proc, processor_game.GameProcessor), 'wrong proc'
 
         # players
         assert game_proc.G.c.player, 'player not inited'
@@ -96,12 +96,12 @@ class TestGameProcessor:
         assert game_proc.G.c.player.faction is None, 'wrong faction'
         assert game_proc.G.c.player.score == 0, 'wrong score'
         assert game_proc.G.c.player.login == 'DonaldTrump', 'wrong login'
-        assert len(game_proc.G.c.player.c.agents.c) == 6, 'wrong agents'
-        assert len(game_proc.G.c.player.c.groups.c) == 0, 'wrong groups'
-        assert len(game_proc.G.c.player.c.objectives.c) == 0, 'wrong objectives'
-        assert len(game_proc.G.c.player.c.agents.current) == 6, 'wrong agents'
-        assert len(game_proc.G.c.player.c.groups.current) == 0, 'wrong groups'
-        assert len(game_proc.G.c.player.c.objectives.current) == 0, 'wrong objectives'
+        assert len(game_proc.G.c.player.c.agent_cards.c) == 6, 'wrong agents'
+        assert len(game_proc.G.c.player.c.group_cards.c) == 0, 'wrong groups'
+        assert len(game_proc.G.c.player.c.objective_cards.c) == 0, 'wrong objectives'
+        assert len(game_proc.G.c.player.c.agent_cards.current) == 6, 'wrong agents'
+        assert len(game_proc.G.c.player.c.group_cards.current) == 0, 'wrong group_cards'
+        assert len(game_proc.G.c.player.c.objective_cards.current) == 0, 'wrong objectives'
         assert len(game_proc.G.c.player.abilities) == 0, 'wrong abilities'
 
         assert game_proc.G.c.bot, 'bot not inited'
@@ -110,34 +110,34 @@ class TestGameProcessor:
         assert game_proc.G.c.bot.faction is None, 'wrong faction'
         assert game_proc.G.c.bot.score == 0, 'wrong score'
         assert game_proc.G.c.bot.login is None, 'wrong login'
-        assert len(game_proc.G.c.bot.c.agents.c) == 6, 'wrong agents'
-        assert len(game_proc.G.c.bot.c.groups.c) == 0, 'wrong groups'
-        assert len(game_proc.G.c.bot.c.objectives.c) == 0, 'wrong objectives'
-        assert len(game_proc.G.c.bot.c.agents.current) == 6, 'wrong agents'
-        assert len(game_proc.G.c.bot.c.groups.current) == 0, 'wrong groups'
-        assert len(game_proc.G.c.bot.c.objectives.current) == 0, 'wrong objectives'
+        assert len(game_proc.G.c.bot.c.agent_cards.c) == 6, 'wrong agent_cards'
+        assert len(game_proc.G.c.bot.c.group_cards.c) == 0, 'wrong groups'
+        assert len(game_proc.G.c.bot.c.objective_cards.c) == 0, 'wrong objectives'
+        assert len(game_proc.G.c.bot.c.agent_cards.current) == 6, 'wrong agents'
+        assert len(game_proc.G.c.bot.c.group_cards.current) == 0, 'wrong groups'
+        assert len(game_proc.G.c.bot.c.objective_cards.current) == 0, 'wrong objectives'
         assert len(game_proc.G.c.bot.abilities) == 0, 'wrong abilities'
 
         # objectives
-        assert len(game_proc.G.c.objectives.c) == 21, 'wrong objective len'
-        assert game_proc.G.c.objectives.last is None, 'wrong mission card'
-        assert len(game_proc.G.c.objectives.current) == 21, 'empty objective current'
-        assert len(game_proc.G.c.objectives.pile) == 0, 'wrong pile'
-        assert game_proc.G.c.objectives.c.egypt.id == 'Egypt', 'wrong card field'
-        assert game_proc.G.c.objectives.c.egypt.name == 'Egypt', 'wrong card field'
-        assert len(game_proc.G.c.objectives.c.egypt.bias_icons) == 4, 'wrong card field'
-        assert game_proc.G.c.objectives.c.egypt.stability == 11, 'wrong card field'
-        assert game_proc.G.c.objectives.c.egypt.victory_points == 20, 'wrong card field'
+        assert len(game_proc.G.c.objective_deck.c) == 21, 'wrong objective len'
+        assert game_proc.G.c.objective_deck.last is None, 'wrong mission card'
+        assert len(game_proc.G.c.objective_deck.current) == 21, 'empty objective current'
+        assert len(game_proc.G.c.objective_deck.pile) == 0, 'wrong pile'
+        assert game_proc.G.c.objective_deck.c.egypt.id == 'Egypt', 'wrong card field'
+        assert game_proc.G.c.objective_deck.c.egypt.name == 'Egypt', 'wrong card field'
+        assert len(game_proc.G.c.objective_deck.c.egypt.bias_icons) == 4, 'wrong card field'
+        assert game_proc.G.c.objective_deck.c.egypt.stability == 11, 'wrong card field'
+        assert game_proc.G.c.objective_deck.c.egypt.victory_points == 20, 'wrong card field'
 
         # groups
-        assert len(game_proc.G.c.groups.c) == 24, 'wrong group len'
-        assert len(game_proc.G.c.groups.current) == 24, 'empty group current'
-        assert len(game_proc.G.c.groups.pile) == 0, 'wrong pile'
-        assert game_proc.G.c.groups.c.guerilla.id == 'Guerilla', 'wrong card field'
-        assert game_proc.G.c.groups.c.guerilla.name == 'Guerilla', 'wrong card field'
-        assert game_proc.G.c.groups.c.guerilla.faction == 'Military', 'wrong card field'
-        assert game_proc.G.c.groups.c.guerilla.influence == 1, 'wrong card field'
-        assert isinstance(game_proc.G.c.groups.c.guerilla.power, str), 'wrong card field'
+        assert len(game_proc.G.c.group_deck.c) == 24, 'wrong group len'
+        assert len(game_proc.G.c.group_deck.current) == 24, 'empty group current'
+        assert len(game_proc.G.c.group_deck.pile) == 0, 'wrong pile'
+        assert game_proc.G.c.group_deck.c.guerilla.id == 'Guerilla', 'wrong card field'
+        assert game_proc.G.c.group_deck.c.guerilla.name == 'Guerilla', 'wrong card field'
+        assert game_proc.G.c.group_deck.c.guerilla.faction == 'Military', 'wrong card field'
+        assert game_proc.G.c.group_deck.c.guerilla.influence == 1, 'wrong card field'
+        assert isinstance(game_proc.G.c.group_deck.c.guerilla.power, str), 'wrong card field'
 
         # steps
         assert game_proc.G.c.steps.game_turn == 0, 'wrong turn'
@@ -154,7 +154,7 @@ class TestGameProcessor:
 
     def test_flush_change_player(
         self,
-        inited_game_proc: game_logic.GameProcessor
+        inited_game_proc: processor_game.GameProcessor
             ) -> None:
         inited_game_proc.G.c.player.is_bot = True
         inited_game_proc.G.c.bot.is_bot = False
@@ -164,7 +164,7 @@ class TestGameProcessor:
 
     def test_flush_steps(
         self,
-        inited_game_proc: game_logic.GameProcessor
+        inited_game_proc: processor_game.GameProcessor
             ) -> None:
         """Test flush() can change steps
         """
@@ -184,14 +184,14 @@ class TestGameProcessorLogic:
 
     def test_deal_and_shuffle_decks(
         self,
-        inited_game_proc: game_logic.GameProcessor,
+        inited_game_proc: processor_game.GameProcessor,
             ) -> None:
         """Test deal_and_shuffle_decks()
         """
         game_proc = inited_game_proc.deal_and_shuffle_decks()
-        assert isinstance(game_proc, game_logic.GameProcessor), 'wrong return'
-        assert len(game_proc.G.c.objectives.current) == 21, 'wrong proc objective len'
-        assert len(game_proc.G.c.groups.current) == 24, 'wrong proc group len'
+        assert isinstance(game_proc, processor_game.GameProcessor), 'wrong return'
+        assert len(game_proc.G.c.objective_deck.current) == 21, 'wrong proc objective len'
+        assert len(game_proc.G.c.group_deck.current) == 24, 'wrong proc group len'
 
     @pytest.mark.parametrize("test_input,expected", [
         (Faction.KGB, ('kgb', 'cia')), (Faction.CIA, ('cia', 'kgb')),
@@ -200,7 +200,7 @@ class TestGameProcessorLogic:
         self,
         test_input: Faction,
         expected: Tuple[str],
-        inited_game_proc: game_logic.GameProcessor,
+        inited_game_proc: processor_game.GameProcessor,
             ) -> None:
         """Test set faction
         """
@@ -220,7 +220,7 @@ class TestGameProcessorLogic:
         self,
         test_input: Priority,
         expected: Tuple[bool],
-        inited_game_proc: game_logic.GameProcessor,
+        inited_game_proc: processor_game.GameProcessor,
             ) -> None:
         """Test set priority
         """
@@ -234,7 +234,7 @@ class TestGameProcessorLogic:
 
     def test_set_priority_random(
         self,
-        inited_game_proc: game_logic.GameProcessor,
+        inited_game_proc: processor_game.GameProcessor,
             ) -> None:
         """Test set priority at random
         """
@@ -244,7 +244,7 @@ class TestGameProcessorLogic:
 
     def test_set_next_turn_change_the_turn_number(
         self,
-        inited_game_proc: game_logic.GameProcessor,
+        inited_game_proc: processor_game.GameProcessor,
             ) -> None:
         """Test set_next_turn() push turn
         """
@@ -256,7 +256,7 @@ class TestGameProcessorLogic:
 
     def test_set_next_turn_cant_change_if_game_ends(
         self,
-        inited_game_proc: game_logic.GameProcessor,
+        inited_game_proc: processor_game.GameProcessor,
             ) -> None:
         """Test set_next_turn() cant change turn if game end
         """
@@ -267,12 +267,12 @@ class TestGameProcessorLogic:
 
     def test_set_next_phase_change_phase(
         self,
-        inited_game_proc: game_logic.GameProcessor,
+        inited_game_proc: processor_game.GameProcessor,
             ) -> None:
         """Test set_next_phase() push phase
         """
         game_proc = inited_game_proc.set_next_phase()
-        assert isinstance(game_proc, game_logic.GameProcessor), 'wrong game_proce'
+        assert isinstance(game_proc, processor_game.GameProcessor), 'wrong game_proce'
         assert game_proc.G.c.steps.last.id == settings.phases[0], \
             'wrong proc phase'
         assert len(game_proc.G.c.steps.current) == 5, 'wrong tep len'
@@ -284,7 +284,7 @@ class TestGameProcessorLogic:
 
     def test_set_next_phase_cant_change_detente(
         self,
-        inited_game_proc: game_logic.GameProcessor,
+        inited_game_proc: processor_game.GameProcessor,
             ) -> None:
         """Test set_next_phase() cant change detente
         """
@@ -297,7 +297,7 @@ class TestGameProcessorLogic:
 
     def test_check_analyct_condition_raise_wrong_phase(
         self,
-        inited_game_proc: game_logic.GameProcessor,
+        inited_game_proc: processor_game.GameProcessor,
             ) -> None:
         """Test play analyst look raise 400 when wrong phase
         """
@@ -308,7 +308,7 @@ class TestGameProcessorLogic:
 
     def test_check_analyct_condition_raise_wrong_access(
         self,
-        inited_game_proc: game_logic.GameProcessor,
+        inited_game_proc: processor_game.GameProcessor,
             ) -> None:
         """Test play analyst look raise 400 when player havent access
         to ability
@@ -320,83 +320,83 @@ class TestGameProcessorLogic:
 
     def test_play_analyst_for_look_the_top(
         self,
-        started_game_proc: game_logic.GameProcessor,
+        started_game_proc: processor_game.GameProcessor,
             ) -> None:
         """Test play analyst look 3 cards
         """
         started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.c.by_id(settings.phases[0])
         started_game_proc.G.c.player.abilities.append('Analyst')
         game_proc = started_game_proc.play_analyst_for_look_the_top()
-        assert len(game_proc.G.c.player.c.groups.current) == 3, 'wrong current'
-        assert game_proc.G.c.player.c.groups.current[0].pos_in_deck == -3, \
+        assert len(game_proc.G.c.player.c.group_cards.current) == 3, 'wrong current'
+        assert game_proc.G.c.player.c.group_cards.current[0].pos_in_deck == -3, \
             'wrong position'
-        old = game_proc.G.c.player.c.groups.current[-1].id
-        assert game_proc.G.c.groups.current[-1].id == old, 'wrong order'
+        old = game_proc.G.c.player.c.group_cards.current[-1].id
+        assert game_proc.G.c.group_deck.current[-1].id == old, 'wrong order'
 
         with pytest.raises(HTTPException):
             game_proc.play_analyst_for_look_the_top()
 
     def test_play_analyst_for_look_the_top_removes_old_revealed(
         self,
-        started_game_proc: game_logic.GameProcessor,
+        started_game_proc: processor_game.GameProcessor,
             ) -> None:
         """Test play analyst look 3 cards and removes old revealed
         """
         started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.c.by_id(settings.phases[0])
         started_game_proc.G.c.player.abilities.append('Analyst')
-        started_game_proc.G.c.player.c.groups.current.append(
-            started_game_proc.G.c.groups.current[-1]
+        started_game_proc.G.c.player.c.group_cards.current.append(
+            started_game_proc.G.c.group_deck.current[-1]
                 )
-        started_game_proc.G.c.player.c.groups.current[-1].pos_in_deck = -10
+        started_game_proc.G.c.player.c.group_cards.current[-1].pos_in_deck = -10
 
         game_proc = started_game_proc.play_analyst_for_look_the_top()
-        assert len(game_proc.G.c.player.c.groups.current) == 3, 'wrong current'
-        assert game_proc.G.c.player.c.groups.current[0].pos_in_deck == -3, \
+        assert len(game_proc.G.c.player.c.group_cards.current) == 3, 'wrong current'
+        assert game_proc.G.c.player.c.group_cards.current[0].pos_in_deck == -3, \
             'wrong position'
 
     def test_play_analyst_for_arrange_the_top(
         self,
-        started_game_proc: game_logic.GameProcessor,
+        started_game_proc: processor_game.GameProcessor,
             ) -> None:
         """Test play analyst for arrange the top
         """
         started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.c.by_id(settings.phases[0])
         started_game_proc.G.c.player.abilities.append('Analyst')
         top = [
-            started_game_proc.G.c.groups.current[-3].id,
-            started_game_proc.G.c.groups.current[-2].id,
-            started_game_proc.G.c.groups.current[-1].id,
+            started_game_proc.G.c.group_deck.current[-3].id,
+            started_game_proc.G.c.group_deck.current[-2].id,
+            started_game_proc.G.c.group_deck.current[-1].id,
                 ]
         rev = top[::-1]
-        assert len(started_game_proc.G.c.groups.current) == 24, 'wrong current'
+        assert len(started_game_proc.G.c.group_deck.current) == 24, 'wrong current'
 
         game_proc = started_game_proc.play_analyst_for_arrange_the_top(rev)
         assert game_proc.G.c.player.abilities == [], 'wrong abilities'
-        assert len(game_proc.G.c.groups.current) == 24, 'wrong current'
+        assert len(game_proc.G.c.group_deck.current) == 24, 'wrong current'
         top = [
-            game_proc.G.c.groups.current[-3].id,
-            game_proc.G.c.groups.current[-2].id,
-            game_proc.G.c.groups.current[-1].id,
+            game_proc.G.c.group_deck.current[-3].id,
+            game_proc.G.c.group_deck.current[-2].id,
+            game_proc.G.c.group_deck.current[-1].id,
                 ]
         assert top == rev, 'not reordered'
 
     def test_play_analyst_for_arrange_the_top_not_match(
         self,
-        started_game_proc: game_logic.GameProcessor,
+        started_game_proc: processor_game.GameProcessor,
             ) -> None:
         """Test play analyst for arrange the top not match the top
         """
         started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.c.by_id(settings.phases[0])
         started_game_proc.G.c.player.abilities.append('Analyst')
         old = [
-            started_game_proc.G.c.groups.current[-3].id,
-            started_game_proc.G.c.groups.current[-2].id,
-            started_game_proc.G.c.groups.current[-1].id,
+            started_game_proc.G.c.group_deck.current[-3].id,
+            started_game_proc.G.c.group_deck.current[-2].id,
+            started_game_proc.G.c.group_deck.current[-1].id,
                 ]
         wrong = [
-            started_game_proc.G.c.groups.current[-10].id,
-            started_game_proc.G.c.groups.current[-2].id,
-            started_game_proc.G.c.groups.current[-1].id,
+            started_game_proc.G.c.group_deck.current[-10].id,
+            started_game_proc.G.c.group_deck.current[-2].id,
+            started_game_proc.G.c.group_deck.current[-1].id,
                 ]
         wrong.reverse()
 
@@ -404,11 +404,11 @@ class TestGameProcessorLogic:
             started_game_proc.play_analyst_for_arrange_the_top(wrong)
 
         assert started_game_proc.G.c.player.abilities == ['Analyst'], 'wrong abilities'
-        assert len(started_game_proc.G.c.groups.current) == 24, 'wrong current'
+        assert len(started_game_proc.G.c.group_deck.current) == 24, 'wrong current'
         new = [
-            started_game_proc.G.c.groups.current[-3].id,
-            started_game_proc.G.c.groups.current[-2].id,
-            started_game_proc.G.c.groups.current[-1].id,
+            started_game_proc.G.c.group_deck.current[-3].id,
+            started_game_proc.G.c.group_deck.current[-2].id,
+            started_game_proc.G.c.group_deck.current[-1].id,
                 ]
         assert old == new, 'reordered'
 
@@ -419,7 +419,7 @@ class TestCheckPhaseConditions:
 
     def test_chek_phase_conditions_before_next_if_game_end(
         self,
-        inited_game_proc: game_logic.GameProcessor,
+        inited_game_proc: processor_game.GameProcessor,
             ) -> None:
         """Test chek_phase_conditions_before_next() if game end
         """
@@ -432,7 +432,7 @@ class TestCheckPhaseConditions:
 
     def test_chek_phase_conditions_before_next_raise_if_no_priority(
         self,
-        inited_game_proc: game_logic.GameProcessor,
+        inited_game_proc: processor_game.GameProcessor,
             ) -> None:
         """Test chek_phase_conditions_before_next() if no player has
         priority in briefing
@@ -446,12 +446,12 @@ class TestCheckPhaseConditions:
 
     def test_chek_phase_conditions_before_next_if_no_mission(
         self,
-        inited_game_proc: game_logic.GameProcessor,
+        inited_game_proc: processor_game.GameProcessor,
             ) -> None:
         """Test chek_phase_conditions_before_next() if no mission card set
         """
         inited_game_proc.G.c.steps.last = inited_game_proc.G.c.steps.c.by_id(settings.phases[0])
-        inited_game_proc.G.c.objectives.last = 'some mission card'
+        inited_game_proc.G.c.objective_deck.last = 'some mission card'
 
         with pytest.raises(
             HTTPException,
@@ -460,7 +460,7 @@ class TestCheckPhaseConditions:
 
     def test_chek_phase_conditions_before_next_if_analyst_not_used(
         self,
-        inited_game_proc: game_logic.GameProcessor,
+        inited_game_proc: processor_game.GameProcessor,
             ) -> None:
         """Test chek_phase_conditions_before_next() if analyst
         bility not used
@@ -469,7 +469,7 @@ class TestCheckPhaseConditions:
         inited_game_proc.G.c.player.abilities.append('Analyst')
         inited_game_proc.G.c.player.has_priority = True
         inited_game_proc.G.c.bot.has_priority = False
-        inited_game_proc.G.c.objectives.last = 'some mission card'
+        inited_game_proc.G.c.objective_deck.last = 'some mission card'
 
         with pytest.raises(
             HTTPException,
@@ -478,7 +478,7 @@ class TestCheckPhaseConditions:
 
     def test_chek_phase_conditions_before_next_if_last_phase(
         self,
-        inited_game_proc: game_logic.GameProcessor,
+        inited_game_proc: processor_game.GameProcessor,
             ) -> None:
         """Test chek_phase_conditions_before_next() if last phase
         and needed push to next tun
@@ -497,19 +497,19 @@ class TestGamePhaseConditions:
 
     def test_set_mission_card(
         self,
-        started_game_proc: game_logic.GameProcessor,
+        started_game_proc: processor_game.GameProcessor,
             ) -> None:
         """Test set mission card and change objective deck
         """
         game_proc = started_game_proc.set_mission_card()
 
-        assert isinstance(game_proc, game_logic.GameProcessor), 'wrong game_proce'
-        assert isinstance(game_proc.G.c.objectives.last.id, str), 'mission not set'
-        assert len(game_proc.G.c.objectives.current) == 20, 'wrong proc current'
+        assert isinstance(game_proc, processor_game.GameProcessor), 'wrong game_proce'
+        assert isinstance(game_proc.G.c.objective_deck.last.id, str), 'mission not set'
+        assert len(game_proc.G.c.objective_deck.current) == 20, 'wrong proc current'
 
     def test_set_turn_priority_at_the_turn_0(
         self,
-        started_game_proc: game_logic.GameProcessor,
+        started_game_proc: processor_game.GameProcessor,
             ) -> None:
         """Test set turn priority at the turn 0
         """
@@ -518,7 +518,7 @@ class TestGamePhaseConditions:
 
         game_proc = started_game_proc.set_turn_priority()
 
-        assert isinstance(game_proc, game_logic.GameProcessor), 'wrong game_proce'
+        assert isinstance(game_proc, processor_game.GameProcessor), 'wrong game_proce'
         assert isinstance(game_proc.G.c.player.has_priority, bool), 'wrong priority'
         assert isinstance(game_proc.G.c.bot.has_priority, bool), 'wrong priority'
 
@@ -531,7 +531,7 @@ class TestGamePhaseConditions:
         self,
         test_input: Tuple[int],
         expected: Tuple[bool],
-        started_game_proc: game_logic.GameProcessor,
+        started_game_proc: processor_game.GameProcessor,
             ) -> None:
         """Test set turn priority
         """
@@ -546,33 +546,33 @@ class TestGamePhaseConditions:
 
     def test_set_phase_conditions_after_next_briefing(
         self,
-        started_game_proc: game_logic.GameProcessor,
+        started_game_proc: processor_game.GameProcessor,
             ) -> None:
         """Test set_phase_conditions_after_next() set mission card
         in briefing
         """
         started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.c.by_id(settings.phases[0])
-        card = started_game_proc.G.c.groups.pop()
-        started_game_proc.G.c.groups.pile.append(card.id)
-        started_game_proc.G.c.player.c.groups.append(card)
-        started_game_proc.G.c.bot.c.groups.append(card)
-        assert len(started_game_proc.G.c.groups.current) == 23, 'wrong groups'
-        assert len(started_game_proc.G.c.player.c.groups.current) == 1, \
+        card = started_game_proc.G.c.group_deck.pop()
+        started_game_proc.G.c.group_deck.pile.append(card.id)
+        started_game_proc.G.c.player.c.group_cards.append(card)
+        started_game_proc.G.c.bot.c.group_cards.append(card)
+        assert len(started_game_proc.G.c.group_deck.current) == 23, 'wrong groups'
+        assert len(started_game_proc.G.c.player.c.group_cards.current) == 1, \
             'wrong revealed for player'
-        assert len(started_game_proc.G.c.bot.c.groups.current) == 1, \
+        assert len(started_game_proc.G.c.bot.c.group_cards.current) == 1, \
             'wrong revealed for bot'
-        assert len(started_game_proc.G.c.groups.pile) == 1, \
+        assert len(started_game_proc.G.c.group_deck.pile) == 1, \
             'wrong pile'
 
         game_proc = started_game_proc.set_phase_conditions_after_next()
 
-        assert isinstance(game_proc.G.c.objectives.last.id, str), 'mission not set'
+        assert isinstance(game_proc.G.c.objective_deck.last.id, str), 'mission not set'
         assert isinstance(game_proc.G.c.player.has_priority, bool), 'wrong priority'
         assert isinstance(game_proc.G.c.bot.has_priority, bool), 'wrong priority'
-        assert len(started_game_proc.G.c.groups.current) == 24, 'wrong groups'
-        assert len(started_game_proc.G.c.player.c.groups.current) == 0, \
+        assert len(started_game_proc.G.c.group_deck.current) == 24, 'wrong groups'
+        assert len(started_game_proc.G.c.player.c.group_cards.current) == 0, \
             'wrong revealed for player'
-        assert len(started_game_proc.G.c.bot.c.groups.current) == 0, \
+        assert len(started_game_proc.G.c.bot.c.group_cards.current) == 0, \
             'wrong revealed for bot'
-        assert len(started_game_proc.G.c.groups.pile) == 0, \
+        assert len(started_game_proc.G.c.group_deck.pile) == 0, \
             'wrong pile'

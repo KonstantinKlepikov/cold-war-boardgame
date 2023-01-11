@@ -29,12 +29,12 @@ class CustomGame(Game):
     def game_decks_field(self):
         f = {}
         tools = self.get_tools()
-        if tools['objectives'].last:
-            f['mission_card'] = tools['objectives'].last.id
+        if tools['objective_deck'].last:
+            f['mission_card'] = tools['objective_deck'].last.id
         else:
             f['mission_card'] = None
-        f['group_deck'] = tools['groups']
-        f['objective_deck'] = tools['objectives']
+        f['group_deck'] = tools['group_deck']
+        f['objective_deck'] = tools['objective_deck']
         return f
 
 
@@ -80,9 +80,9 @@ class CustomPlayer(Player):
     def player_cards_field(self):
         f = {}
         tools = self.get_tools()
-        f['agent_cards'] = tools['agents'].current
-        f['group_cards'] = tools['groups'].current
-        f['objective_cards'] = tools['objectives'].current
+        f['agent_cards'] = tools['agent_cards'].current
+        f['group_cards'] = tools['group_cards'].current
+        f['objective_cards'] = tools['objective_cards'].current
         return f
 
 

@@ -87,7 +87,7 @@ typecheck = ["mypy"]
 
 [[package]]
 name = "bgameb"
-version = "0.0.35"
+version = "0.0.37"
 description = "Board Game Builder"
 category = "main"
 optional = false
@@ -1140,7 +1140,7 @@ dev = ["black (>=19.3b0)", "pytest (>=4.6.2)"]
 [metadata]
 lock-version = "1.1"
 python-versions = "3.9.16"
-content-hash = "80fc5e682a71b3a02cb42633825cbf0e555ce907fca9415c200a1c1ed56c6d0c"
+content-hash = "c33f368400ed32dc2b8686d3749982f83bd6114dc857f3971f3e38701905c1a9"
 
 [metadata.files]
 anyio = [
@@ -1191,8 +1191,8 @@ bcrypt = [
     {file = "bcrypt-4.0.1.tar.gz", hash = "sha256:27d375903ac8261cfe4047f6709d16f7d18d39b1ec92aaf72af989552a650ebd"},
 ]
 bgameb = [
-    {file = "bgameb-0.0.35-py3-none-any.whl", hash = "sha256:73ea80ce7c7fea47f766c94bbb3ca65f2594ab41cc7450061f72ed34c987d90c"},
-    {file = "bgameb-0.0.35.tar.gz", hash = "sha256:ae9ddd417b7f8a27dbc88555675bc1ad03feaffc1ac03520194efe5a81fc85cb"},
+    {file = "bgameb-0.0.37-py3-none-any.whl", hash = "sha256:169d978b511fd42dc3e13aa74339b0221965102409f97c9dbee24a7303263884"},
+    {file = "bgameb-0.0.37.tar.gz", hash = "sha256:2e907f5b0258b1a71b40a50b0435d9b2860698096651470d7b20370a0ee6fdbc"},
 ]
 black = [
     {file = "black-21.12b0-py3-none-any.whl", hash = "sha256:a615e69ae185e08fdd73e4715e260e2479c861b5740057fde6e8b4e3b7dd589f"},

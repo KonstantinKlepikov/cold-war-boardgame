@@ -1,10 +1,9 @@
 from fastapi import status, Depends, APIRouter, Query, HTTPException
 from app.schemas import schema_user, schema_game
 from app.crud import crud_game
-from app.core import security_user
+from app.core import security_user, processor_game
 from app.constructs import Faction
 from app.config import settings
-from app.core import game_logic
 
 
 router = APIRouter()
@@ -22,11 +21,11 @@ def create_new_game(
         ) -> None:
     """Create new game.
     """
-    obj_in = game_logic.make_game_data(user.login)
+    obj_in = processor_game.make_game_data(user.login)
     crud_game.game.create_new_game(obj_in)
     crud_game.game.get_game_processor(user.login) \
         .deal_and_shuffle_decks() \
-        .flusсh().save()
+        .flush().save()
 
 
 @router.patch(
@@ -46,7 +45,7 @@ def preset_faction(
     """
     crud_game.game.get_game_processor(user.login) \
         .set_faction(q) \
-        .flusсh().save()
+        .flush().save()
 
 
 @router.patch(
@@ -63,7 +62,7 @@ def next_turn(
     """
     crud_game.game.get_game_processor(user.login) \
         .set_next_turn() \
-        .flusсh().save()
+        .flush().save()
 
 
 @router.patch(
@@ -82,7 +81,7 @@ def next_phase(
         .chek_phase_conditions_before_next() \
         .set_next_phase() \
         .set_phase_conditions_after_next() \
-        .flusсh().save()
+        .flush().save()
 
 
 @router.patch(
@@ -98,10 +97,11 @@ def analyst_get(
     """Look top three cards of group deck and change current game data
     """
     proc = crud_game.game.get_game_processor(user.login) \
-        .play_analyst_for_look_the_top() \
+        .play_analyst_for_look_the_top()
 
-    proc.flusсh().save()
-    return { "top_cards": proc.G.c.groups.temp_group }
+    proc.flush().save()
+
+    return { "top_cards": proc.G.c.group_deck.temp_group }
 
 
 @router.patch(
@@ -125,4 +125,4 @@ def analyst_arrnge(
                 )
     crud_game.game.get_game_processor(user.login) \
         .play_analyst_for_arrange_the_top(top.top_cards) \
-        .flusсh().save()
+        .flush().save()

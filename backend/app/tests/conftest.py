@@ -5,7 +5,7 @@ from mongoengine.context_managers import switch_db
 from fastapi.testclient import TestClient
 from app.main import app
 from app.config import settings
-from app.core import game_logic
+from app.core import processor_game
 from app.models import model_user, model_game, model_cards
 from app.crud import crud_game, crud_card, crud_user
 from app.constructs import Priority, Faction
@@ -165,17 +165,17 @@ def cards(connection: Generator) -> crud_card.CRUDCards:
 def game_proc(
     game: crud_game.CRUDGame,
     cards: crud_card.CRUDCards,
-        ) -> game_logic.GameProcessor:
+        ) -> processor_game.GameProcessor:
     """Get game processor object
     """
     current_data = game.get_current_game_data(settings.user0_login)
-    return game_logic.GameProcessor(cards.get_all_cards(), current_data)
+    return processor_game.GameProcessor(cards.get_all_cards(), current_data)
 
 
 @pytest.fixture(scope="function")
 def inited_game_proc(
-    game_proc: game_logic.GameProcessor,
-        ) -> game_logic.GameProcessor:
+    game_proc: processor_game.GameProcessor,
+        ) -> processor_game.GameProcessor:
     """Get game processor object
     """
     return game_proc.fill()
@@ -184,18 +184,18 @@ def inited_game_proc(
 @pytest.fixture(scope="function")
 def started_game_proc(
     game: crud_game.CRUDGame,
-        ) -> game_logic.GameProcessor:
+        ) -> processor_game.GameProcessor:
     """Init the game and return processor
     """
-    obj_in = game_logic.make_game_data(settings.user0_login)
+    obj_in = processor_game.make_game_data(settings.user0_login)
     game.create_new_game(obj_in)
     return game.get_game_processor(settings.user0_login).deal_and_shuffle_decks()
 
 
 @pytest.fixture(scope="function")
 def started_game_proc_fact(
-    started_game_proc: game_logic.GameProcessor,
-        ) -> game_logic.GameProcessor:
+    started_game_proc: processor_game.GameProcessor,
+        ) -> processor_game.GameProcessor:
     """Init the game with faction and return processor
     """
     return started_game_proc.set_faction(Faction.KGB)

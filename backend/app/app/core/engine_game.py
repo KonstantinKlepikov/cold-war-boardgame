@@ -5,25 +5,62 @@ from dataclasses_json import dataclass_json, Undefined
 
 
 @dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(repr=False)
+@dataclass
 class CustomGame(Game):
-    mission_card: Optional[str] = None
+    game_steps: dict = field(default_factory=dict)
+    players: list = field(default_factory=list)
+    game_decks: dict = field(default_factory=dict)
 
     def __post_init__(self) -> None:
         super().__post_init__()
 
+        self._to_relocate = {
+            "players": "players_field",
+            "game_steps": "game_steps_field",
+            "game_decks": "game_decks_field",
+                }
+
+    def players_field(self):
+        return list(self.get_players().values())
+
+    def game_steps_field(self):
+        return self.get_tools()['steps']
+
+    def game_decks_field(self):
+        f = {}
+        tools = self.get_tools()
+        if tools['objective_deck'].last:
+            f['mission_card'] = tools['objective_deck'].last.id
+        else:
+            f['mission_card'] = None
+        f['group_deck'] = tools['group_deck']
+        f['objective_deck'] = tools['objective_deck']
+        return f
+
 
 @dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(repr=False)
+@dataclass
 class CustomSteps(Steps):
     game_turn: int = 0
     turn_phase: Optional[str] = None
     turn_phases_left: List[str] = field(default_factory=list)
     is_game_end: bool = False
 
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+        self._to_relocate = {
+            "turn_phase": "turn_phase_field",
+            "turn_phases_left": "current_ids",
+                }
+
+    def turn_phase_field(self):
+        if self.last:
+            return self.last.id
+
 
 @dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(repr=False)
+@dataclass
 class CustomPlayer(Player):
     has_priority: Optional[bool] = None
     is_bot: Optional[bool] = None
@@ -36,9 +73,22 @@ class CustomPlayer(Player):
     def __post_init__(self) -> None:
         super().__post_init__()
 
+        self._to_relocate = {
+            "player_cards": "player_cards_field",
+                }
+
+    def player_cards_field(self):
+        f = {}
+        tools = self.get_tools()
+        f['agent_cards'] = tools['agent_cards'].current
+        f['group_cards'] = tools['group_cards'].current
+        f['objective_cards'] = tools['objective_cards'].current
+        return f
+
+
 
 @dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(repr=False)
+@dataclass
 class CustomDeck(Deck):
     deck_len: int = 0
     pile: List[str] = field(default_factory=list)
@@ -47,9 +97,17 @@ class CustomDeck(Deck):
     def __post_init__(self) -> None:
         super().__post_init__()
 
+        self._to_relocate = {
+            "deck_len": "deck_len_field",
+            "deck": "current_ids",
+            }
+
+    def deck_len_field(self):
+        return len(self.current)
+
 
 @dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(repr=False)
+@dataclass
 class PlayerAgentCard(Card):
     name: Optional[str] = None
     is_dead: bool = False
@@ -57,12 +115,9 @@ class PlayerAgentCard(Card):
     is_in_vacation: bool = False
     is_revealed: bool = False
 
-    def __post_init__(self) -> None:
-        super().__post_init__()
-
 
 @dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(repr=False)
+@dataclass
 class PlayerGroupObjCard(Card):
     name: Optional[str] = None
     is_in_deck: bool = True
@@ -70,24 +125,18 @@ class PlayerGroupObjCard(Card):
     is_active: Optional[bool] = None
     pos_in_deck: Optional[int] = None
 
-    def __post_init__(self) -> None:
-        super().__post_init__()
-
 
 @dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(repr=False)
+@dataclass
 class GroupCard(Card):
     name: Optional[str] = None
     faction: Optional[str] = None
     influence: Optional[int] = None
     power: Optional[str] = None
 
-    def __post_init__(self) -> None:
-        super().__post_init__()
-
 
 @dataclass_json(undefined=Undefined.EXCLUDE)
-@dataclass(repr=False)
+@dataclass
 class ObjectiveCard(Card):
     name: Optional[str] = None
     bias_icons: List[str] = field(default_factory=list)
@@ -95,6 +144,3 @@ class ObjectiveCard(Card):
     special_ability: Optional[str] = None
     stability: Optional[int] = None
     victory_points: Optional[int] = None
-
-    def __post_init__(self) -> None:
-        super().__post_init__()

@@ -27,7 +27,7 @@ app = FastAPI(
     description=settings.descriprion,
     version=settings.version,
     openapi_tags=settings.openapi_tags,
-    swagger_ui_parameters={"defaultModelsExpandDepth": 0}
+    swagger_ui_parameters={"defaultModelsExpandDepth": -1}
         )
 
 

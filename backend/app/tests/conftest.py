@@ -75,12 +75,16 @@ def db_game_data() -> Dict[str, Union[str, bool]]:
             [
                 {
                     'is_bot': False,
-                    'player_cards': {'agent_cards': agent_cards},
+                    'player_cards': {'agent_cards':
+                        {'db_cards': agent_cards},
+                            },
                     'login': settings.user0_login,
                 },
                 {
                     'is_bot': True,
-                    'player_cards': {'agent_cards': agent_cards},
+                    'player_cards': {'agent_cards':
+                        {'db_cards': agent_cards},
+                            },
                     'login': None,
                 }
             ]

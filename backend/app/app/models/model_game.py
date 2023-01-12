@@ -26,16 +26,6 @@ class GameSteps(EmbeddedDocument):
     is_game_end = BooleanField(default=False)
 
 
-class PlayerAgentCard(EmbeddedDocument):
-    """Player agent card
-    """
-    is_dead = BooleanField(default=False)
-    is_in_play = BooleanField(default=False)
-    is_in_vacation = BooleanField(default=False)
-    is_revealed = BooleanField(default=False)
-    name = StringField()
-
-
 class PlayerGroupOrObjectivreCard(EmbeddedDocument):
     """Known or own by player nonagent card
     """
@@ -46,30 +36,30 @@ class PlayerGroupOrObjectivreCard(EmbeddedDocument):
     name = StringField()
 
 
-# TODO: use this
+class PlayerAgentCard(EmbeddedDocument):
+    """Player agent card
+    """
+    is_dead = BooleanField(default=False)
+    is_in_play = BooleanField(default=False)
+    is_in_vacation = BooleanField(default=False)
+    is_revealed = BooleanField(default=False)
+    name = StringField()
+
+
 class PlayerAgentCards(EmbeddedDocument):
     """Agent cards representation
     """
-    dead: ListField(StringField())
-    in_play: StringField(null=True)
-    in_vacation: ListField(StringField())
-    revealed: ListField(StringField())
+    dead = ListField(StringField())
+    in_play = StringField(null=True)
+    in_vacation = ListField(StringField())
+    revealed= ListField(StringField())
     db_cards = EmbeddedDocumentListField(PlayerAgentCard)
 
 
-# TODO: use this
-class _PlayerCards(EmbeddedDocument):
-    """Array of player cards
-    """
-    agent_cards = EmbeddedDocumentField(PlayerAgentCards, default=PlayerAgentCards())
-    group_cards = EmbeddedDocumentListField(PlayerGroupOrObjectivreCard)
-    objective_cards = EmbeddedDocumentListField(PlayerGroupOrObjectivreCard)
-
-# TODO: remove this
 class PlayerCards(EmbeddedDocument):
     """Array of player cards
     """
-    agent_cards = EmbeddedDocumentListField(PlayerAgentCard)
+    agent_cards = EmbeddedDocumentField(PlayerAgentCards, default=PlayerAgentCards())
     group_cards = EmbeddedDocumentListField(PlayerGroupOrObjectivreCard)
     objective_cards = EmbeddedDocumentListField(PlayerGroupOrObjectivreCard)
 

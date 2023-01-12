@@ -1,6 +1,7 @@
 from typing import Literal, Optional, List, Union
 from pydantic import BaseModel, NonNegativeInt, NonPositiveInt, conint
 from app.constructs import Phase
+from app.config import settings
 
 
 class GameSteps(BaseModel):
@@ -23,7 +24,7 @@ class GameSteps(BaseModel):
 class GameStepsDb(GameSteps):
     """Game steps in db
     """
-    turn_phases_left: List[str] = []
+    turn_phases_left: List[Phase] = settings.phases
 
     class Config:
         schema_extra = {
@@ -37,28 +38,7 @@ class GameStepsDb(GameSteps):
             }
         }
 
-# TODO: remove this
-class PlayerAgentCard(BaseModel):
-    """Agent card owned by player
-    """
-    is_dead: bool = False
-    is_in_play: bool = False
-    is_in_vacation: bool = False
-    is_revealed: bool = False
-    name: str
 
-    class Config:
-        schema_extra = {
-            "example": {
-                "is_dead": False,
-                "is_in_play": True,
-                "is_in_vacation": False,
-                "is_revealed": False,
-                "name": "Master Spy",
-                }
-            }
-
-# TODO: use this
 class PlayerAgentCardDb(BaseModel):
     """Agent card owned by player
     """
@@ -80,7 +60,6 @@ class PlayerAgentCardDb(BaseModel):
             }
 
 
-# TODO: use this
 class PlayerAgentCards(BaseModel):
     """Agent cards data
     """
@@ -102,7 +81,6 @@ class PlayerAgentCards(BaseModel):
             }
 
 
-# TODO: use this
 class PlayerAgentCardsDb(PlayerAgentCards):
     """Agent cards data in db
     """
@@ -148,17 +126,7 @@ class TopDeck(BaseModel):
             }
 
 
-# TODO: remove this
 class PlayerCards(BaseModel):
-    """Player cards
-    """
-    agent_cards: List[PlayerAgentCard]
-    group_cards: List[PlayerGroupOrObjectivreCard] = []
-    objective_cards: List[PlayerGroupOrObjectivreCard] = []
-
-
-# TODO: use this
-class _PlayerCards(BaseModel):
     """Player cards
     """
     agent_cards: PlayerAgentCards = PlayerAgentCards()
@@ -166,8 +134,7 @@ class _PlayerCards(BaseModel):
     objective_cards: List[PlayerGroupOrObjectivreCard] = []
 
 
-# TODO: use this
-class _PlayerCardsDb(_PlayerCards):
+class PlayerCardsDb(PlayerCards):
     """Player cards
     """
     agent_cards: PlayerAgentCardsDb = PlayerAgentCardsDb()
@@ -278,11 +245,10 @@ class Player(BaseModel):
                 }
             }
 
-# TODO: use this
 class PlayerDb(Player):
     """Player current data in db
     """
-    player_cards: _PlayerCardsDb
+    player_cards: PlayerCardsDb
 
 
 class CurrentGameData(BaseModel):
@@ -293,16 +259,7 @@ class CurrentGameData(BaseModel):
     game_decks: GameDecks = GameDecks()
 
 
-# TODO: remove this
 class CurrentGameDataDb(CurrentGameData):
-    """Current game data
-    """
-    game_steps: GameStepsDb = GameStepsDb()
-    game_decks: GameDecksDb = GameDecksDb()
-
-
-# TODO: use this
-class _CurrentGameDataDb(CurrentGameData):
     """Current game data
     """
     game_steps: GameStepsDb = GameStepsDb()

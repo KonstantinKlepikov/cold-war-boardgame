@@ -6,17 +6,17 @@ from app.config import settings
 from app.constructs import Priority, Faction
 from app.core.engine_game import (
     CustomGame, CustomDeck, CustomPlayer, CustomSteps, PlayerAgentCard,
-    PlayerGroupObjCard, GroupCard, ObjectiveCard
+    PlayerGroupObjCard, GroupCard, ObjectiveCard, CustomAgentBag
         )
 from bgameb import Step, Dice, Bag
 from fastapi.encoders import jsonable_encoder
 
 
-def make_game_data(login: str) -> schema_game.CurrentGameData:
+def make_game_data(login: str) -> schema_game.CurrentGameDataDb:
     """Make game data for start the game
 
     Returns:
-        CurrentGameData: game data schema
+        CurrentGameDataDb: game data schema
     """
     agent_cards = [
             {'name': 'Master Spy'},
@@ -32,18 +32,22 @@ def make_game_data(login: str) -> schema_game.CurrentGameData:
                     [
                         {
                             'is_bot': False,
-                            'player_cards': {'agent_cards': agent_cards},
+                            'player_cards': {'agent_cards':
+                                {'db_cards': agent_cards},
+                                    },
                             'login': login,
                         },
                         {
                             'is_bot': True,
-                            'player_cards': {'agent_cards': agent_cards},
+                            'player_cards': {'agent_cards':
+                                {'db_cards': agent_cards},
+                                    },
                             'login': None,
                         }
                     ]
                 }
 
-    return schema_game.CurrentGameData(**new_game)
+    return schema_game.CurrentGameDataDb(**new_game)
 
 
 class GameProcessor:
@@ -98,6 +102,7 @@ class GameProcessor:
             self.G.c.steps.last = self.G.c.steps.c.by_id(
                 self.G.c.steps.turn_phase
                     )
+        # print(self.G.c.steps.current_ids())
 
         # init ptayers
         for p in self.current_data.players:
@@ -107,8 +112,8 @@ class GameProcessor:
             self.G.add(player)
 
             # player agent_cards
-            self.G.c[name].add(Bag('agent_cards'))
-            for c in p.player_cards.agent_cards:
+            self.G.c[name].add(CustomAgentBag('agent_cards'))
+            for c in p.player_cards.agent_cards.db_cards:
                 data: dict = c.to_mongo().to_dict()
                 card = PlayerAgentCard(data['name'], **data)
                 self.G.c[name].c.agent_cards.add(card)

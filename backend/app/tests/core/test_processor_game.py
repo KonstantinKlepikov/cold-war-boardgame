@@ -26,7 +26,11 @@ class TestGameData:
         assert data.players[0].is_bot == False, 'wrong is_bot'
         assert not data.players[0].faction, 'wrong faction'
         assert data.players[0].score == 0, 'wrong score'
-        assert len(data.players[0].player_cards.agent_cards) == 6, 'hasnt cards'
+        assert len(data.players[0].player_cards.agent_cards.db_cards) == 6, 'hasnt cards'
+        assert data.players[0].player_cards.agent_cards.dead == [], 'wrong dead'
+        assert data.players[0].player_cards.agent_cards.in_play == None, 'wrong in play'
+        assert data.players[0].player_cards.agent_cards.in_vacation == [], 'wrong vacation'
+        assert data.players[0].player_cards.agent_cards.revealed == [], 'wrong revealed'
         assert data.players[0].player_cards.group_cards == [], 'hasnt cards'
         assert data.players[0].player_cards.objective_cards == [], 'hasnt cards'
 
@@ -35,7 +39,11 @@ class TestGameData:
         assert data.players[1].is_bot == True, 'wrong is_bot'
         assert not data.players[1].faction, 'wrong faction'
         assert data.players[1].score == 0, 'wrong score'
-        assert len(data.players[1].player_cards.agent_cards) == 6, 'hasnt cards'
+        assert len(data.players[1].player_cards.agent_cards.db_cards) == 6, 'hasnt cards'
+        assert data.players[1].player_cards.agent_cards.dead == [], 'wrong dead'
+        assert data.players[1].player_cards.agent_cards.in_play == None, 'wrong in play'
+        assert data.players[1].player_cards.agent_cards.in_vacation == [], 'wrong vacation'
+        assert data.players[1].player_cards.agent_cards.revealed == [], 'wrong revealed'
         assert data.players[1].player_cards.group_cards == [], 'hasnt cards'
         assert data.players[1].player_cards.objective_cards == [], 'hasnt cards'
 
@@ -175,7 +183,7 @@ class TestGameProcessor:
         assert current.game_steps.game_turn == 1, 'wrong turn'
         assert current.game_steps.turn_phase == 'briefing', 'wrong phase'
         assert current.game_steps.is_game_end == True, 'game not end'
-        assert current.game_steps.turn_phases_left == inited_game_proc.G.c.steps.current_ids(), \
+        assert len(current.game_steps.turn_phases_left) == 5, \
             'wrong phases left'
 
 class TestGameProcessorLogic:

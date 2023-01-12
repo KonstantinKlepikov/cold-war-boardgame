@@ -420,6 +420,20 @@ class TestGameProcessorLogic:
                 ]
         assert old == new, 'reordered'
 
+    # TODO: use by_id here
+    def test_set_agent(
+        self,
+        started_game_proc: processor_game.GameProcessor,
+            ) -> None:
+        """Test set agent
+        """
+        game_proc = started_game_proc.set_agent(
+            player='player', agent_id='Deputy Director'
+                )
+        ind = game_proc.G.c.player.c.agent_cards.index('Deputy Director')
+        assert game_proc.G.c.player.c.agent_cards.current[ind].is_in_play == True, \
+            'agent not set'
+
 
 class TestCheckPhaseConditions:
     """Test chek_phase_conditions_before_next()

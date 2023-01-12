@@ -54,6 +54,7 @@ class CustomSteps(Steps):
             "turn_phases_left": "current_ids",
                 }
 
+    # TODO: use last_id
     def turn_phase_field(self):
         if self.last:
             return self.last.id

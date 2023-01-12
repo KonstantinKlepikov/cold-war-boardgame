@@ -1,4 +1,4 @@
-from typing import Dict, List, Union, Optional
+from typing import Dict, List, Union, Optional, Literal
 from fastapi import HTTPException
 from app.schemas import schema_game
 from app.models import model_game
@@ -80,6 +80,7 @@ class GameProcessor:
         else:
             self.current_data = current_data
 
+    # TODO: use last_id
     def fill(self) -> 'GameProcessor':
         """Init new objective deck
 
@@ -102,7 +103,6 @@ class GameProcessor:
             self.G.c.steps.last = self.G.c.steps.c.by_id(
                 self.G.c.steps.turn_phase
                     )
-        # print(self.G.c.steps.current_ids())
 
         # init ptayers
         for p in self.current_data.players:
@@ -117,7 +117,7 @@ class GameProcessor:
                 data: dict = c.to_mongo().to_dict()
                 card = PlayerAgentCard(data['name'], **data)
                 self.G.c[name].c.agent_cards.add(card)
-                self.G.c[name].c.agent_cards.deal()
+            self.G.c[name].c.agent_cards.deal()
 
             # player group_cards
             self.G.c[name].add(Bag('group_cards'))
@@ -125,7 +125,7 @@ class GameProcessor:
                 data: dict = c.to_mongo().to_dict()
                 card = PlayerGroupObjCard(data['name'], **data)
                 self.G.c[name].c.group_cards.add(card)
-                self.G.c[name].c.group_cards.deal()
+            self.G.c[name].c.group_cards.deal()
 
             # player objective_cards
             self.G.c[name].add(Bag('objective_cards'))
@@ -133,7 +133,7 @@ class GameProcessor:
                 data: dict = c.to_mongo().to_dict()
                 card = PlayerGroupObjCard(data['name'], **data)
                 self.G.c[name].c.objective_cards.add(card)
-                self.G.c[name].c.objective_cards.deal()
+            self.G.c[name].c.objective_cards.deal()
 
         # init game decks
         # group deck
@@ -384,6 +384,30 @@ class GameProcessor:
         self.G.c.player.abilities.remove('Analyst')
 
         return self
+
+    # TODO: get_current_by_index() here
+    def set_agent(
+        self,
+        player: Literal['player', 'bot'],
+        agent_id: str,
+            ) -> 'GameProcessor':
+        """Set agent card
+
+        Returns:
+            GameProcessor
+        """
+        try:
+            ind = self.G.c[player].c.agent_cards.index(agent_id)
+            operated = self.G.c[player].c.agent_cards.current[ind]
+            operated.is_in_play = True
+
+        except ValueError:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Agent {agent_id} not available to choice."
+                    )
+        return self
+
 
     def chek_phase_conditions_before_next(self) -> 'GameProcessor':
         """Check game conition before push to next phase

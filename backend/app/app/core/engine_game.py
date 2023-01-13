@@ -21,18 +21,15 @@ class CustomGame(Game):
                 }
 
     def players_field(self):
-        return list(self.get_players().values())
+        return list(self.get_players.values())
 
     def game_steps_field(self):
-        return self.get_tools()['steps']
+        return self.get_tools['steps']
 
     def game_decks_field(self):
         f = {}
-        tools = self.get_tools()
-        if tools['objective_deck'].last:
-            f['mission_card'] = tools['objective_deck'].last.id
-        else:
-            f['mission_card'] = None
+        tools = self.get_tools
+        f['mission_card'] = tools['objective_deck'].last_id
         f['group_deck'] = tools['group_deck']
         f['objective_deck'] = tools['objective_deck']
         return f
@@ -50,14 +47,9 @@ class CustomSteps(Steps):
         super().__post_init__()
 
         self._to_relocate = {
-            "turn_phase": "turn_phase_field",
+            "turn_phase": "last_id",
             "turn_phases_left": "current_ids",
                 }
-
-    # TODO: use last_id
-    def turn_phase_field(self):
-        if self.last:
-            return self.last.id
 
 
 @dataclass_json(undefined=Undefined.EXCLUDE)
@@ -80,7 +72,7 @@ class CustomPlayer(Player):
 
     def player_cards_field(self):
         f = {}
-        tools = self.get_tools()
+        tools = self.get_tools
         f['agent_cards'] = tools['agent_cards']
         f['group_cards'] = tools['group_cards'].current
         f['objective_cards'] = tools['objective_cards'].current

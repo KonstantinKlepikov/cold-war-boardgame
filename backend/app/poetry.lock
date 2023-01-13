@@ -87,7 +87,7 @@ typecheck = ["mypy"]
 
 [[package]]
 name = "bgameb"
-version = "0.0.37"
+version = "0.0.39"
 description = "Board Game Builder"
 category = "main"
 optional = false
@@ -1191,8 +1191,8 @@ bcrypt = [
     {file = "bcrypt-4.0.1.tar.gz", hash = "sha256:27d375903ac8261cfe4047f6709d16f7d18d39b1ec92aaf72af989552a650ebd"},
 ]
 bgameb = [
-    {file = "bgameb-0.0.37-py3-none-any.whl", hash = "sha256:169d978b511fd42dc3e13aa74339b0221965102409f97c9dbee24a7303263884"},
-    {file = "bgameb-0.0.37.tar.gz", hash = "sha256:2e907f5b0258b1a71b40a50b0435d9b2860698096651470d7b20370a0ee6fdbc"},
+    {file = "bgameb-0.0.39-py3-none-any.whl", hash = "sha256:84ac12d477d8fd50ac6c8e65fa756a1eae79290de1967305abe747b820ef7dc0"},
+    {file = "bgameb-0.0.39.tar.gz", hash = "sha256:c399c840981031e9cd1a6023becb19e6b5b171ea632ac356cf1d24ccb35b3aa0"},
 ]
 black = [
     {file = "black-21.12b0-py3-none-any.whl", hash = "sha256:a615e69ae185e08fdd73e4715e260e2479c861b5740057fde6e8b4e3b7dd589f"},

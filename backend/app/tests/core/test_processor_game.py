@@ -176,7 +176,7 @@ class TestGameProcessor:
             ) -> None:
         """Test flush() can change steps
         """
-        inited_game_proc.G.c.steps.pull()
+        inited_game_proc.G.c.steps.pop()
         inited_game_proc.G.c.steps.game_turn += 1
         inited_game_proc.G.c.steps.is_game_end = True
         current = inited_game_proc.flush()

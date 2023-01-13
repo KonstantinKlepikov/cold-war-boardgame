@@ -80,7 +80,6 @@ class GameProcessor:
         else:
             self.current_data = current_data
 
-    # TODO: use last_id
     def fill(self) -> 'GameProcessor':
         """Init new objective deck
 
@@ -259,8 +258,8 @@ class GameProcessor:
         Returns:
             GameProcessor
         """
-        if not self.G.c.steps.last or self.G.c.steps.last.id != settings.phases[5]:
-            self.G.c.steps.pull()
+        if self.G.c.steps.last_id != settings.phases[5]:
+            self.G.c.steps.pop()
 
         return self
 
@@ -306,7 +305,7 @@ class GameProcessor:
     def _check_analyct_condition(self) -> None:
         """Check conditions for play analyst ability
         """
-        if self.G.c.steps.last is None or self.G.c.steps.last.id != settings.phases[0]:
+        if self.G.c.steps.last_id != settings.phases[0]:
             raise HTTPException(
                 status_code=409,
                 detail="Ability can't be played in any phases except 'briefing'."
@@ -423,7 +422,7 @@ class GameProcessor:
                     )
 
         # phase = self.G.c.steps.turn_phase
-        phase = self.G.c.steps.last.id if self.G.c.steps.last else None
+        phase = self.G.c.steps.last_id
 
         # briefing
         if phase == settings.phases[0]:
@@ -483,7 +482,7 @@ class GameProcessor:
             GameProcessor
         """
         # phase = self.G.c.steps.turn_phase
-        phase = self.G.c.steps.last.id if self.G.c.steps.last else None
+        phase = self.G.c.steps.last_id
 
         # set briefing states after next
         if phase == settings.phases[0]:

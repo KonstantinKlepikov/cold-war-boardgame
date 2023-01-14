@@ -3,8 +3,7 @@ from mongoengine import (
     BooleanField, IntField, ListField, EmbeddedDocumentListField,
     ValidationError, queryset_manager,
         )
-from app.constructs import Phase
-from app.config import settings
+from app.constructs import Phases, Agents
 
 
 def check_turn_phase(value: str) -> bool:
@@ -13,8 +12,18 @@ def check_turn_phase(value: str) -> bool:
     Args:
         value (str): phase name
     """
-    if not Phase.has_value(value):
+    if not Phases.has_value(value):
         raise ValidationError("Phase name is not allowable")
+
+
+def check_agent(value: str) -> bool:
+    """Check is turn_phase allowable
+
+    Args:
+        value (str): agent name
+    """
+    if not Agents.has_value(value):
+        raise ValidationError("Agent name is not allowable")
 
 
 class GameSteps(EmbeddedDocument):
@@ -22,7 +31,7 @@ class GameSteps(EmbeddedDocument):
     """
     game_turn = IntField(min_value=0, default=0)
     turn_phase = StringField(null=True, validation=check_turn_phase)
-    turn_phases_left = ListField(StringField(), default=settings.phases)
+    turn_phases_left = ListField(StringField(), default=Phases.get_values())
     is_game_end = BooleanField(default=False)
 
 
@@ -43,7 +52,7 @@ class PlayerAgentCard(EmbeddedDocument):
     is_in_play = BooleanField(default=False)
     is_in_vacation = BooleanField(default=False)
     is_revealed = BooleanField(default=False)
-    name = StringField()
+    name = StringField(validation=check_agent)
 
 
 class PlayerAgentCards(EmbeddedDocument):

@@ -4,6 +4,7 @@ from fastapi.testclient import TestClient
 from app.crud import crud_game, crud_user
 from app.core import processor_game
 from app.config import settings
+from app.constructs import Phases
 
 
 class TestCreateNewGame:
@@ -223,7 +224,7 @@ class TestNextPhase:
         assert response.status_code == 200, 'wrong status'
 
         current = connection['CurrentGameData'].objects().first()
-        assert current.game_steps.turn_phase == settings.phases[0], 'wrong turn_phase'
+        assert current.game_steps.turn_phase == Phases.BRIEFING.value, 'wrong turn_phase'
         assert isinstance(current.game_decks.mission_card, str), 'wrong mission card'
 
     def test_next_phase_return_200_and_get_from_briefing(
@@ -249,7 +250,7 @@ class TestNextPhase:
         assert response.status_code == 200, 'wrong status'
 
         current = connection['CurrentGameData'].objects().first()
-        assert current.game_steps.turn_phase == settings.phases[1], 'wrong turn_phase'
+        assert current.game_steps.turn_phase == Phases.PLANNING.value, 'wrong turn_phase'
         assert isinstance(current.game_decks.mission_card, str), 'wrong mission card'
 
     def test_next_phase_if_last_return_409(
@@ -304,7 +305,7 @@ class TestAnalyst:
         """Test /phase/briefing/analyst_look returns 200
         """
         current = connection['CurrentGameData'].objects().first()
-        current.game_steps.turn_phase = settings.phases[0]
+        current.game_steps.turn_phase = Phases.BRIEFING.value
         current.players[0].abilities = ['Analyst', ]
         current.save()
 
@@ -332,7 +333,7 @@ class TestAnalyst:
         """Test /phase/briefing/analyst_look returns 200
         """
         current = connection['CurrentGameData'].objects().first()
-        current.game_steps.turn_phase = settings.phases[0]
+        current.game_steps.turn_phase = Phases.BRIEFING.value
         current.players[0].abilities = ['Analyst', ]
         current.save()
         top = current.game_decks.group_deck.deck[-3:]

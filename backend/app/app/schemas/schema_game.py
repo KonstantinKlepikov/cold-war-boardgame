@@ -1,14 +1,15 @@
-from typing import Literal, Optional, List, Union
+from typing import Optional, List, Union
 from pydantic import BaseModel, NonNegativeInt, NonPositiveInt, conint
-from app.constructs import Phase
-from app.config import settings
+from app.constructs import (
+    Phases, Agents, Groups, Objectives, Faction, ObjectiveAbilities
+        )
 
 
 class GameSteps(BaseModel):
     """Game steps
     """
     game_turn: NonNegativeInt = 0
-    turn_phase: Union[Phase, None] = None
+    turn_phase: Union[Phases, None] = None
     is_game_end: bool = False
 
     class Config:
@@ -24,7 +25,7 @@ class GameSteps(BaseModel):
 class GameStepsDb(GameSteps):
     """Game steps in db
     """
-    turn_phases_left: List[Phase] = settings.phases
+    turn_phases_left: List[Phases] = Phases.get_values()
 
     class Config:
         schema_extra = {
@@ -46,7 +47,7 @@ class PlayerAgentCardDb(BaseModel):
     is_in_play: bool = False
     is_in_vacation: bool = False
     is_revealed: bool = False
-    name: str
+    name: Agents
 
     class Config:
         schema_extra = {
@@ -63,10 +64,10 @@ class PlayerAgentCardDb(BaseModel):
 class PlayerAgentCards(BaseModel):
     """Agent cards data
     """
-    dead: List[str] = []
-    in_play: Optional[str] = None
-    in_vacation: List[str] = []
-    revealed: List[str] = []
+    dead: List[Agents] = []
+    in_play: Optional[Agents] = None
+    in_vacation: List[Agents] = []
+    revealed: List[Agents] = []
 
     class Config:
         schema_extra = {
@@ -85,6 +86,7 @@ class PlayerAgentCardsDb(PlayerAgentCards):
     """Agent cards data in db
     """
     db_cards: List[PlayerAgentCardDb] = []
+    # FIXME: list of unique values
 
 
 class PlayerGroupOrObjectivreCard(BaseModel):
@@ -109,6 +111,17 @@ class PlayerGroupOrObjectivreCard(BaseModel):
                 }
             }
 
+class PlayerGroupCard(PlayerGroupOrObjectivreCard):
+    """Player group card
+    """
+    name: Groups
+
+
+class PlayerObjectiveCard(PlayerGroupOrObjectivreCard):
+    """Player objective card
+    """
+    name: Objectives
+
 
 class TopDeck(BaseModel):
     """List of id of top cards of any deck. The top card
@@ -130,8 +143,8 @@ class PlayerCards(BaseModel):
     """Player cards
     """
     agent_cards: PlayerAgentCards = PlayerAgentCards()
-    group_cards: List[PlayerGroupOrObjectivreCard] = []
-    objective_cards: List[PlayerGroupOrObjectivreCard] = []
+    group_cards: List[PlayerGroupCard] = []
+    objective_cards: List[PlayerObjectiveCard] = []
 
 
 class PlayerCardsDb(PlayerCards):
@@ -181,7 +194,7 @@ class GameDecks(BaseModel):
     """
     group_deck: GameDeck = GameDeck()
     objective_deck: GameDeck = GameDeck()
-    mission_card: Optional[str] = None
+    mission_card: Optional[Objectives] = None
 
 
 class GameDecksDb(GameDecks):
@@ -197,10 +210,10 @@ class Player(BaseModel):
     has_priority: Optional[bool] = None
     is_bot: Optional[bool] = None
     score: conint(ge=0, le=100) = 0
-    faction: Optional[Literal['kgb', 'cia']] = None
+    faction: Optional[Faction] = None
     player_cards: PlayerCards
     login: Optional[str] = None
-    abilities: List[str] = []
+    abilities: List[Union[ObjectiveAbilities, Agents]] = []
 
     class Config:
         schema_extra = {

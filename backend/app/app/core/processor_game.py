@@ -2,8 +2,7 @@ from typing import Dict, List, Union, Optional, Literal
 from fastapi import HTTPException
 from app.schemas import schema_game
 from app.models import model_game
-from app.config import settings
-from app.constructs import Priority, Faction
+from app.constructs import Priority, Faction, Agents, Phases
 from app.core.engine_game import (
     CustomGame, CustomDeck, CustomPlayer, CustomSteps, PlayerAgentCard,
     PlayerGroupObjCard, GroupCard, ObjectiveCard, CustomAgentBag
@@ -18,15 +17,7 @@ def make_game_data(login: str) -> schema_game.CurrentGameDataDb:
     Returns:
         CurrentGameDataDb: game data schema
     """
-    agent_cards = [
-            {'name': 'Master Spy'},
-            {'name': 'Deputy Director'},
-            {'name': 'Double Agent'},
-            {'name': 'Analyst'},
-            {'name': 'Assassin'},
-            {'name': 'Director'},
-            ]
-
+    agent_cards = [{'name': agent} for agent in Agents.get_values()]
     new_game = {
                 'players':
                     [
@@ -89,7 +80,7 @@ class GameProcessor:
         # init game steps
         data: dict = self.current_data.game_steps.to_mongo().to_dict()
         self.G.add(CustomSteps('steps', **data))
-        for num, val in enumerate(settings.phases):
+        for num, val in enumerate(Phases.get_values()):
             step = Step(val, priority=num)
             self.G.c.steps.add(step)
 
@@ -258,7 +249,7 @@ class GameProcessor:
         Returns:
             GameProcessor
         """
-        if self.G.c.steps.last_id != settings.phases[5]:
+        if self.G.c.steps.last_id != Phases.DETENTE.value:
             self.G.c.steps.pop()
 
         return self
@@ -305,12 +296,12 @@ class GameProcessor:
     def _check_analyct_condition(self) -> None:
         """Check conditions for play analyst ability
         """
-        if self.G.c.steps.last_id != settings.phases[0]:
+        if self.G.c.steps.last_id != Phases.BRIEFING.value:
             raise HTTPException(
                 status_code=409,
                 detail="Ability can't be played in any phases except 'briefing'."
                     )
-        if not 'Analyst' in self.G.c.player.abilities:
+        if not Agents.ANALYST.value in self.G.c.player.abilities:
             raise HTTPException(
                 status_code=409,
                 detail="No access to play ability of Analyst agent card."
@@ -380,11 +371,10 @@ class GameProcessor:
             for card in top:
                 self.G.c.group_deck.append(current[card])
 
-        self.G.c.player.abilities.remove('Analyst')
+        self.G.c.player.abilities.remove(Agents.ANALYST.value)
 
         return self
 
-    # TODO: get_current_by_index() here
     def set_agent(
         self,
         player: Literal['player', 'bot'],
@@ -395,18 +385,15 @@ class GameProcessor:
         Returns:
             GameProcessor
         """
-        try:
-            ind = self.G.c[player].c.agent_cards.index(agent_id)
-            operated = self.G.c[player].c.agent_cards.current[ind]
-            operated.is_in_play = True
-
-        except ValueError:
+        played = self.G.c[player].c.agent_cards.by_id(agent_id)
+        if played:
+            played.is_in_play = True
+        else:
             raise HTTPException(
                 status_code=409,
                 detail=f"Agent {agent_id} not available to choice."
                     )
         return self
-
 
     def chek_phase_conditions_before_next(self) -> 'GameProcessor':
         """Check game conition before push to next phase
@@ -425,7 +412,7 @@ class GameProcessor:
         phase = self.G.c.steps.last_id
 
         # briefing
-        if phase == settings.phases[0]:
+        if phase == Phases.BRIEFING.value:
 
             # players has't priority
             if not self.G.c.player.has_priority \
@@ -450,23 +437,23 @@ class GameProcessor:
                         )
 
         # planning
-        elif phase == settings.phases[1]:
+        elif phase == Phases.PLANNING.value:
             pass
 
         # influence_struggle
-        elif phase == settings.phases[2]:
+        elif phase == Phases.INFLUENCE.value:
             pass
 
         # ceasefire
-        elif phase == settings.phases[3]:
+        elif phase == Phases.CEASEFIRE.value:
             pass
 
         # debriefing
-        elif phase == settings.phases[4]:
+        elif phase == Phases.DEBRIFIENG.value:
             pass
 
         # detente
-        elif phase == settings.phases[5]:
+        elif phase == Phases.DETENTE.value:
             raise HTTPException(
                 status_code=409,
                 detail="This phase is last in a turn. Change turn number "
@@ -485,7 +472,7 @@ class GameProcessor:
         phase = self.G.c.steps.last_id
 
         # set briefing states after next
-        if phase == settings.phases[0]:
+        if phase == Phases.BRIEFING.value:
 
             self.set_mission_card()
             self.set_turn_priority()
@@ -495,23 +482,23 @@ class GameProcessor:
             self.G.c.bot.c.group_cards.clear()
 
         # planning
-        elif phase == settings.phases[1]:
+        elif phase == Phases.PLANNING.value:
             pass
 
         # influence_struggle
-        elif phase == settings.phases[2]:
+        elif phase == Phases.INFLUENCE.value:
             pass
 
         # ceasefire
-        elif phase == settings.phases[3]:
+        elif phase == Phases.CEASEFIRE.value:
             pass
 
         # debriefing
-        elif phase == settings.phases[4]:
+        elif phase == Phases.DEBRIFIENG.value:
             pass
 
         # detente
-        elif phase == settings.phases[5]:
+        elif phase == Phases.DETENTE.value:
             pass
 
         return self

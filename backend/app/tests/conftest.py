@@ -8,8 +8,11 @@ from app.config import settings
 from app.core import processor_game
 from app.models import model_user, model_game, model_cards
 from app.crud import crud_game, crud_card, crud_user
-from app.constructs import Priority, Faction
+from app.constructs import Faction, Agents, Groups, Objectives
 from app.db.init_db import init_db_cards, init_db_users
+
+
+agent_cards = [{'name': agent} for agent in Agents.get_values()]
 
 
 @pytest.fixture(scope="session")
@@ -37,37 +40,15 @@ def db_user(users_data: Dict[str, str]) -> Dict[str, str]:
 def db_game_data() -> Dict[str, Union[str, bool]]:
     """Get game data
     """
-    agent_cards = [
-        {'name': 'Master Spy'},
-        {'name': 'Deputy Director'},
-        {'name': 'Double Agent'},
-        {'name': 'Analyst'},
-        {'name': 'Assassin'},
-        {'name': 'Director'},
-        ]
-    group_cards = [
-        'Guerilla', 'Militia', 'Mercenaries', 'Police', 'Infantry', 'Generals',
-        'Workers', 'Mafia', 'Food companies', 'Industry', 'Oil Tycoons',
-        'Bankers', 'Students', 'Trade Union', 'Nationalists', 'Fundamentalists',
-        'Opposition', 'Government', 'Artists', 'NGOs', 'Phone company',
-        'Newspapers', 'Radio', 'Television',
-            ]
-    objective_cards = [
-        'Nobel Peace Prize', 'Live Benefit', 'Nuclear Escalation', 'Space Race',
-        'Olympic Games', 'Summit Meeting', 'Egypt', 'Vietnam', 'Panama', 'Angola',
-        'Afghanistan', 'Houndaras', 'Libya', 'Greece', 'Turkey', 'Iran', 'Cuba',
-        'Congo', 'Czechoslovakia', 'Chile', 'Korea',
-            ]
-
     return {
         'game_decks':
             {
                 'group_deck': {
-                    'deck': group_cards,
+                    'deck': Groups.get_values(),
                     'deck_len': 24,
                         },
                 'objective_deck': {
-                    'deck': objective_cards,
+                    'deck': Objectives.get_values(),
                     'deck_len': 21,
                         }
             },

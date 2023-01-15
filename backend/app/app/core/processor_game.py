@@ -102,12 +102,23 @@ class GameProcessor:
             self.G.add(player)
 
             # player agent_cards
-            self.G.c[name].add(CustomAgentBag('agent_cards'))
+            cards = data['player_cards']['agent_cards']
+            del cards['db_cards']
+            self.G.c[name].add(CustomAgentBag('agent_cards', **cards))
             for c in p.player_cards.agent_cards.db_cards:
                 data: dict = c.to_mongo().to_dict()
                 card = PlayerAgentCard(data['name'], **data)
                 self.G.c[name].c.agent_cards.add(card)
             self.G.c[name].c.agent_cards.deal()
+            for card in self.G.c[name].c.agent_cards.current:
+                if card.id in cards['dead']:
+                    card.is_dead = True
+                if card.id == cards['in_play']:
+                    card.is_in_play = True
+                if card.id in cards['in_vacation']:
+                    card.is_in_vacation = True
+                if card.id in cards['revealed']:
+                    card.is_revealed = True
 
             # player group_cards
             self.G.c[name].add(Bag('group_cards'))
@@ -388,6 +399,9 @@ class GameProcessor:
         played = self.G.c[player].c.agent_cards.by_id(agent_id)
         if played:
             played.is_in_play = True
+            if Agents.DOUBLE.value in self.G.c[player].abilities:
+                played.is_revealed = True
+                self.G.c[player].abilities.remove(Agents.DOUBLE.value)
         else:
             raise HTTPException(
                 status_code=409,
@@ -430,11 +444,24 @@ class GameProcessor:
                         )
 
             # analyst not used
-            if 'Analyst' in self.G.c.player.abilities:
+            if Agents.ANALYST.value in self.G.c.player.abilities:
                 raise HTTPException(
                     status_code=409,
                     detail="Analyst ability must be used."
                         )
+
+            # agent not choosen
+            for player in ['player', 'bot']:
+                pa = [
+                    agent.is_in_play for agent
+                    in self.G.c[player].c.agent_cards.current
+                    if agent.is_in_play is True
+                        ]
+                if True not in pa:
+                    raise HTTPException(
+                        status_code=409,
+                        detail=f"Agent for {player} not choosen."
+                            )
 
         # planning
         elif phase == Phases.PLANNING.value:
@@ -487,7 +514,13 @@ class GameProcessor:
 
         # influence_struggle
         elif phase == Phases.INFLUENCE.value:
-            pass
+
+            # return all agents from vacation to headquarter
+            for player in ['player', 'bot']:
+                for agent in self.G.c[player].c.agent_cards.current:
+                    if agent.is_in_vacation == True:
+                        agent.is_in_vacation = False
+                        agent.is_revealed = False
 
         # ceasefire
         elif phase == Phases.CEASEFIRE.value:
@@ -495,10 +528,23 @@ class GameProcessor:
 
         # debriefing
         elif phase == Phases.DEBRIFIENG.value:
-            pass
+
+            # open all agents in play
+            for player in ['player', 'bot']:
+                for agent in self.G.c[player].c.agent_cards.current:
+                    if agent.is_in_play == True:
+                        agent.is_revealed = True
 
         # detente
         elif phase == Phases.DETENTE.value:
-            pass
+
+            # put agents to vacations from play
+            for player in ['player', 'bot']:
+                for agent in self.G.c[player].c.agent_cards.current:
+                    agent.is_in_play = False
+                    if agent.id == Agents.DEPUTY.value:
+                        agent.is_revealed = False
+                    else:
+                        agent.is_in_vacation = True
 
         return self

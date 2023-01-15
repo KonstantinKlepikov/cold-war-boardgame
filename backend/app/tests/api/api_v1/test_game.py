@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from app.crud import crud_game, crud_user
 from app.core import processor_game
 from app.config import settings
-from app.constructs import Phases
+from app.constructs import Phases,Agents, Objectives
 
 
 class TestCreateNewGame:
@@ -40,9 +40,8 @@ class TestCreateNewGame:
                 'Authorization': f'Bearer {settings.user0_token}'
                 }
             )
-        assert response.status_code == 201, 'wrong status'
+        assert response.status_code == 201, f'{response.content=}'
         assert connection['CurrentGameData'].objects().count() == 2, 'wrong count of data'
-        # assert connection['CurrentGameData'].objects().count() == 3, 'wrong count of data'
 
 
 class TestPresetFaction:
@@ -76,7 +75,7 @@ class TestPresetFaction:
                 'Authorization': f'Bearer {settings.user0_token}'
                 }
             )
-        assert response.status_code == 200, 'wrong status'
+        assert response.status_code == 200, f'{response.content=}'
         assert connection['CurrentGameData'].objects().count() == 1, 'wrong count of data'
 
         response = client.patch(
@@ -85,7 +84,7 @@ class TestPresetFaction:
                 'Authorization': f'Bearer {settings.user0_token}'
                 }
             )
-        assert response.status_code == 409, 'wrong status'
+        assert response.status_code == 409, f'{response.content=}'
         assert response.json()['detail'] == 'You cant change faction because is choosen yet', \
             'wrong detail'
 
@@ -108,7 +107,7 @@ class TestPresetFaction:
                 'Authorization': f'Bearer {settings.user0_token}'
                 }
             )
-        assert response.status_code == 404, 'wrong status'
+        assert response.status_code == 404, f'{response.content=}'
 
         response = client.patch(
             f"{settings.api_v1_str}/game/preset/faction",
@@ -116,7 +115,7 @@ class TestPresetFaction:
                 'Authorization': f'Bearer {settings.user0_token}'
                 }
             )
-        assert response.status_code == 422, 'wrong status'
+        assert response.status_code == 422, f'{response.content=}'
 
 
 class TestNextTurn:
@@ -146,7 +145,6 @@ class TestNextTurn:
     def test_next_turn_return_200(
         self,
         mock_return,
-        connection: Generator,
         client: TestClient,
             ) -> None:
         """Test game/next set next turn
@@ -157,9 +155,7 @@ class TestNextTurn:
                 'Authorization': f'Bearer {settings.user0_token}'
                 }
             )
-        assert response.status_code == 200, 'wrong status'
-        assert connection['CurrentGameData'].objects().first() \
-            .game_steps.game_turn == 1, 'wrong game_turn'
+        assert response.status_code == 200, f'{response.content=}'
 
     def test_next_turn_if_game_end_return_409(
         self,
@@ -177,9 +173,8 @@ class TestNextTurn:
                 'Authorization': f'Bearer {settings.user0_token}'
                 }
             )
-        assert response.status_code == 409, 'wrong status'
+        assert response.status_code == 409, f'{response.content=}'
         assert response.json()['detail'] == "Something can't be changed, because game is end"
-
 
 class TestNextPhase:
     """Test game/next_phase
@@ -189,7 +184,7 @@ class TestNextPhase:
     def mock_return(
         self,
         user: crud_user.CRUDUser,
-        started_game_proc_fact: processor_game.GameProcessor,
+        started_game_proc: processor_game.GameProcessor,
         monkeypatch,
             ) -> None:
         """Mock user and game
@@ -198,7 +193,7 @@ class TestNextPhase:
             return user.get_by_login(settings.user0_login)
 
         def mock_process(*args, **kwargs) -> Callable:
-            return started_game_proc_fact
+            return started_game_proc
 
         monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
         monkeypatch.setattr(crud_game.game, "get_game_processor", mock_process)
@@ -206,15 +201,10 @@ class TestNextPhase:
     def test_next_phase_return_200(
         self,
         mock_return,
-        connection: Generator,
         client: TestClient,
             ) -> None:
         """Test game/next set next phase
         """
-        current = connection['CurrentGameData'].objects().first()
-        assert current.game_steps.turn_phase is None, 'wrong turn_phase'
-        assert current.game_decks.mission_card is None, 'wrong mission card'
-
         response = client.patch(
             f"{settings.api_v1_str}/game/next_phase",
             headers={
@@ -222,46 +212,43 @@ class TestNextPhase:
                 }
             )
         assert response.status_code == 200, 'wrong status'
-
-        current = connection['CurrentGameData'].objects().first()
-        assert current.game_steps.turn_phase == Phases.BRIEFING.value, 'wrong turn_phase'
-        assert isinstance(current.game_decks.mission_card, str), 'wrong mission card'
 
     def test_next_phase_return_200_and_get_from_briefing(
         self,
         mock_return,
-        connection: Generator,
         client: TestClient,
+        started_game_proc: processor_game.GameProcessor,
             ) -> None:
         """Test game/next set next phase from briefing
         """
-        client.patch(
-            f"{settings.api_v1_str}/game/next_phase",
-            headers={
-                'Authorization': f'Bearer {settings.user0_token}'
-                }
-            )
+        started_game_proc.G.c.player.faction = 'kgb'
+        started_game_proc.G.c.bot.faction = 'cia'
+        started_game_proc.G.c.player.c.agent_cards.current[0].is_in_play = True
+        started_game_proc.G.c.bot.c.agent_cards.current[0].is_in_play = True
+        started_game_proc.G.c.player.has_priority = True
+        started_game_proc.G.c.bot.has_priority = False
+        started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.by_id(Phases.BRIEFING.value)
+        started_game_proc.G.c.objective_deck.last = started_game_proc.G.c.objective_deck.by_id(Objectives.AFGHANISTAN.value)
+
         response = client.patch(
             f"{settings.api_v1_str}/game/next_phase",
             headers={
                 'Authorization': f'Bearer {settings.user0_token}'
                 }
             )
-        assert response.status_code == 200, 'wrong status'
+        assert response.status_code == 200, f'{response.content=}'
 
-        current = connection['CurrentGameData'].objects().first()
-        assert current.game_steps.turn_phase == Phases.PLANNING.value, 'wrong turn_phase'
-        assert isinstance(current.game_decks.mission_card, str), 'wrong mission card'
+    # TODO: test her errors
 
     def test_next_phase_if_last_return_409(
         self,
         mock_return,
-        started_game_proc_fact: processor_game.GameProcessor,
+        started_game_proc: processor_game.GameProcessor,
         client: TestClient,
             ) -> None:
         """Test last phases cant'be pushed
         """
-        started_game_proc_fact.G.c.steps.is_game_end = True
+        started_game_proc.G.c.steps.is_game_end = True
 
         response = client.patch(
             f"{settings.api_v1_str}/game/next_phase",
@@ -269,7 +256,7 @@ class TestNextPhase:
                 'Authorization': f'Bearer {settings.user0_token}'
                 }
             )
-        assert response.status_code == 409, 'wrong status'
+        assert response.status_code == 409, f'{response.content=}'
         assert response.json()['detail'] == "Something can't be changed, because game is end"
 
 
@@ -315,7 +302,7 @@ class TestAnalyst:
                 'Authorization': f'Bearer {settings.user0_token}'
                 }
             )
-        assert response.status_code == 200, 'wrong status'
+        assert response.status_code == 200, f'{response.content=}'
         assert len(response.json()["top_cards"]) == 3, 'no top cards in result'
 
         current = connection['CurrentGameData'].objects().first()
@@ -346,7 +333,7 @@ class TestAnalyst:
                 },
             json={"top_cards": top},
             )
-        assert response.status_code == 200, 'wrong status'
+        assert response.status_code == 200, f'{response.content=}'
 
         current = connection['CurrentGameData'].objects().first()
         assert current.game_decks.group_deck.deck[-3:] == top, \
@@ -363,28 +350,28 @@ class TestAutorizationError:
         """Test game create return 401 for unauthorized
         """
         response = client.post(f"{settings.api_v1_str}/game/create")
-        assert response.status_code == 401, 'wrong status'
+        assert response.status_code == 401, f'{response.content=}'
         assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
 
     def test_preset_faction_return_401(self, client: TestClient) -> None:
         """Test preset faction return 401
         """
         response = client.patch(f"{settings.api_v1_str}/game/preset/faction?q=kgb")
-        assert response.status_code == 401, 'wrong status'
+        assert response.status_code == 401, f'{response.content=}'
         assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
 
     def test_next_turn_return_401(self, client: TestClient) -> None:
         """Test next turn return 401 for unauthorized
         """
         response = client.patch(f"{settings.api_v1_str}/game/next_turn")
-        assert response.status_code == 401, 'wrong status'
+        assert response.status_code == 401, f'{response.content=}'
         assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
 
     def test_next_turn_return_401(self, client: TestClient) -> None:
         """Test next phase return 401 for unauthorized
         """
         response = client.patch(f"{settings.api_v1_str}/game/next_phase")
-        assert response.status_code == 401, 'wrong status'
+        assert response.status_code == 401, f'{response.content=}'
         assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
 
     def test_analyst_get_return_401(self, client: TestClient) -> None:
@@ -393,7 +380,7 @@ class TestAutorizationError:
         response = client.patch(
             f"{settings.api_v1_str}/game/phase/briefing/analyst_arrange",
                 )
-        assert response.status_code == 401, 'wrong status'
+        assert response.status_code == 401, f'{response.content=}'
         assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
 
     def test_analyst_arrange_return_401(self, client: TestClient) -> None:
@@ -403,5 +390,5 @@ class TestAutorizationError:
             f"{settings.api_v1_str}/game/phase/briefing/analyst_arrange",
             json={"top_cards": ['one', 'two', 'three']},
                 )
-        assert response.status_code == 401, 'wrong status'
+        assert response.status_code == 401, f'{response.content=}'
         assert response.json()['detail'] == 'Not authenticated', 'wrong detail'

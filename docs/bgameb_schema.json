@@ -1,843 +1,1167 @@
 {
-    "id": "Cold War Game",
-    "counter": {},
-    "player": {
-        "id": "player",
-        "counter": {},
-        "is_active": null,
-        "has_priority": null,
-        "team": null,
-        "is_bot": false,
-        "score": 0,
-        "faction": null,
-        "player_cards": {
-            "agent_cards": [{
-                "is_dead": false,
-                "is_in_play": false,
-                "is_in_vacation": false,
-                "is_revealed": false,
-                "name": "Master Spy"
-            }, {
-                "is_dead": false,
-                "is_in_play": false,
-                "is_in_vacation": false,
-                "is_revealed": false,
-                "name": "Deputy Director"
-            }, {
-                "is_dead": false,
-                "is_in_play": false,
-                "is_in_vacation": false,
-                "is_revealed": false,
-                "name": "Double Agent"
-            }, {
-                "is_dead": false,
-                "is_in_play": false,
-                "is_in_vacation": false,
-                "is_revealed": false,
-                "name": "Analyst"
-            }, {
-                "is_dead": false,
-                "is_in_play": false,
-                "is_in_vacation": false,
-                "is_revealed": false,
-                "name": "Assassin"
-            }, {
-                "is_dead": false,
-                "is_in_play": false,
-                "is_in_vacation": false,
-                "is_revealed": false,
-                "name": "Director"
-            }],
-            "group_cards": [],
-            "objective_cards": []
-        },
-        "login": "DonaldTrump"
+    "openapi": "3.0.2",
+    "info": {
+        "title": "cold-war-back",
+        "description": "ColdWar API backend",
+        "version": "0.0.2"
     },
-    "bot": {
-        "id": "bot",
-        "counter": {},
-        "is_active": null,
-        "has_priority": null,
-        "team": null,
-        "is_bot": true,
-        "score": 0,
-        "faction": null,
-        "player_cards": {
-            "agent_cards": [{
-                "is_dead": false,
-                "is_in_play": false,
-                "is_in_vacation": false,
-                "is_revealed": false,
-                "name": "Master Spy"
-            }, {
-                "is_dead": false,
-                "is_in_play": false,
-                "is_in_vacation": false,
-                "is_revealed": false,
-                "name": "Deputy Director"
-            }, {
-                "is_dead": false,
-                "is_in_play": false,
-                "is_in_vacation": false,
-                "is_revealed": false,
-                "name": "Double Agent"
-            }, {
-                "is_dead": false,
-                "is_in_play": false,
-                "is_in_vacation": false,
-                "is_revealed": false,
-                "name": "Analyst"
-            }, {
-                "is_dead": false,
-                "is_in_play": false,
-                "is_in_vacation": false,
-                "is_revealed": false,
-                "name": "Assassin"
-            }, {
-                "is_dead": false,
-                "is_in_play": false,
-                "is_in_vacation": false,
-                "is_revealed": false,
-                "name": "Director"
-            }],
-            "group_cards": [],
-            "objective_cards": []
+    "paths": {
+        "/api/v1/user/login": {
+            "post": {
+                "tags": ["user"],
+                "summary": "Authenticate user",
+                "description": "Send for autorization:\n\n- **password**\n- **login**",
+                "operationId": "login_api_v1_user_login_post",
+                "requestBody": {
+                    "content": {
+                        "application/x-www-form-urlencoded": {
+                            "schema": {
+                                "$ref": "#/components/schemas/Body_login_api_v1_user_login_post"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "OK. As response you receive access token. Use it for bearer autentication.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Token"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HttpError400"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         },
-        "login": null
-    },
-    "group_deck": {
-        "id": "Group Deck",
-        "counter": {},
-        "guerilla": {
-            "id": "Guerilla",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Guerilla",
-            "faction": "Military",
-            "influence": 1,
-            "power": "Send any other group card, whether ready or mobilized, to the discard pile"
+        "/api/v1/game/data/static": {
+            "get": {
+                "tags": ["game_data"],
+                "summary": "Static game data",
+                "description": "Get all static game data (cards data).\n    ",
+                "operationId": "get_static_data_api_v1_game_data_static_get",
+                "responses": {
+                    "200": {
+                        "description": "OK. As response you recieve static game data.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/GameCards"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
         },
-        "militia": {
-            "id": "Militia",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Militia",
-            "faction": "Military",
-            "influence": 2,
-            "power": "Send any other group card, whether ready or mobilized, to the discard pile"
+        "/api/v1/game/data/current": {
+            "post": {
+                "tags": ["game_data"],
+                "summary": "Current game data",
+                "description": "Get all current game data (game statement) for current user.\n    ",
+                "operationId": "get_current_data_api_v1_game_data_current_post",
+                "responses": {
+                    "200": {
+                        "description": "OK. As response you recieve current game data.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/CurrentGameData"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HttpError401"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HttpError404"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{
+                    "OAuth2PasswordBearer": []
+                }]
+            }
         },
-        "mercenaries": {
-            "id": "Mercenaries",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Mercenaries",
-            "faction": "Military",
-            "influence": 3,
-            "power": "Send any other group card, whether ready or mobilized, to the discard pile"
+        "/api/v1/game/create": {
+            "post": {
+                "tags": ["game"],
+                "summary": "Create new game",
+                "description": "Create new game.\n    ",
+                "operationId": "create_new_game_api_v1_game_create_post",
+                "responses": {
+                    "201": {
+                        "description": "Created. New game object created in db.",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HttpError401"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{
+                    "OAuth2PasswordBearer": []
+                }]
+            }
         },
-        "police": {
-            "id": "Police",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Police",
-            "faction": "Military",
-            "influence": 4,
-            "power": "Send any other group card, whether ready or mobilized, to the discard pile"
+        "/api/v1/game/preset/faction": {
+            "patch": {
+                "tags": ["game"],
+                "summary": "Preset faction before game start",
+                "description": "Preset faction of player\n    ",
+                "operationId": "preset_faction_api_v1_game_preset_faction_patch",
+                "parameters": [{
+                    "required": true,
+                    "schema": {
+                        "title": "Preset faction",
+                        "allOf": [{
+                            "$ref": "#/components/schemas/Faction"
+                        }]
+                    },
+                    "name": "q",
+                    "in": "query"
+                }],
+                "responses": {
+                    "200": {
+                        "description": "Ok. Faction is setted.",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HttpError401"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HttpError404"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HttpError409"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{
+                    "OAuth2PasswordBearer": []
+                }]
+            }
         },
-        "infantry": {
-            "id": "Infantry",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Infantry",
-            "faction": "Military",
-            "influence": 5,
-            "power": "Send any other group card, whether ready or mobilized, to the discard pile"
+        "/api/v1/game/next_turn": {
+            "patch": {
+                "tags": ["game"],
+                "summary": "Go to next turn",
+                "description": "Change turn number to next\n    ",
+                "operationId": "next_turn_api_v1_game_next_turn_patch",
+                "responses": {
+                    "200": {
+                        "description": "Ok.",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HttpError401"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HttpError404"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HttpError409"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{
+                    "OAuth2PasswordBearer": []
+                }]
+            }
         },
-        "generals": {
-            "id": "Generals",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Generals",
-            "faction": "Military",
-            "influence": 6,
-            "power": "Send any other group card, whether ready or mobilized, to the discard pile"
+        "/api/v1/game/next_phase": {
+            "patch": {
+                "tags": ["game"],
+                "summary": "Go to next phase",
+                "description": "Change phase to next\n    ",
+                "operationId": "next_phase_api_v1_game_next_phase_patch",
+                "responses": {
+                    "200": {
+                        "description": "Ok.",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HttpError401"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HttpError404"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HttpError409"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{
+                    "OAuth2PasswordBearer": []
+                }]
+            }
         },
-        "workers": {
-            "id": "Workers",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Workers",
-            "faction": "Economic",
-            "influence": 1,
-            "power": "Mobilize any ready group or ready any mobilized group. You may not affect an economic card with this power"
+        "/api/v1/game/phase/briefing/analyst_look": {
+            "patch": {
+                "tags": ["game"],
+                "summary": "Look top three cards of group deck with analist ability",
+                "description": "Look top three cards of group deck and change current game data\n    ",
+                "operationId": "analyst_get_api_v1_game_phase_briefing_analyst_look_patch",
+                "responses": {
+                    "200": {
+                        "description": "Ok. Data is changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HttpError401"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HttpError404"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HttpError409"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{
+                    "OAuth2PasswordBearer": []
+                }]
+            }
         },
-        "mafia": {
-            "id": "Mafia",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Mafia",
-            "faction": "Economic",
-            "influence": 2,
-            "power": "Mobilize any ready group or ready any mobilized group. You may not affect an economic card with this power"
-        },
-        "food_companies": {
-            "id": "Food companies",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Food companies",
-            "faction": "Economic",
-            "influence": 3,
-            "power": "Mobilize any ready group or ready any mobilized group. You may not affect an economic card with this power"
-        },
-        "industry": {
-            "id": "Industry",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Industry",
-            "faction": "Economic",
-            "influence": 4,
-            "power": "Mobilize any ready group or ready any mobilized group. You may not affect an economic card with this power"
-        },
-        "oil_tycoons": {
-            "id": "Oil Tycoons",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Oil Tycoons",
-            "faction": "Economic",
-            "influence": 5,
-            "power": "Mobilize any ready group or ready any mobilized group. You may not affect an economic card with this power"
-        },
-        "bankers": {
-            "id": "Bankers",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Bankers",
-            "faction": "Economic",
-            "influence": 6,
-            "power": "Mobilize any ready group or ready any mobilized group. You may not affect an economic card with this power"
-        },
-        "students": {
-            "id": "Students",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Students",
-            "faction": "Political",
-            "influence": 1,
-            "power": "Steal a group your opponent or give him one of yours. You may not make either player exceed the objective's population limit, nor make your opponent exceed the objective's Stability"
-        },
-        "trade_union": {
-            "id": "Trade Union",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Trade Union",
-            "faction": "Political",
-            "influence": 2,
-            "power": "Steal a group your opponent or give him one of yours. You may not make either player exceed the objective's population limit, nor make your opponent exceed the objective's Stability"
-        },
-        "nationalists": {
-            "id": "Nationalists",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Nationalists",
-            "faction": "Political",
-            "influence": 3,
-            "power": "Steal a group your opponent or give him one of yours. You may not make either player exceed the objective's population limit, nor make your opponent exceed the objective's Stability"
-        },
-        "fundamentalists": {
-            "id": "Fundamentalists",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Fundamentalists",
-            "faction": "Political",
-            "influence": 4,
-            "power": "Steal a group your opponent or give him one of yours. You may not make either player exceed the objective's population limit, nor make your opponent exceed the objective's Stability"
-        },
-        "opposition": {
-            "id": "Opposition",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Opposition",
-            "faction": "Political",
-            "influence": 5,
-            "power": "Steal a group your opponent or give him one of yours. You may not make either player exceed the objective's population limit, nor make your opponent exceed the objective's Stability"
-        },
-        "government": {
-            "id": "Government",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Government",
-            "faction": "Political",
-            "influence": 6,
-            "power": "Steal a group your opponent or give him one of yours. You may not make either player exceed the objective's population limit, nor make your opponent exceed the objective's Stability"
-        },
-        "artists": {
-            "id": "Artists",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Artists",
-            "faction": "Media",
-            "influence": 1,
-            "power": "Look at the top card on the group deck, then recruit it, discard it, or leave it where it was"
-        },
-        "ngos": {
-            "id": "NGOs",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "NGOs",
-            "faction": "Media",
-            "influence": 2,
-            "power": "Look at the top card on the group deck, then recruit it, discard it, or leave it where it was"
-        },
-        "phone_company": {
-            "id": "Phone company",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Phone company",
-            "faction": "Media",
-            "influence": 3,
-            "power": "Look at the top card on the group deck, then recruit it, discard it, or leave it where it was"
-        },
-        "newspapers": {
-            "id": "Newspapers",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Newspapers",
-            "faction": "Media",
-            "influence": 4,
-            "power": "Look at the top card on the group deck, then recruit it, discard it, or leave it where it was"
-        },
-        "radio": {
-            "id": "Radio",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Radio",
-            "faction": "Media",
-            "influence": 5,
-            "power": "Look at the top card on the group deck, then recruit it, discard it, or leave it where it was"
-        },
-        "television": {
-            "id": "Television",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Television",
-            "faction": "Media",
-            "influence": 6,
-            "power": "Look at the top card on the group deck, then recruit it, discard it, or leave it where it was"
+        "/api/v1/game/phase/briefing/analyst_arrange": {
+            "patch": {
+                "tags": ["game"],
+                "summary": "Arrange top three cards of group deck with analist ability",
+                "description": "Arrange top three cards of group deck and change current game data\n    ",
+                "operationId": "analyst_arrnge_api_v1_game_phase_briefing_analyst_arrange_patch",
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/TopDeck"
+                            }
+                        }
+                    },
+                    "required": true
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ok. Data is changed",
+                        "content": {
+                            "application/json": {
+                                "schema": {}
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HttpError401"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HttpError404"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HttpError409"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/HTTPValidationError"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [{
+                    "OAuth2PasswordBearer": []
+                }]
+            }
         }
     },
-    "objective_deck": {
-        "id": "Objective Deck",
-        "counter": {},
-        "nobel_peace_prize": {
-            "id": "Nobel Peace Prize",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Nobel Peace Prize",
-            "bias_icons": ["Media", "Political", "Economic", "Military"],
-            "population": 1,
-            "special_ability": "Cease-fire: Upon cansing civil disorder, discard this objective to prevent your Agent X from being terminated. He goes on leave instead.",
-            "stability": 6,
-            "victory_points": 5
+    "components": {
+        "schemas": {
+            "AgentCard": {
+                "title": "AgentCard",
+                "required": ["name", "agenda_lose", "agenda_win", "initiative"],
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "$ref": "#/components/schemas/Agents"
+                    },
+                    "agenda_lose": {
+                        "title": "Agenda Lose",
+                        "type": "string"
+                    },
+                    "agenda_win": {
+                        "title": "Agenda Win",
+                        "type": "string"
+                    },
+                    "initiative": {
+                        "title": "Initiative",
+                        "exclusiveMinimum": 0.0,
+                        "type": "integer"
+                    }
+                },
+                "description": "Agent card schema\n    ",
+                "example": {
+                    "name": "Master Spy",
+                    "agenda_lose": "You claim the objective immediately",
+                    "agenda_win": "Your opponent claims the objective immediately",
+                    "initiative": 1
+                }
+            },
+            "Agents": {
+                "title": "Agents",
+                "enum": ["Master Spy", "Deputy Director", "Double Agent", "Analyst", "Assassin", "Director"],
+                "type": "string",
+                "description": "Agent cards ids\n    "
+            },
+            "Body_login_api_v1_user_login_post": {
+                "title": "Body_login_api_v1_user_login_post",
+                "required": ["username", "password"],
+                "type": "object",
+                "properties": {
+                    "grant_type": {
+                        "title": "Grant Type",
+                        "pattern": "password",
+                        "type": "string"
+                    },
+                    "username": {
+                        "title": "Username",
+                        "type": "string"
+                    },
+                    "password": {
+                        "title": "Password",
+                        "type": "string"
+                    },
+                    "scope": {
+                        "title": "Scope",
+                        "type": "string",
+                        "default": ""
+                    },
+                    "client_id": {
+                        "title": "Client Id",
+                        "type": "string"
+                    },
+                    "client_secret": {
+                        "title": "Client Secret",
+                        "type": "string"
+                    }
+                }
+            },
+            "CurrentGameData": {
+                "title": "CurrentGameData",
+                "required": ["players"],
+                "type": "object",
+                "properties": {
+                    "game_steps": {
+                        "title": "Game Steps",
+                        "allOf": [{
+                            "$ref": "#/components/schemas/GameSteps"
+                        }],
+                        "default": {
+                            "game_turn": 0,
+                            "is_game_end": false
+                        }
+                    },
+                    "players": {
+                        "title": "Players",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Player"
+                        }
+                    },
+                    "game_decks": {
+                        "title": "Game Decks",
+                        "allOf": [{
+                            "$ref": "#/components/schemas/GameDecks"
+                        }],
+                        "default": {
+                            "group_deck": {
+                                "deck_len": 0,
+                                "pile": []
+                            },
+                            "objective_deck": {
+                                "deck_len": 0,
+                                "pile": []
+                            }
+                        }
+                    }
+                },
+                "description": "Current game data\n    "
+            },
+            "Faction": {
+                "title": "Faction",
+                "enum": ["cia", "kgb"],
+                "type": "string",
+                "description": "Faction enumeration\n    "
+            },
+            "GameCards": {
+                "title": "GameCards",
+                "required": ["agent_cards", "group_cards", "objective_cards"],
+                "type": "object",
+                "properties": {
+                    "agent_cards": {
+                        "title": "Agent Cards",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/AgentCard"
+                        }
+                    },
+                    "group_cards": {
+                        "title": "Group Cards",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/GroupCard"
+                        }
+                    },
+                    "objective_cards": {
+                        "title": "Objective Cards",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ObjectiveCard"
+                        }
+                    }
+                },
+                "description": "Agents, group and objective cards schema\n    "
+            },
+            "GameDeck": {
+                "title": "GameDeck",
+                "type": "object",
+                "properties": {
+                    "deck_len": {
+                        "title": "Deck Len",
+                        "minimum": 0.0,
+                        "type": "integer",
+                        "default": 0
+                    },
+                    "pile": {
+                        "title": "Pile",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "default": []
+                    }
+                },
+                "description": "Game deck\n    ",
+                "example": {
+                    "deck_len": 0,
+                    "pile": ["Ukranian War", "Something Else"]
+                }
+            },
+            "GameDecks": {
+                "title": "GameDecks",
+                "type": "object",
+                "properties": {
+                    "group_deck": {
+                        "title": "Group Deck",
+                        "allOf": [{
+                            "$ref": "#/components/schemas/GameDeck"
+                        }],
+                        "default": {
+                            "deck_len": 0,
+                            "pile": []
+                        }
+                    },
+                    "objective_deck": {
+                        "title": "Objective Deck",
+                        "allOf": [{
+                            "$ref": "#/components/schemas/GameDeck"
+                        }],
+                        "default": {
+                            "deck_len": 0,
+                            "pile": []
+                        }
+                    },
+                    "mission_card": {
+                        "$ref": "#/components/schemas/Objectives"
+                    }
+                },
+                "description": "Game decks and mission card\n    "
+            },
+            "GameSteps": {
+                "title": "GameSteps",
+                "type": "object",
+                "properties": {
+                    "game_turn": {
+                        "title": "Game Turn",
+                        "minimum": 0.0,
+                        "type": "integer",
+                        "default": 0
+                    },
+                    "turn_phase": {
+                        "$ref": "#/components/schemas/Phases"
+                    },
+                    "is_game_end": {
+                        "title": "Is Game End",
+                        "type": "boolean",
+                        "default": false
+                    }
+                },
+                "description": "Game steps\n    ",
+                "example": {
+                    "game_turn": 0,
+                    "turn_phase": "briefing",
+                    "is_game_end": false
+                }
+            },
+            "GroupCard": {
+                "title": "GroupCard",
+                "required": ["name", "faction", "influence", "power"],
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "$ref": "#/components/schemas/Groups"
+                    },
+                    "faction": {
+                        "$ref": "#/components/schemas/GroupFactions"
+                    },
+                    "influence": {
+                        "title": "Influence",
+                        "exclusiveMinimum": 0.0,
+                        "type": "integer"
+                    },
+                    "power": {
+                        "title": "Power",
+                        "type": "string"
+                    }
+                },
+                "description": "Group card schema\n    ",
+                "example": {
+                    "name": "Guerilla",
+                    "faction": "Military",
+                    "influence": 1,
+                    "power": "Send any other group card, whether ready or mobilized, to the discard pile"
+                }
+            },
+            "GroupFactions": {
+                "title": "GroupFactions",
+                "enum": ["Economic", "Military", "Media", "Political", "Government"],
+                "type": "string",
+                "description": "Factions of group\n    "
+            },
+            "Groups": {
+                "title": "Groups",
+                "enum": ["Guerilla", "Militia", "Mercenaries", "Police", "Infantry", "Generals", "Workers", "Mafia", "Food companies", "Industry", "Oil Tycoons", "Bankers", "Students", "Trade Union", "Nationalists", "Fundamentalists", "Opposition", "Government", "Artists", "NGOs", "Phone company", "Newspapers", "Radio", "Television"],
+                "type": "string",
+                "description": "Groups cards ids\n    "
+            },
+            "HTTPValidationError": {
+                "title": "HTTPValidationError",
+                "type": "object",
+                "properties": {
+                    "detail": {
+                        "title": "Detail",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/ValidationError"
+                        }
+                    }
+                }
+            },
+            "HttpError400": {
+                "title": "HttpError400",
+                "required": ["message"],
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "title": "Message",
+                        "type": "string"
+                    }
+                },
+                "description": "400 Bad Request\n    ",
+                "example": {
+                    "autorisation error": {
+                        "detail": "Wrong login or password"
+                    }
+                }
+            },
+            "HttpError401": {
+                "title": "HttpError401",
+                "required": ["message"],
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "title": "Message",
+                        "type": "string"
+                    }
+                },
+                "description": "401 Unauthorized\n    ",
+                "example": {
+                    "detail": "Not authenticated"
+                }
+            },
+            "HttpError404": {
+                "title": "HttpError404",
+                "required": ["message"],
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "title": "Message",
+                        "type": "string"
+                    }
+                },
+                "description": "404 Not Found\n    ",
+                "example": {
+                    "detail": "Cant find current game data in db. For start new game use /game/create endpoint"
+                }
+            },
+            "HttpError409": {
+                "title": "HttpError409",
+                "required": ["message"],
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "title": "Message",
+                        "type": "string"
+                    }
+                },
+                "description": "409 Conflict\n    ",
+                "example": {
+                    "end game error": {
+                        "detail": "Something wrong with client or server data"
+                    }
+                }
+            },
+            "Icons": {
+                "title": "Icons",
+                "enum": ["Economic", "Military", "Media", "Political"],
+                "type": "string",
+                "description": "Bias icons\n    "
+            },
+            "ObjectiveAbilities": {
+                "title": "ObjectiveAbilities",
+                "enum": ["Nobel Peace Prize", "Live Benefit", "Nuclear Escalation", "Space Race", "Olympic Games", "Summit Meeting"],
+                "type": "string",
+                "description": "Objectives with abilities cards ids\n    "
+            },
+            "ObjectiveCard": {
+                "title": "ObjectiveCard",
+                "required": ["name", "bias_icons", "population", "stability", "victory_points"],
+                "type": "object",
+                "properties": {
+                    "name": {
+                        "$ref": "#/components/schemas/Objectives"
+                    },
+                    "bias_icons": {
+                        "uniqueItems": true,
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Icons"
+                        }
+                    },
+                    "population": {
+                        "title": "Population",
+                        "exclusiveMinimum": 0.0,
+                        "type": "integer"
+                    },
+                    "special_ability": {
+                        "title": "Special Ability",
+                        "type": "string"
+                    },
+                    "stability": {
+                        "title": "Stability",
+                        "exclusiveMinimum": 0.0,
+                        "type": "integer"
+                    },
+                    "victory_points": {
+                        "title": "Victory Points",
+                        "minimum": 0.0,
+                        "type": "integer"
+                    }
+                },
+                "description": "Objective card schema\n    ",
+                "example": {
+                    "name": "Egypt",
+                    "bias_icons": ["Political", "Economic", "Media", "Military"],
+                    "population": 4,
+                    "stability": 11,
+                    "victory_points": 20
+                }
+            },
+            "Objectives": {
+                "title": "Objectives",
+                "enum": ["Nobel Peace Prize", "Live Benefit", "Nuclear Escalation", "Space Race", "Olympic Games", "Summit Meeting", "Egypt", "Vietnam", "Panama", "Angola", "Afghanistan", "Houndaras", "Libya", "Greece", "Turkey", "Iran", "Cuba", "Congo", "Czechoslovakia", "Chile", "Korea"],
+                "type": "string",
+                "description": "Objectives cards ids\n    "
+            },
+            "Phases": {
+                "title": "Phases",
+                "enum": ["briefing", "planning", "influence_struggle", "ceasefire", "debriefing", "detente"],
+                "type": "string",
+                "description": "Game phases\n    "
+            },
+            "Player": {
+                "title": "Player",
+                "required": ["player_cards"],
+                "type": "object",
+                "properties": {
+                    "has_priority": {
+                        "title": "Has Priority",
+                        "type": "boolean"
+                    },
+                    "is_bot": {
+                        "title": "Is Bot",
+                        "type": "boolean"
+                    },
+                    "score": {
+                        "title": "Score",
+                        "maximum": 100.0,
+                        "minimum": 0.0,
+                        "type": "integer",
+                        "default": 0
+                    },
+                    "faction": {
+                        "$ref": "#/components/schemas/Faction"
+                    },
+                    "player_cards": {
+                        "$ref": "#/components/schemas/PlayerCards"
+                    },
+                    "login": {
+                        "title": "Login",
+                        "type": "string"
+                    },
+                    "abilities": {
+                        "title": "Abilities",
+                        "type": "array",
+                        "items": {
+                            "anyOf": [{
+                                "$ref": "#/components/schemas/ObjectiveAbilities"
+                            }, {
+                                "$ref": "#/components/schemas/Agents"
+                            }]
+                        },
+                        "default": []
+                    }
+                },
+                "description": "Player current data\n    ",
+                "example": {
+                    "has_priority": true,
+                    "is_bot": false,
+                    "score": 0,
+                    "faction": "kgb",
+                    "player_cards": {
+                        "agent_cards": [{
+                            "is_dead": false,
+                            "is_in_play": true,
+                            "is_in_vacation": false,
+                            "is_revealed": false,
+                            "name": "Master Spy"
+                        }],
+                        "group_cards": [{
+                            "is_in_deck": true,
+                            "is_in_play": false,
+                            "is_active": true,
+                            "position": 0,
+                            "name": "Militia"
+                        }],
+                        "objective_cards": [{
+                            "is_in_deck": false,
+                            "is_in_play": true,
+                            "is_active": false,
+                            "name": "Egypt"
+                        }]
+                    },
+                    "login": "DonaldTrump",
+                    "abilities": ["Analist"]
+                }
+            },
+            "PlayerAgentCards": {
+                "title": "PlayerAgentCards",
+                "type": "object",
+                "properties": {
+                    "dead": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Agents"
+                        },
+                        "default": []
+                    },
+                    "in_play": {
+                        "$ref": "#/components/schemas/Agents"
+                    },
+                    "in_vacation": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Agents"
+                        },
+                        "default": []
+                    },
+                    "revealed": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Agents"
+                        },
+                        "default": []
+                    }
+                },
+                "description": "Agent cards data\n    ",
+                "example": {
+                    "dead": ["The Director"],
+                    "is_in_vacation": ["Assassin"],
+                    "is_revealed": ["_hidden", "_hidden", "_hidden", "_hidden"]
+                }
+            },
+            "PlayerCards": {
+                "title": "PlayerCards",
+                "type": "object",
+                "properties": {
+                    "agent_cards": {
+                        "title": "Agent Cards",
+                        "allOf": [{
+                            "$ref": "#/components/schemas/PlayerAgentCards"
+                        }],
+                        "default": {
+                            "dead": [],
+                            "in_vacation": [],
+                            "revealed": []
+                        }
+                    },
+                    "group_cards": {
+                        "title": "Group Cards",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PlayerGroupCard"
+                        },
+                        "default": []
+                    },
+                    "objective_cards": {
+                        "title": "Objective Cards",
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/PlayerObjectiveCard"
+                        },
+                        "default": []
+                    }
+                },
+                "description": "Player cards\n    "
+            },
+            "PlayerGroupCard": {
+                "title": "PlayerGroupCard",
+                "required": ["name"],
+                "type": "object",
+                "properties": {
+                    "is_in_deck": {
+                        "title": "Is In Deck",
+                        "type": "boolean",
+                        "default": true
+                    },
+                    "is_in_play": {
+                        "title": "Is In Play",
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "is_active": {
+                        "title": "Is Active",
+                        "type": "boolean"
+                    },
+                    "pos_in_deck": {
+                        "title": "Pos In Deck",
+                        "maximum": 0.0,
+                        "type": "integer"
+                    },
+                    "name": {
+                        "$ref": "#/components/schemas/Groups"
+                    }
+                },
+                "description": "Player group card\n    ",
+                "example": {
+                    "is_in_deck": true,
+                    "is_in_play": false,
+                    "pos_in_deck": 0,
+                    "name": "Master Spy"
+                }
+            },
+            "PlayerObjectiveCard": {
+                "title": "PlayerObjectiveCard",
+                "required": ["name"],
+                "type": "object",
+                "properties": {
+                    "is_in_deck": {
+                        "title": "Is In Deck",
+                        "type": "boolean",
+                        "default": true
+                    },
+                    "is_in_play": {
+                        "title": "Is In Play",
+                        "type": "boolean",
+                        "default": false
+                    },
+                    "is_active": {
+                        "title": "Is Active",
+                        "type": "boolean"
+                    },
+                    "pos_in_deck": {
+                        "title": "Pos In Deck",
+                        "maximum": 0.0,
+                        "type": "integer"
+                    },
+                    "name": {
+                        "$ref": "#/components/schemas/Objectives"
+                    }
+                },
+                "description": "Player objective card\n    ",
+                "example": {
+                    "is_in_deck": true,
+                    "is_in_play": false,
+                    "pos_in_deck": 0,
+                    "name": "Master Spy"
+                }
+            },
+            "Token": {
+                "title": "Token",
+                "required": ["access_token", "token_type"],
+                "type": "object",
+                "properties": {
+                    "access_token": {
+                        "title": "Access Token",
+                        "type": "string"
+                    },
+                    "token_type": {
+                        "title": "Token Type",
+                        "type": "string"
+                    }
+                },
+                "example": {
+                    "access_token": "$2b$12$sifRrf5m7GM0hhFAF7BQ0.dIokOEZkfYOawlal8Jp/GeWh/4zn8la",
+                    "token_type": "bearer"
+                }
+            },
+            "TopDeck": {
+                "title": "TopDeck",
+                "required": ["top_cards"],
+                "type": "object",
+                "properties": {
+                    "top_cards": {
+                        "title": "Top Cards",
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "description": "List of id of top cards of any deck. The top card\nis a last card in list.",
+                "example": {
+                    "top_cards": ["Master Spy"]
+                }
+            },
+            "ValidationError": {
+                "title": "ValidationError",
+                "required": ["loc", "msg", "type"],
+                "type": "object",
+                "properties": {
+                    "loc": {
+                        "title": "Location",
+                        "type": "array",
+                        "items": {
+                            "anyOf": [{
+                                "type": "string"
+                            }, {
+                                "type": "integer"
+                            }]
+                        }
+                    },
+                    "msg": {
+                        "title": "Message",
+                        "type": "string"
+                    },
+                    "type": {
+                        "title": "Error Type",
+                        "type": "string"
+                    }
+                }
+            }
         },
-        "live_benefit": {
-            "id": "Live Benefit",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Live Benefit",
-            "bias_icons": ["Media", "Economic", "Political", "Military"],
-            "population": 1,
-            "special_ability": "Influence Struggle: Instead of recruiting a group normally, activating a group, or passing, discard this objective to recruit the group on top of the group discard pile.",
-            "stability": 6,
-            "victory_points": 5
-        },
-        "nuclear_escalation": {
-            "id": "Nuclear Escalation",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Nuclear Escalation",
-            "bias_icons": ["Media", "Military", "Political", "Economic"],
-            "population": 1,
-            "special_ability": "Influence Struggle: Instead of recruiting a group normally, activating a group, or passing, discard this objective to send all military cards in play to the group deck discard pile.",
-            "stability": 6,
-            "victory_points": 5
-        },
-        "space_race": {
-            "id": "Space Race",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Space Race",
-            "bias_icons": ["Media", "Military", "Economic", "Political"],
-            "population": 1,
-            "special_ability": "Detente: Discard this objective to look at the next three cards on the objective deck and then replace them in any order you choose.",
-            "stability": 6,
-            "victory_points": 5
-        },
-        "olympic_games": {
-            "id": "Olympic Games",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Olympic Games",
-            "bias_icons": ["Media", "Economic", "Military", "Political"],
-            "population": 1,
-            "special_ability": "Detente: Discard this objective to return a terminated agent to the game. It reurns on leave (i.e., not at headquarters).",
-            "stability": 6,
-            "victory_points": 5
-        },
-        "summit_meeting": {
-            "id": "Summit Meeting",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Summit Meeting",
-            "bias_icons": ["Media", "Political", "Military", "Economic"],
-            "population": 1,
-            "special_ability": "Influence Struggle: Discard this objective to force your opponent to reveal his Agent X's identity.",
-            "stability": 6,
-            "victory_points": 5
-        },
-        "egypt": {
-            "id": "Egypt",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Egypt",
-            "bias_icons": ["Political", "Economic", "Media", "Military"],
-            "population": 4,
-            "stability": 11,
-            "victory_points": 20
-        },
-        "vietnam": {
-            "id": "Vietnam",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Vietnam",
-            "bias_icons": ["Economic", "Political", "Media", "Military"],
-            "population": 5,
-            "stability": 9,
-            "victory_points": 20
-        },
-        "panama": {
-            "id": "Panama",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Panama",
-            "bias_icons": ["Economic", "Military", "Media", "Political"],
-            "population": 5,
-            "stability": 9,
-            "victory_points": 15
-        },
-        "angola": {
-            "id": "Angola",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Angola",
-            "bias_icons": ["Military", "Political", "Media", "Economic"],
-            "population": 5,
-            "stability": 9,
-            "victory_points": 10
-        },
-        "afghanistan": {
-            "id": "Afghanistan",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Afghanistan",
-            "bias_icons": ["Economic", "Political", "Military", "Media"],
-            "population": 5,
-            "stability": 9,
-            "victory_points": 15
-        },
-        "houndaras": {
-            "id": "Houndaras",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Houndaras",
-            "bias_icons": ["Military", "Economic", "Media", "Political"],
-            "population": 5,
-            "stability": 9,
-            "victory_points": 10
-        },
-        "libya": {
-            "id": "Libya",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Libya",
-            "bias_icons": ["Military", "Political", "Economic", "Media"],
-            "population": 4,
-            "stability": 11,
-            "victory_points": 15
-        },
-        "greece": {
-            "id": "Greece",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Greece",
-            "bias_icons": ["Political", "Military", "Media", "Economic"],
-            "population": 3,
-            "stability": 13,
-            "victory_points": 10
-        },
-        "turkey": {
-            "id": "Turkey",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Turkey",
-            "bias_icons": ["Political", "Media", "Economic", "Military"],
-            "population": 3,
-            "stability": 13,
-            "victory_points": 15
-        },
-        "iran": {
-            "id": "Iran",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Iran",
-            "bias_icons": ["Political", "Military", "Economic", "Media"],
-            "population": 4,
-            "stability": 11,
-            "victory_points": 15
-        },
-        "cuba": {
-            "id": "Cuba",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Cuba",
-            "bias_icons": ["Economic", "Military", "Political", "Media"],
-            "population": 5,
-            "stability": 9,
-            "victory_points": 10
-        },
-        "congo": {
-            "id": "Congo",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Congo",
-            "bias_icons": ["Military", "Economic", "Political", "Media"],
-            "population": 5,
-            "stability": 9,
-            "victory_points": 10
-        },
-        "czechoslovakia": {
-            "id": "Czechoslovakia",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Czechoslovakia",
-            "bias_icons": ["Political", "Media", "Military", "Economic"],
-            "population": 3,
-            "stability": 13,
-            "victory_points": 20
-        },
-        "chile": {
-            "id": "Chile",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Chile",
-            "bias_icons": ["Political", "Economic", "Military", "Media"],
-            "population": 4,
-            "stability": 11,
-            "victory_points": 10
-        },
-        "korea": {
-            "id": "Korea",
-            "counter": {},
-            "count": 1,
-            "opened": false,
-            "tapped": false,
-            "side": null,
-            "name": "Korea",
-            "bias_icons": ["Military", "Media", "Political", "Economic"],
-            "population": 4,
-            "stability": 11,
-            "victory_points": 10
+        "securitySchemes": {
+            "OAuth2PasswordBearer": {
+                "type": "oauth2",
+                "flows": {
+                    "password": {
+                        "scopes": {},
+                        "tokenUrl": "/api/v1/user/login"
+                    }
+                }
+            }
         }
     },
-    "game_steps": {
-        "id": "game_steps",
-        "counter": {},
-        "briefing": {
-            "id": "briefing",
-            "counter": {},
-            "priority": 0
-        },
-        "planning": {
-            "id": "planning",
-            "counter": {},
-            "priority": 1
-        },
-        "influence_struggle": {
-            "id": "influence_struggle",
-            "counter": {},
-            "priority": 2
-        },
-        "ceasefire": {
-            "id": "ceasefire",
-            "counter": {},
-            "priority": 3
-        },
-        "debriefing": {
-            "id": "debriefing",
-            "counter": {},
-            "priority": 4
-        },
-        "detente": {
-            "id": "detente",
-            "counter": {},
-            "priority": 5
-        }
-    },
-    "coin": {
-        "id": "coin",
-        "counter": {},
-        "count": 1,
-        "sides": 2
-    }
-}
-
-{
-    "_id": {
-        "$oid": "63937eb476b8a38765a2e655"
-    },
-    "game_steps": {
-        "game_turn": 0,
-        "turn_phase": "detente",
-        "turn_phases_left": ["briefing", "planning", "influence_struggle", "ceasefire", "debriefing", "detente"],
-        "is_game_end": false
-    },
-    "players": [{
-        "has_priority": null,
-        "is_bot": false,
-        "score": 0,
-        "faction": null,
-        "player_cards": {
-            "agent_cards": [{
-                "is_dead": false,
-                "is_in_play": false,
-                "is_in_vacation": false,
-                "is_revealed": false,
-                "name": "Master Spy"
-            }, {
-                "is_dead": false,
-                "is_in_play": false,
-                "is_in_vacation": false,
-                "is_revealed": false,
-                "name": "Deputy Director"
-            }, {
-                "is_dead": false,
-                "is_in_play": false,
-                "is_in_vacation": false,
-                "is_revealed": false,
-                "name": "Double Agent"
-            }, {
-                "is_dead": false,
-                "is_in_play": false,
-                "is_in_vacation": false,
-                "is_revealed": false,
-                "name": "Analyst"
-            }, {
-                "is_dead": false,
-                "is_in_play": false,
-                "is_in_vacation": false,
-                "is_revealed": false,
-                "name": "Assassin"
-            }, {
-                "is_dead": false,
-                "is_in_play": false,
-                "is_in_vacation": false,
-                "is_revealed": false,
-                "name": "Director"
-            }],
-            "group_cards": [],
-            "objective_cards": []
-        },
-        "login": "DonaldTrump"
+    "tags": [{
+        "name": "user",
+        "description": "Users api"
     }, {
-        "has_priority": null,
-        "is_bot": true,
-        "score": 0,
-        "faction": null,
-        "player_cards": {
-            "agent_cards": [{
-                "is_dead": false,
-                "is_in_play": false,
-                "is_in_vacation": false,
-                "is_revealed": false,
-                "name": "Master Spy"
-            }, {
-                "is_dead": false,
-                "is_in_play": false,
-                "is_in_vacation": false,
-                "is_revealed": false,
-                "name": "Deputy Director"
-            }, {
-                "is_dead": false,
-                "is_in_play": false,
-                "is_in_vacation": false,
-                "is_revealed": false,
-                "name": "Double Agent"
-            }, {
-                "is_dead": false,
-                "is_in_play": false,
-                "is_in_vacation": false,
-                "is_revealed": false,
-                "name": "Analyst"
-            }, {
-                "is_dead": false,
-                "is_in_play": false,
-                "is_in_vacation": false,
-                "is_revealed": false,
-                "name": "Assassin"
-            }, {
-                "is_dead": false,
-                "is_in_play": false,
-                "is_in_vacation": false,
-                "is_revealed": false,
-                "name": "Director"
-            }],
-            "group_cards": [],
-            "objective_cards": []
-        },
-        "login": null
-    }],
-    "game_decks": {
-        "group_deck": {
-            "deck_len": 24,
-            "pile": [],
-            "current": ["Guerilla", "Militia", "Mercenaries", "Police", "Infantry", "Generals", "Workers", "Mafia", "Food companies", "Industry", "Oil Tycoons", "Bankers", "Students", "Trade Union", "Nationalists", "Fundamentalists", "Opposition", "Government", "Artists", "NGOs", "Phone company", "Newspapers", "Radio", "Television"]
-        },
-        "objective_deck": {
-            "deck_len": 21,
-            "pile": [],
-            "current": ["Nobel Peace Prize", "Live Benefit", "Nuclear Escalation", "Space Race", "Olympic Games", "Summit Meeting", "Egypt", "Vietnam", "Panama", "Angola", "Afghanistan", "Houndaras", "Libya", "Greece", "Turkey", "Iran", "Cuba", "Congo", "Czechoslovakia", "Chile", "Korea"]
-        },
-        "mission_card": null
-    }
+        "name": "game_data",
+        "description": "Game data api"
+    }, {
+        "name": "game",
+        "description": "Game processing api"
+    }]
 }

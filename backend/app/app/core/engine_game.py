@@ -125,7 +125,7 @@ class CustomAgentBag(Bag):
             "dead": "dead_field",
             "in_play": "in_play_field",
             "in_vacation": "in_vacation_field",
-            "revealed": "revealed_field",
+            "revealed": "in_revealed_field",
                 }
 
     def dead_field(self):

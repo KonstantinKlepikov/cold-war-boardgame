@@ -161,26 +161,15 @@ def game_proc(
 def inited_game_proc(
     game_proc: processor_game.GameProcessor,
         ) -> processor_game.GameProcessor:
-    """Get game processor object
+    """Fill game processor object
     """
     return game_proc.fill()
 
 
 @pytest.fixture(scope="function")
 def started_game_proc(
-    game: crud_game.CRUDGame,
+    inited_game_proc: processor_game.GameProcessor,
         ) -> processor_game.GameProcessor:
     """Init the game and return processor
     """
-    obj_in = processor_game.make_game_data(settings.user0_login)
-    game.create_new_game(obj_in)
-    return game.get_game_processor(settings.user0_login).deal_and_shuffle_decks()
-
-
-@pytest.fixture(scope="function")
-def started_game_proc_fact(
-    started_game_proc: processor_game.GameProcessor,
-        ) -> processor_game.GameProcessor:
-    """Init the game with faction and return processor
-    """
-    return started_game_proc.set_faction(Faction.KGB)
+    return inited_game_proc.deal_and_shuffle_decks()

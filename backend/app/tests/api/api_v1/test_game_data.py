@@ -28,7 +28,7 @@ class TestGameDataStatic:
         monkeypatch.setattr(crud_card.cards, "get_all_cards", mockreturn)
         response = client.get(f"{settings.api_v1_str}/game/data/static")
 
-        assert response.status_code == 200, 'wrong status'
+        assert response.status_code == 200, f'{response.content=}'
         assert response.json()["agent_cards"], 'no agent_cards'
         assert response.json()["group_cards"], 'no group_cards'
         assert response.json()["objective_cards"], 'objective_cards'
@@ -63,11 +63,11 @@ class TestGameDataCurrent:
                 'Authorization': f'Bearer {settings.user0_token}'
                 }
             )
-        assert response.status_code == 200, 'wrong status'
+        assert response.status_code == 200, f'{response.content=}'
 
     def test_game_data_current_return_401(self, client: TestClient,) -> None:
         """Test game data current return 401 for unauthorized
         """
         response = client.post(f"{settings.api_v1_str}/game/data/current")
-        assert response.status_code == 401, 'wrong status'
+        assert response.status_code == 401, f'{response.content=}'
         assert response.json()['detail'] == 'Not authenticated', 'wrong detail'

@@ -1,7 +1,8 @@
 from typing import Dict, List, Optional, Any
-from bgameb import Game, Player, Deck, Card, Steps
+from bgameb import Game, Player, Deck, Card, Steps, Bag
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, Undefined
+from app.constructs import HiddenAgents
 
 
 @dataclass_json(undefined=Undefined.EXCLUDE)
@@ -21,18 +22,15 @@ class CustomGame(Game):
                 }
 
     def players_field(self):
-        return list(self.get_players().values())
+        return list(self.get_players.values())
 
     def game_steps_field(self):
-        return self.get_tools()['steps']
+        return self.get_tools['steps']
 
     def game_decks_field(self):
         f = {}
-        tools = self.get_tools()
-        if tools['objective_deck'].last:
-            f['mission_card'] = tools['objective_deck'].last.id
-        else:
-            f['mission_card'] = None
+        tools = self.get_tools
+        f['mission_card'] = tools['objective_deck'].last_id
         f['group_deck'] = tools['group_deck']
         f['objective_deck'] = tools['objective_deck']
         return f
@@ -50,13 +48,9 @@ class CustomSteps(Steps):
         super().__post_init__()
 
         self._to_relocate = {
-            "turn_phase": "turn_phase_field",
+            "turn_phase": "last_id",
             "turn_phases_left": "current_ids",
                 }
-
-    def turn_phase_field(self):
-        if self.last:
-            return self.last.id
 
 
 @dataclass_json(undefined=Undefined.EXCLUDE)
@@ -79,12 +73,11 @@ class CustomPlayer(Player):
 
     def player_cards_field(self):
         f = {}
-        tools = self.get_tools()
-        f['agent_cards'] = tools['agent_cards'].current
+        tools = self.get_tools
+        f['agent_cards'] = tools['agent_cards']
         f['group_cards'] = tools['group_cards'].current
         f['objective_cards'] = tools['objective_cards'].current
         return f
-
 
 
 @dataclass_json(undefined=Undefined.EXCLUDE)
@@ -113,7 +106,54 @@ class PlayerAgentCard(Card):
     is_dead: bool = False
     is_in_play: bool = False
     is_in_vacation: bool = False
+    is_in_headquarter: bool = True
     is_revealed: bool = False
+
+
+@dataclass_json(undefined=Undefined.EXCLUDE)
+@dataclass
+class CustomAgentBag(Bag):
+    dead: List[str] = field(default_factory=list)
+    in_play: Optional[str] = None
+    in_vacation: List[str] = field(default_factory=list)
+    in_headquarter: List[str] = field(default_factory=list)
+    db_cards: List[PlayerAgentCard] = field(default_factory=list)
+
+    def __post_init__(self) -> None:
+        super().__post_init__()
+
+        self._to_relocate = {
+            "db_cards": "current",
+            "dead": "dead_field",
+            "in_play": "in_play_field",
+            "in_vacation": "in_vacation_field",
+            "in_headquarter": "in_headquarter_field",
+                }
+
+    def dead_field(self):
+        return [card.id for card in self.current if card.is_dead]
+
+    def in_play_field(self):
+        for card in self.current:
+            if card.is_in_play:
+                if card.is_revealed:
+                    return card.id
+                else:
+                    return HiddenAgents.HIDDEN.value
+        return None
+
+    def in_vacation_field(self):
+        return [card.id for card in self.current if card.is_in_vacation]
+
+    def in_headquarter_field(self):
+        h = []
+        for card in self.current:
+            if card.is_in_headquarter:
+                if card.is_revealed:
+                    h.append(card.id)
+                else:
+                    h.append(HiddenAgents.HIDDEN.value)
+        return h
 
 
 @dataclass_json(undefined=Undefined.EXCLUDE)

@@ -3,7 +3,7 @@ import bgameb
 from typing import Tuple
 from fastapi import HTTPException
 from app.config import settings
-from app.constructs import Priority, Faction
+from app.constructs import Priority, Faction, Phases, Agents
 from app.core import processor_game
 
 
@@ -26,7 +26,11 @@ class TestGameData:
         assert data.players[0].is_bot == False, 'wrong is_bot'
         assert not data.players[0].faction, 'wrong faction'
         assert data.players[0].score == 0, 'wrong score'
-        assert len(data.players[0].player_cards.agent_cards) == 6, 'hasnt cards'
+        assert len(data.players[0].player_cards.agent_cards.db_cards) == 6, 'hasnt cards'
+        assert data.players[0].player_cards.agent_cards.dead == [], 'wrong dead'
+        assert data.players[0].player_cards.agent_cards.in_play == None, 'wrong in play'
+        assert data.players[0].player_cards.agent_cards.in_vacation == [], 'wrong vacation'
+        assert data.players[0].player_cards.agent_cards.in_headquarter == [], 'wrong in_headquarter'
         assert data.players[0].player_cards.group_cards == [], 'hasnt cards'
         assert data.players[0].player_cards.objective_cards == [], 'hasnt cards'
 
@@ -35,7 +39,11 @@ class TestGameData:
         assert data.players[1].is_bot == True, 'wrong is_bot'
         assert not data.players[1].faction, 'wrong faction'
         assert data.players[1].score == 0, 'wrong score'
-        assert len(data.players[1].player_cards.agent_cards) == 6, 'hasnt cards'
+        assert len(data.players[1].player_cards.agent_cards.db_cards) == 6, 'hasnt cards'
+        assert data.players[1].player_cards.agent_cards.dead == [], 'wrong dead'
+        assert data.players[1].player_cards.agent_cards.in_play == None, 'wrong in play'
+        assert data.players[1].player_cards.agent_cards.in_vacation == [], 'wrong vacation'
+        assert data.players[1].player_cards.agent_cards.in_headquarter == [], 'wrong in_headquarter'
         assert data.players[1].player_cards.group_cards == [], 'hasnt cards'
         assert data.players[1].player_cards.objective_cards == [], 'hasnt cards'
 
@@ -168,15 +176,35 @@ class TestGameProcessor:
             ) -> None:
         """Test flush() can change steps
         """
-        inited_game_proc.G.c.steps.pull()
+        inited_game_proc.G.c.steps.pop()
         inited_game_proc.G.c.steps.game_turn += 1
         inited_game_proc.G.c.steps.is_game_end = True
         current = inited_game_proc.flush()
         assert current.game_steps.game_turn == 1, 'wrong turn'
-        assert current.game_steps.turn_phase == 'briefing', 'wrong phase'
+        assert current.game_steps.turn_phase == Phases.BRIEFING.value, 'wrong phase'
         assert current.game_steps.is_game_end == True, 'game not end'
-        assert current.game_steps.turn_phases_left == inited_game_proc.G.c.steps.current_ids(), \
+        assert len(current.game_steps.turn_phases_left) == 5, \
             'wrong phases left'
+
+    def test_flush_agents(
+        self,
+        inited_game_proc: processor_game.GameProcessor,
+            ) -> None:
+        """Test flush() can chamge agents
+        """
+        card = inited_game_proc.G.c.player.c.agent_cards.current[0]
+        card.is_dead = True
+        card.is_in_vacation = True
+        card.is_in_play = True
+        card.is_revealed = True
+        current = inited_game_proc.flush()
+        cards = current.players[0].player_cards.agent_cards
+        assert cards.dead == [card.id,], 'wrong dead'
+        assert cards.in_vacation == [card.id,], 'wrong vacation'
+        assert cards.in_play == card.id, 'wrong play'
+        assert cards.in_headquarter == [
+            card.id, '_hidden', '_hidden', '_hidden', '_hidden', '_hidden'
+                ], 'wrong in_headquarter'
 
 class TestGameProcessorLogic:
     """Test GameProcessor class
@@ -273,12 +301,12 @@ class TestGameProcessorLogic:
         """
         game_proc = inited_game_proc.set_next_phase()
         assert isinstance(game_proc, processor_game.GameProcessor), 'wrong game_proce'
-        assert game_proc.G.c.steps.last.id == settings.phases[0], \
+        assert game_proc.G.c.steps.last.id == Phases.BRIEFING.value, \
             'wrong proc phase'
         assert len(game_proc.G.c.steps.current) == 5, 'wrong tep len'
 
         game_proc = inited_game_proc.set_next_phase()
-        assert game_proc.G.c.steps.last.id == settings.phases[1], \
+        assert game_proc.G.c.steps.last.id == Phases.PLANNING.value, \
             'wrong proc phase'
         assert len(game_proc.G.c.steps.current) == 4, 'wrong tep len'
 
@@ -288,7 +316,7 @@ class TestGameProcessorLogic:
             ) -> None:
         """Test set_next_phase() cant change detente
         """
-        inited_game_proc.G.c.steps.last = inited_game_proc.G.c.steps.c.by_id(settings.phases[5])
+        inited_game_proc.G.c.steps.last = inited_game_proc.G.c.steps.c.by_id(Phases.DETENTE.value)
 
         game_proc = inited_game_proc.set_next_phase()
         assert game_proc.G.c.steps.last.id == 'detente', \
@@ -301,7 +329,7 @@ class TestGameProcessorLogic:
             ) -> None:
         """Test play analyst look raise 400 when wrong phase
         """
-        inited_game_proc.G.c.steps.last = inited_game_proc.G.c.steps.c.by_id(settings.phases[5])
+        inited_game_proc.G.c.steps.last = inited_game_proc.G.c.steps.c.by_id(Phases.DETENTE.value)
 
         with pytest.raises(HTTPException):
             inited_game_proc._check_analyct_condition()
@@ -313,7 +341,7 @@ class TestGameProcessorLogic:
         """Test play analyst look raise 400 when player havent access
         to ability
         """
-        inited_game_proc.G.c.steps.last = inited_game_proc.G.c.steps.c.by_id(settings.phases[0])
+        inited_game_proc.G.c.steps.last = inited_game_proc.G.c.steps.c.by_id(Phases.BRIEFING.value)
 
         with pytest.raises(HTTPException):
             inited_game_proc._check_analyct_condition()
@@ -324,8 +352,8 @@ class TestGameProcessorLogic:
             ) -> None:
         """Test play analyst look 3 cards
         """
-        started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.c.by_id(settings.phases[0])
-        started_game_proc.G.c.player.abilities.append('Analyst')
+        started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.c.by_id(Phases.BRIEFING.value)
+        started_game_proc.G.c.player.abilities.append(Agents.ANALYST.value)
         game_proc = started_game_proc.play_analyst_for_look_the_top()
         assert len(game_proc.G.c.player.c.group_cards.current) == 3, 'wrong current'
         assert game_proc.G.c.player.c.group_cards.current[0].pos_in_deck == -3, \
@@ -342,8 +370,8 @@ class TestGameProcessorLogic:
             ) -> None:
         """Test play analyst look 3 cards and removes old revealed
         """
-        started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.c.by_id(settings.phases[0])
-        started_game_proc.G.c.player.abilities.append('Analyst')
+        started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.c.by_id(Phases.BRIEFING.value)
+        started_game_proc.G.c.player.abilities.append(Agents.ANALYST.value)
         started_game_proc.G.c.player.c.group_cards.current.append(
             started_game_proc.G.c.group_deck.current[-1]
                 )
@@ -360,8 +388,8 @@ class TestGameProcessorLogic:
             ) -> None:
         """Test play analyst for arrange the top
         """
-        started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.c.by_id(settings.phases[0])
-        started_game_proc.G.c.player.abilities.append('Analyst')
+        started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.c.by_id(Phases.BRIEFING.value)
+        started_game_proc.G.c.player.abilities.append(Agents.ANALYST.value)
         top = [
             started_game_proc.G.c.group_deck.current[-3].id,
             started_game_proc.G.c.group_deck.current[-2].id,
@@ -386,8 +414,8 @@ class TestGameProcessorLogic:
             ) -> None:
         """Test play analyst for arrange the top not match the top
         """
-        started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.c.by_id(settings.phases[0])
-        started_game_proc.G.c.player.abilities.append('Analyst')
+        started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.c.by_id(Phases.BRIEFING.value)
+        started_game_proc.G.c.player.abilities.append(Agents.ANALYST.value)
         old = [
             started_game_proc.G.c.group_deck.current[-3].id,
             started_game_proc.G.c.group_deck.current[-2].id,
@@ -403,7 +431,7 @@ class TestGameProcessorLogic:
         with pytest.raises(HTTPException):
             started_game_proc.play_analyst_for_arrange_the_top(wrong)
 
-        assert started_game_proc.G.c.player.abilities == ['Analyst'], 'wrong abilities'
+        assert started_game_proc.G.c.player.abilities == [Agents.ANALYST.value], 'wrong abilities'
         assert len(started_game_proc.G.c.group_deck.current) == 24, 'wrong current'
         new = [
             started_game_proc.G.c.group_deck.current[-3].id,
@@ -411,6 +439,46 @@ class TestGameProcessorLogic:
             started_game_proc.G.c.group_deck.current[-1].id,
                 ]
         assert old == new, 'reordered'
+
+    @pytest.mark.parametrize("test_input", ['player', 'bot', ])
+    def test_set_agent(
+        self,
+        started_game_proc: processor_game.GameProcessor,
+        test_input: str,
+            ) -> None:
+        """Test set agent
+        """
+        game_proc = started_game_proc.set_agent(
+            player=test_input, agent_id=Agents.DEPUTY.value
+                )
+        assert game_proc.G.c[test_input].c.agent_cards.by_id(Agents.DEPUTY.value).is_in_play == True, \
+            'agent not set'
+        assert game_proc.G.c[test_input].c.agent_cards.by_id(Agents.DEPUTY.value).is_in_headquarter== False, \
+            'agent is in hand'
+        assert game_proc.G.c[test_input].c.agent_cards.by_id(Agents.DEPUTY.value).is_revealed == False, \
+            'wrong revealed'
+        with pytest.raises(HTTPException):
+            game_proc = started_game_proc.set_agent(
+                player=test_input, agent_id='Someher wrong'
+                    )
+
+    @pytest.mark.parametrize("test_input", ['player', 'bot', ])
+    def test_set_agent_and_reveal(
+        self,
+        started_game_proc: processor_game.GameProcessor,
+        test_input: str,
+            ) -> None:
+        started_game_proc.G.c[test_input].abilities.append(Agents.DOUBLE.value)
+        game_proc = started_game_proc.set_agent(
+            player=test_input, agent_id=Agents.DEPUTY.value
+                )
+        assert game_proc.G.c[test_input].c.agent_cards.by_id(Agents.DEPUTY.value).is_in_play == True, \
+            'agent not set'
+        assert game_proc.G.c[test_input].c.agent_cards.by_id(Agents.DEPUTY.value).is_revealed == True, \
+            'wrong revealed'
+        assert game_proc.G.c[test_input].c.agent_cards.by_id(Agents.DEPUTY.value).is_in_headquarter== False, \
+            'agent is in hand'
+        assert game_proc.G.c.player.abilities == [], 'abilities not clear'
 
 
 class TestCheckPhaseConditions:
@@ -437,7 +505,7 @@ class TestCheckPhaseConditions:
         """Test chek_phase_conditions_before_next() if no player has
         priority in briefing
         """
-        inited_game_proc.G.c.steps.last = inited_game_proc.G.c.steps.c.by_id(settings.phases[0])
+        inited_game_proc.G.c.steps.last = inited_game_proc.G.c.steps.c.by_id(Phases.BRIEFING.value)
 
         with pytest.raises(
             HTTPException,
@@ -450,7 +518,7 @@ class TestCheckPhaseConditions:
             ) -> None:
         """Test chek_phase_conditions_before_next() if no mission card set
         """
-        inited_game_proc.G.c.steps.last = inited_game_proc.G.c.steps.c.by_id(settings.phases[0])
+        inited_game_proc.G.c.steps.last = inited_game_proc.G.c.steps.c.by_id(Phases.BRIEFING.value)
         inited_game_proc.G.c.objective_deck.last = 'some mission card'
 
         with pytest.raises(
@@ -465,12 +533,32 @@ class TestCheckPhaseConditions:
         """Test chek_phase_conditions_before_next() if analyst
         bility not used
         """
-        inited_game_proc.G.c.steps.last = inited_game_proc.G.c.steps.c.by_id(settings.phases[0])
-        inited_game_proc.G.c.player.abilities.append('Analyst')
+        inited_game_proc.G.c.steps.last = inited_game_proc.G.c.steps.c.by_id(Phases.BRIEFING.value)
+        inited_game_proc.G.c.player.abilities.append(Agents.ANALYST.value)
         inited_game_proc.G.c.player.has_priority = True
         inited_game_proc.G.c.bot.has_priority = False
         inited_game_proc.G.c.objective_deck.last = 'some mission card'
 
+        with pytest.raises(
+            HTTPException,
+                ):
+            inited_game_proc.chek_phase_conditions_before_next()
+
+    @pytest.mark.parametrize("test_input", ['player', 'bot', ])
+    def test_chek_phase_conditions_before_next_if_players_agent_not_set(
+        self,
+        inited_game_proc: processor_game.GameProcessor,
+        test_input: str,
+            ) -> None:
+        """Test chek_phase_conditions_before_next() if players
+        agent not set
+        """
+        inited_game_proc.G.c.steps.last = inited_game_proc.G.c.steps.c.by_id(Phases.BRIEFING.value)
+        with pytest.raises(
+            HTTPException,
+                ):
+            inited_game_proc.chek_phase_conditions_before_next()
+        inited_game_proc.G.c[test_input].c.agent_cards.by_id(Agents.DEPUTY.value).is_in_play = True
         with pytest.raises(
             HTTPException,
                 ):
@@ -483,7 +571,7 @@ class TestCheckPhaseConditions:
         """Test chek_phase_conditions_before_next() if last phase
         and needed push to next tun
         """
-        inited_game_proc.G.c.steps.last = inited_game_proc.G.c.steps.c.by_id(settings.phases[5])
+        inited_game_proc.G.c.steps.last = inited_game_proc.G.c.steps.c.by_id(Phases.DETENTE.value)
 
         with pytest.raises(
             HTTPException,
@@ -551,7 +639,7 @@ class TestGamePhaseConditions:
         """Test set_phase_conditions_after_next() set mission card
         in briefing
         """
-        started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.c.by_id(settings.phases[0])
+        started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.c.by_id(Phases.BRIEFING.value)
         card = started_game_proc.G.c.group_deck.pop()
         started_game_proc.G.c.group_deck.pile.append(card.id)
         started_game_proc.G.c.player.c.group_cards.append(card)
@@ -576,3 +664,78 @@ class TestGamePhaseConditions:
             'wrong revealed for bot'
         assert len(started_game_proc.G.c.group_deck.pile) == 0, \
             'wrong pile'
+
+    @pytest.mark.parametrize("test_input", ['player', 'bot', ])
+    def test_set_phase_conditions_after_next_influence(
+        self,
+        started_game_proc: processor_game.GameProcessor,
+        test_input: str,
+            ) -> None:
+        """Test set phase condition after next in influence struggle change
+        returns vacated agents to hand
+        """
+        started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.c.by_id(Phases.INFLUENCE.value)
+        cards = started_game_proc.G.c[test_input].c.agent_cards
+        cards.by_id(Agents.SPY.value).is_in_vacation = True
+        cards.by_id(Agents.SPY.value).is_revealed = True
+        cards.by_id(Agents.DIRECTOR.value).is_in_vacation = True
+        cards.by_id(Agents.DIRECTOR.value).is_revealed = False
+
+        game_proc = started_game_proc.set_phase_conditions_after_next()
+        cards = game_proc.G.c[test_input].c.agent_cards
+
+        assert cards.by_id(Agents.SPY.value).is_in_vacation is False, 'not changed'
+        assert cards.by_id(Agents.SPY.value).is_revealed is False, 'not changed'
+        assert cards.by_id(Agents.DIRECTOR.value).is_in_vacation is False, 'not changed'
+        assert cards.by_id(Agents.DIRECTOR.value).is_revealed is False, 'changed'
+
+    @pytest.mark.parametrize("test_input", ['player', 'bot', ])
+    def test_set_phase_conditions_after_next_debriefing(
+        self,
+        started_game_proc: processor_game.GameProcessor,
+        test_input: str,
+            ) -> None:
+        """Test set phase condition after next in debriefing
+        reveal agents in play
+        """
+        started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.c.by_id(Phases.DEBRIFIENG.value)
+        cards = started_game_proc.G.c[test_input].c.agent_cards
+        cards.by_id(Agents.SPY.value).is_in_play = True
+        cards.by_id(Agents.SPY.value).is_revealed = True
+        cards.by_id(Agents.DIRECTOR.value).is_in_play = True
+        cards.by_id(Agents.DIRECTOR.value).is_revealed = False
+
+        game_proc = started_game_proc.set_phase_conditions_after_next()
+        cards = game_proc.G.c[test_input].c.agent_cards
+
+        assert cards.by_id(Agents.SPY.value).is_in_play is True, 'changed'
+        assert cards.by_id(Agents.SPY.value).is_revealed is True, 'changed'
+        assert cards.by_id(Agents.DIRECTOR.value).is_in_play is True, 'changed'
+        assert cards.by_id(Agents.DIRECTOR.value).is_revealed is True, 'not changed'
+
+    @pytest.mark.parametrize("test_input", ['player', 'bot', ])
+    def test_set_phase_conditions_after_next_detente(
+        self,
+        started_game_proc: processor_game.GameProcessor,
+        test_input: str,
+            ) -> None:
+        """Test set phase condition after next in detente
+        agents go to vacation and to hand
+        """
+        started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.c.by_id(Phases.DETENTE.value)
+        cards = started_game_proc.G.c[test_input].c.agent_cards
+        cards.by_id(Agents.SPY.value).is_in_play = True
+        cards.by_id(Agents.SPY.value).is_revealed = True
+        cards.by_id(Agents.DEPUTY.value).is_in_play = True
+        cards.by_id(Agents.DEPUTY.value).is_revealed = True
+
+        game_proc = started_game_proc.set_phase_conditions_after_next()
+        cards = game_proc.G.c[test_input].c.agent_cards
+
+        assert cards.by_id(Agents.SPY.value).is_in_play is False, 'not changed'
+        assert cards.by_id(Agents.SPY.value).is_revealed is True, 'changed'
+        assert cards.by_id(Agents.SPY.value).is_in_vacation is True, 'not changed'
+        assert cards.by_id(Agents.DEPUTY.value).is_in_play is False, 'not changed'
+        assert cards.by_id(Agents.DEPUTY.value).is_revealed is False, 'not changed'
+        assert cards.by_id(Agents.DEPUTY.value).is_in_vacation is False, 'changed'
+

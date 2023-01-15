@@ -2,6 +2,7 @@ from typing import Dict, List, Optional, Any
 from bgameb import Game, Player, Deck, Card, Steps, Bag
 from dataclasses import dataclass, field
 from dataclasses_json import dataclass_json, Undefined
+from app.constructs import HiddenAgents
 
 
 @dataclass_json(undefined=Undefined.EXCLUDE)
@@ -105,6 +106,7 @@ class PlayerAgentCard(Card):
     is_dead: bool = False
     is_in_play: bool = False
     is_in_vacation: bool = False
+    is_in_headquarter: bool = True
     is_revealed: bool = False
 
 
@@ -114,7 +116,7 @@ class CustomAgentBag(Bag):
     dead: List[str] = field(default_factory=list)
     in_play: Optional[str] = None
     in_vacation: List[str] = field(default_factory=list)
-    revealed: List[str] = field(default_factory=list)
+    in_headquarter: List[str] = field(default_factory=list)
     db_cards: List[PlayerAgentCard] = field(default_factory=list)
 
     def __post_init__(self) -> None:
@@ -125,23 +127,33 @@ class CustomAgentBag(Bag):
             "dead": "dead_field",
             "in_play": "in_play_field",
             "in_vacation": "in_vacation_field",
-            "revealed": "in_revealed_field",
+            "in_headquarter": "in_headquarter_field",
                 }
 
     def dead_field(self):
-        return [card.id for card in self.current if card.is_dead == True]
+        return [card.id for card in self.current if card.is_dead]
 
     def in_play_field(self):
         for card in self.current:
             if card.is_in_play:
-                return card.id
+                if card.is_revealed:
+                    return card.id
+                else:
+                    return HiddenAgents.HIDDEN.value
         return None
 
     def in_vacation_field(self):
-        return [card.id for card in self.current if card.is_in_vacation == True]
+        return [card.id for card in self.current if card.is_in_vacation]
 
-    def in_revealed_field(self):
-        return [card.id for card in self.current if card.is_revealed == True]
+    def in_headquarter_field(self):
+        h = []
+        for card in self.current:
+            if card.is_in_headquarter:
+                if card.is_revealed:
+                    h.append(card.id)
+                else:
+                    h.append(HiddenAgents.HIDDEN.value)
+        return h
 
 
 @dataclass_json(undefined=Undefined.EXCLUDE)

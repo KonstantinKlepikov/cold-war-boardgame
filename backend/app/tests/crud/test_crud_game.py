@@ -31,7 +31,7 @@ class TestCRUDGame:
         assert state.players[0].player_cards.agent_cards.dead == [], 'wrong dead'
         assert state.players[0].player_cards.agent_cards.in_play == None, 'wrong in play'
         assert state.players[0].player_cards.agent_cards.in_vacation == [], 'wrong vacation'
-        assert state.players[0].player_cards.agent_cards.revealed == [], 'wrong revealed'
+        assert state.players[0].player_cards.agent_cards.in_headquarter == [], 'wrong in_headquarter'
         assert state.players[0].player_cards.group_cards == [], 'hasnt cards'
         assert state.players[0].player_cards.objective_cards == [], 'hasnt cards'
 
@@ -44,7 +44,7 @@ class TestCRUDGame:
         assert state.players[1].player_cards.agent_cards.dead == [], 'wrong dead'
         assert state.players[1].player_cards.agent_cards.in_play == None, 'wrong in play'
         assert state.players[1].player_cards.agent_cards.in_vacation == [], 'wrong vacation'
-        assert state.players[1].player_cards.agent_cards.revealed == [], 'wrong revealed'
+        assert state.players[1].player_cards.agent_cards.in_headquarter == [], 'wrong in_headquarter'
         assert state.players[1].player_cards.group_cards == [], 'hasnt cards'
         assert state.players[1].player_cards.objective_cards == [], 'hasnt cards'
 

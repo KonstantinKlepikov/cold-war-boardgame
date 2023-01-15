@@ -485,6 +485,12 @@
                 "type": "string",
                 "description": "Agent cards ids\n    "
             },
+            "HiddenAgents": {
+                "title": "HiddenAgents",
+                "enum": ["Master Spy", "Deputy Director", "Double Agent", "Analyst", "Assassin", "Director", "_hidden"],
+                "type": "string",
+                "description": "Agent cards ids\n    "
+            },
             "Body_login_api_v1_user_login_post": {
                 "title": "Body_login_api_v1_user_login_post",
                 "required": ["username", "password"],
@@ -957,10 +963,10 @@
                         },
                         "default": []
                     },
-                    "revealed": {
+                    "in_headquarter": {
                         "type": "array",
                         "items": {
-                            "$ref": "#/components/schemas/Agents"
+                            "$ref": "#/components/schemas/HiddenAgents"
                         },
                         "default": []
                     }
@@ -984,7 +990,7 @@
                         "default": {
                             "dead": [],
                             "in_vacation": [],
-                            "revealed": []
+                            "in_headquarter": []
                         }
                     },
                     "group_cards": {

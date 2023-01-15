@@ -1,7 +1,8 @@
 from typing import Optional, List, Union
 from pydantic import BaseModel, NonNegativeInt, NonPositiveInt, conint
 from app.constructs import (
-    Phases, Agents, Groups, Objectives, Faction, ObjectiveAbilities
+    Phases, Agents, Groups, Objectives, Faction, ObjectiveAbilities,
+    HiddenAgents
         )
 
 
@@ -47,6 +48,7 @@ class PlayerAgentCardDb(BaseModel):
     is_in_play: bool = False
     is_in_vacation: bool = False
     is_revealed: bool = False
+    is_in_headquarter: bool = True
     name: Agents
 
     class Config:
@@ -56,6 +58,7 @@ class PlayerAgentCardDb(BaseModel):
                 "is_in_play": True,
                 "is_in_vacation": False,
                 "is_revealed": False,
+                "is_in_headquarter": False,
                 "name": "Master Spy",
                 }
             }
@@ -65,17 +68,17 @@ class PlayerAgentCards(BaseModel):
     """Agent cards data
     """
     dead: List[Agents] = []
-    in_play: Optional[Agents] = None
+    in_play: Optional[HiddenAgents] = None
     in_vacation: List[Agents] = []
-    revealed: List[Agents] = []
+    in_headquarter: List[HiddenAgents] = []
 
     class Config:
         schema_extra = {
             "example": {
                 "dead": ['The Director'],
-                "is_in_play": None,
-                "is_in_vacation": ['Assassin'],
-                "is_revealed": [
+                "in_play": None,
+                "in_vacation": ['Assassin'],
+                "in_headquarter": [
                     '_hidden', '_hidden', '_hidden', '_hidden'
                         ],
                 }

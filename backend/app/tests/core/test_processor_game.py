@@ -30,7 +30,7 @@ class TestGameData:
         assert data.players[0].player_cards.agent_cards.dead == [], 'wrong dead'
         assert data.players[0].player_cards.agent_cards.in_play == None, 'wrong in play'
         assert data.players[0].player_cards.agent_cards.in_vacation == [], 'wrong vacation'
-        assert data.players[0].player_cards.agent_cards.revealed == [], 'wrong revealed'
+        assert data.players[0].player_cards.agent_cards.in_headquarter == [], 'wrong in_headquarter'
         assert data.players[0].player_cards.group_cards == [], 'hasnt cards'
         assert data.players[0].player_cards.objective_cards == [], 'hasnt cards'
 
@@ -43,7 +43,7 @@ class TestGameData:
         assert data.players[1].player_cards.agent_cards.dead == [], 'wrong dead'
         assert data.players[1].player_cards.agent_cards.in_play == None, 'wrong in play'
         assert data.players[1].player_cards.agent_cards.in_vacation == [], 'wrong vacation'
-        assert data.players[1].player_cards.agent_cards.revealed == [], 'wrong revealed'
+        assert data.players[1].player_cards.agent_cards.in_headquarter == [], 'wrong in_headquarter'
         assert data.players[1].player_cards.group_cards == [], 'hasnt cards'
         assert data.players[1].player_cards.objective_cards == [], 'hasnt cards'
 
@@ -202,7 +202,9 @@ class TestGameProcessor:
         assert cards.dead == [card.id,], 'wrong dead'
         assert cards.in_vacation == [card.id,], 'wrong vacation'
         assert cards.in_play == card.id, 'wrong play'
-        assert cards.revealed == [card.id,], 'wrong revealed'
+        assert cards.in_headquarter == [
+            card.id, '_hidden', '_hidden', '_hidden', '_hidden', '_hidden'
+                ], 'wrong in_headquarter'
 
 class TestGameProcessorLogic:
     """Test GameProcessor class
@@ -451,6 +453,8 @@ class TestGameProcessorLogic:
                 )
         assert game_proc.G.c[test_input].c.agent_cards.by_id(Agents.DEPUTY.value).is_in_play == True, \
             'agent not set'
+        assert game_proc.G.c[test_input].c.agent_cards.by_id(Agents.DEPUTY.value).is_in_headquarter== False, \
+            'agent is in hand'
         assert game_proc.G.c[test_input].c.agent_cards.by_id(Agents.DEPUTY.value).is_revealed == False, \
             'wrong revealed'
         with pytest.raises(HTTPException):
@@ -468,8 +472,12 @@ class TestGameProcessorLogic:
         game_proc = started_game_proc.set_agent(
             player=test_input, agent_id=Agents.DEPUTY.value
                 )
+        assert game_proc.G.c[test_input].c.agent_cards.by_id(Agents.DEPUTY.value).is_in_play == True, \
+            'agent not set'
         assert game_proc.G.c[test_input].c.agent_cards.by_id(Agents.DEPUTY.value).is_revealed == True, \
             'wrong revealed'
+        assert game_proc.G.c[test_input].c.agent_cards.by_id(Agents.DEPUTY.value).is_in_headquarter== False, \
+            'agent is in hand'
         assert game_proc.G.c.player.abilities == [], 'abilities not clear'
 
 

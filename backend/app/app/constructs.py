@@ -51,6 +51,18 @@ class Agents(BaseEnum):
     DIRECTOR = 'Director'
 
 
+class HiddenAgents(BaseEnum):
+    """Agent cards ids
+    """
+    SPY = 'Master Spy'
+    DEPUTY = 'Deputy Director'
+    DOUBLE = 'Double Agent'
+    ANALYST = 'Analyst'
+    ASSASSIN = 'Assassin'
+    DIRECTOR = 'Director'
+    HIDDEN = '_hidden'
+
+
 class Groups(BaseEnum):
     """Groups cards ids
     """

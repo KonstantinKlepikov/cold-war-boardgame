@@ -110,15 +110,6 @@ class GameProcessor:
                 card = PlayerAgentCard(data['name'], **data)
                 self.G.c[name].c.agent_cards.add(card)
             self.G.c[name].c.agent_cards.deal()
-            for card in self.G.c[name].c.agent_cards.current:
-                if card.id in cards['dead']:
-                    card.is_dead = True
-                if card.id == cards['in_play']:
-                    card.is_in_play = True
-                if card.id in cards['in_vacation']:
-                    card.is_in_vacation = True
-                if card.id in cards['revealed']:
-                    card.is_revealed = True
 
             # player group_cards
             self.G.c[name].add(Bag('group_cards'))
@@ -399,6 +390,7 @@ class GameProcessor:
         played = self.G.c[player].c.agent_cards.by_id(agent_id)
         if played:
             played.is_in_play = True
+            played.is_in_headquarter = False
             if Agents.DOUBLE.value in self.G.c[player].abilities:
                 played.is_revealed = True
                 self.G.c[player].abilities.remove(Agents.DOUBLE.value)

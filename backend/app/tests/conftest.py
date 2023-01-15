@@ -8,7 +8,7 @@ from app.config import settings
 from app.core import processor_game
 from app.models import model_user, model_game, model_cards
 from app.crud import crud_game, crud_card, crud_user
-from app.constructs import Faction, Agents, Groups, Objectives
+from app.constructs import Agents, Groups, Objectives
 from app.db.init_db import init_db_cards, init_db_users
 
 

@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from app.crud import crud_game, crud_user
 from app.core import processor_game
 from app.config import settings
-from app.constructs import Phases,Agents, Objectives
+from app.constructs import Phases, Objectives
 
 
 class TestCreateNewGame:

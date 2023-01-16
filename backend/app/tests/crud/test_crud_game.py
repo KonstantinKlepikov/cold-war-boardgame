@@ -1,5 +1,5 @@
 from typing import Dict, Generator, Union
-from app.core import game_logic
+from app.core import processor_game
 from app.crud import crud_game
 from app.schemas import schema_game
 from app.config import settings
@@ -27,7 +27,11 @@ class TestCRUDGame:
         assert state.players[0].is_bot == False, 'wrong is_bot'
         assert not state.players[0].faction, 'wrong faction'
         assert state.players[0].score == 0, 'wrong score'
-        assert len(state.players[0].player_cards.agent_cards) == 6, 'hasnt cards'
+        assert len(state.players[0].player_cards.agent_cards.db_cards) == 6, 'hasnt cards'
+        assert state.players[0].player_cards.agent_cards.dead == [], 'wrong dead'
+        assert state.players[0].player_cards.agent_cards.in_play == None, 'wrong in play'
+        assert state.players[0].player_cards.agent_cards.in_vacation == [], 'wrong vacation'
+        assert state.players[0].player_cards.agent_cards.in_headquarter == [], 'wrong in_headquarter'
         assert state.players[0].player_cards.group_cards == [], 'hasnt cards'
         assert state.players[0].player_cards.objective_cards == [], 'hasnt cards'
 
@@ -36,7 +40,11 @@ class TestCRUDGame:
         assert state.players[1].is_bot == True, 'wrong is_bot'
         assert not state.players[1].faction, 'wrong faction'
         assert state.players[1].score == 0, 'wrong score'
-        assert len(state.players[1].player_cards.agent_cards) == 6, 'hasnt cards'
+        assert len(state.players[1].player_cards.agent_cards.db_cards) == 6, 'hasnt cards'
+        assert state.players[1].player_cards.agent_cards.dead == [], 'wrong dead'
+        assert state.players[1].player_cards.agent_cards.in_play == None, 'wrong in play'
+        assert state.players[1].player_cards.agent_cards.in_vacation == [], 'wrong vacation'
+        assert state.players[1].player_cards.agent_cards.in_headquarter == [], 'wrong in_headquarter'
         assert state.players[1].player_cards.group_cards == [], 'hasnt cards'
         assert state.players[1].player_cards.objective_cards == [], 'hasnt cards'
 
@@ -59,7 +67,7 @@ class TestCRUDGame:
         game_proc = game.get_game_processor(
             settings.user0_login
                 )
-        assert isinstance(game_proc, game_logic.GameProcessor), 'wrong return'
+        assert isinstance(game_proc, processor_game.GameProcessor), 'wrong return'
 
     def test_create_new_game(
         self,

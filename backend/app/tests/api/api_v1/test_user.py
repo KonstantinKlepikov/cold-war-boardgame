@@ -31,7 +31,7 @@ class TestUserLogin:
                     },
                 )
 
-        assert response.status_code == 200, 'wrong status'
+        assert response.status_code == 200, f'{response.content=}'
         assert response.json()["access_token"], 'no token'
         assert response.json()["token_type"] == 'bearer', 'wrong type'
 
@@ -55,7 +55,7 @@ class TestUserLogin:
                 }
             )
 
-        assert response.status_code == 400, 'not a error'
+        assert response.status_code == 400, f'{response.content=}'
         assert response.json()['detail'] == 'Wrong login or password', \
             'wrong error message'
 
@@ -80,6 +80,6 @@ class TestUserLogin:
                 }
             )
 
-        assert response.status_code == 400, 'not a error'
+        assert response.status_code == 400, f'{response.content=}'
         assert response.json()['detail'] == 'Wrong login or password', \
             'wrong error message'

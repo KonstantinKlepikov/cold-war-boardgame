@@ -5,11 +5,14 @@ from mongoengine.context_managers import switch_db
 from fastapi.testclient import TestClient
 from app.main import app
 from app.config import settings
-from app.core import game_logic
+from app.core import processor_game
 from app.models import model_user, model_game, model_cards
 from app.crud import crud_game, crud_card, crud_user
-from app.constructs import Priority, Faction
+from app.constructs import Agents, Groups, Objectives
 from app.db.init_db import init_db_cards, init_db_users
+
+
+agent_cards = [{'name': agent} for agent in Agents.get_values()]
 
 
 @pytest.fixture(scope="session")
@@ -37,37 +40,15 @@ def db_user(users_data: Dict[str, str]) -> Dict[str, str]:
 def db_game_data() -> Dict[str, Union[str, bool]]:
     """Get game data
     """
-    agent_cards = [
-        {'name': 'Master Spy'},
-        {'name': 'Deputy Director'},
-        {'name': 'Double Agent'},
-        {'name': 'Analyst'},
-        {'name': 'Assassin'},
-        {'name': 'Director'},
-        ]
-    group_cards = [
-        'Guerilla', 'Militia', 'Mercenaries', 'Police', 'Infantry', 'Generals',
-        'Workers', 'Mafia', 'Food companies', 'Industry', 'Oil Tycoons',
-        'Bankers', 'Students', 'Trade Union', 'Nationalists', 'Fundamentalists',
-        'Opposition', 'Government', 'Artists', 'NGOs', 'Phone company',
-        'Newspapers', 'Radio', 'Television',
-            ]
-    objective_cards = [
-        'Nobel Peace Prize', 'Live Benefit', 'Nuclear Escalation', 'Space Race',
-        'Olympic Games', 'Summit Meeting', 'Egypt', 'Vietnam', 'Panama', 'Angola',
-        'Afghanistan', 'Houndaras', 'Libya', 'Greece', 'Turkey', 'Iran', 'Cuba',
-        'Congo', 'Czechoslovakia', 'Chile', 'Korea',
-            ]
-
     return {
         'game_decks':
             {
                 'group_deck': {
-                    'deck': group_cards,
+                    'deck': Groups.get_values(),
                     'deck_len': 24,
                         },
                 'objective_deck': {
-                    'deck': objective_cards,
+                    'deck': Objectives.get_values(),
                     'deck_len': 21,
                         }
             },
@@ -75,12 +56,16 @@ def db_game_data() -> Dict[str, Union[str, bool]]:
             [
                 {
                     'is_bot': False,
-                    'player_cards': {'agent_cards': agent_cards},
+                    'player_cards': {'agent_cards':
+                        {'db_cards': agent_cards},
+                            },
                     'login': settings.user0_login,
                 },
                 {
                     'is_bot': True,
-                    'player_cards': {'agent_cards': agent_cards},
+                    'player_cards': {'agent_cards':
+                        {'db_cards': agent_cards},
+                            },
                     'login': None,
                 }
             ]
@@ -165,37 +150,26 @@ def cards(connection: Generator) -> crud_card.CRUDCards:
 def game_proc(
     game: crud_game.CRUDGame,
     cards: crud_card.CRUDCards,
-        ) -> game_logic.GameProcessor:
+        ) -> processor_game.GameProcessor:
     """Get game processor object
     """
     current_data = game.get_current_game_data(settings.user0_login)
-    return game_logic.GameProcessor(cards.get_all_cards(), current_data)
+    return processor_game.GameProcessor(cards.get_all_cards(), current_data)
 
 
 @pytest.fixture(scope="function")
 def inited_game_proc(
-    game_proc: game_logic.GameProcessor,
-        ) -> game_logic.GameProcessor:
-    """Get game processor object
+    game_proc: processor_game.GameProcessor,
+        ) -> processor_game.GameProcessor:
+    """Fill game processor object
     """
     return game_proc.fill()
 
 
 @pytest.fixture(scope="function")
 def started_game_proc(
-    game: crud_game.CRUDGame,
-        ) -> game_logic.GameProcessor:
+    inited_game_proc: processor_game.GameProcessor,
+        ) -> processor_game.GameProcessor:
     """Init the game and return processor
     """
-    obj_in = game_logic.make_game_data(settings.user0_login)
-    game.create_new_game(obj_in)
-    return game.get_game_processor(settings.user0_login).deal_and_shuffle_decks()
-
-
-@pytest.fixture(scope="function")
-def started_game_proc_fact(
-    started_game_proc: game_logic.GameProcessor,
-        ) -> game_logic.GameProcessor:
-    """Init the game with faction and return processor
-    """
-    return started_game_proc.set_faction(Faction.KGB)
+    return inited_game_proc.deal_and_shuffle_decks()

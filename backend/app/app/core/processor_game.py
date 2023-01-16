@@ -1,49 +1,44 @@
-from typing import Dict, List, Union, Optional
+from typing import Dict, List, Union, Optional, Literal
 from fastapi import HTTPException
 from app.schemas import schema_game
 from app.models import model_game
-from app.config import settings
-from app.constructs import Priority, Faction
-from app.core.game_definition import (
+from app.constructs import Priority, Faction, Agents, Phases
+from app.core.engine_game import (
     CustomGame, CustomDeck, CustomPlayer, CustomSteps, PlayerAgentCard,
-    PlayerGroupObjCard, GroupCard, ObjectiveCard
+    PlayerGroupObjCard, GroupCard, ObjectiveCard, CustomAgentBag
         )
 from bgameb import Step, Dice, Bag
 from fastapi.encoders import jsonable_encoder
 
 
-def make_game_data(login: str) -> schema_game.CurrentGameData:
+def make_game_data(login: str) -> schema_game.CurrentGameDataDb:
     """Make game data for start the game
 
     Returns:
-        CurrentGameData: game data schema
+        CurrentGameDataDb: game data schema
     """
-    agent_cards = [
-            {'name': 'Master Spy'},
-            {'name': 'Deputy Director'},
-            {'name': 'Double Agent'},
-            {'name': 'Analyst'},
-            {'name': 'Assassin'},
-            {'name': 'Director'},
-            ]
-
+    agent_cards = [{'name': agent} for agent in Agents.get_values()]
     new_game = {
                 'players':
                     [
                         {
                             'is_bot': False,
-                            'player_cards': {'agent_cards': agent_cards},
+                            'player_cards': {'agent_cards':
+                                {'db_cards': agent_cards},
+                                    },
                             'login': login,
                         },
                         {
                             'is_bot': True,
-                            'player_cards': {'agent_cards': agent_cards},
+                            'player_cards': {'agent_cards':
+                                {'db_cards': agent_cards},
+                                    },
                             'login': None,
                         }
                     ]
                 }
 
-    return schema_game.CurrentGameData(**new_game)
+    return schema_game.CurrentGameDataDb(**new_game)
 
 
 class GameProcessor:
@@ -85,7 +80,7 @@ class GameProcessor:
         # init game steps
         data: dict = self.current_data.game_steps.to_mongo().to_dict()
         self.G.add(CustomSteps('steps', **data))
-        for num, val in enumerate(settings.phases):
+        for num, val in enumerate(Phases.get_values()):
             step = Step(val, priority=num)
             self.G.c.steps.add(step)
 
@@ -93,15 +88,11 @@ class GameProcessor:
             self.G.c.steps.deal(
                 self.G.c.steps.turn_phases_left
                     )
-        else:
-            self.G.c.steps.clear()
 
         if self.G.c.steps.turn_phase:
             self.G.c.steps.last = self.G.c.steps.c.by_id(
                 self.G.c.steps.turn_phase
                     )
-        else:
-            self.G.c.steps.last = None
 
         # init ptayers
         for p in self.current_data.players:
@@ -110,105 +101,70 @@ class GameProcessor:
             player = CustomPlayer(name, **data)
             self.G.add(player)
 
-            # player agents
-            self.G.c[name].add(Bag('agents'))
-            for c in p.player_cards.agent_cards:
+            # player agent_cards
+            cards = data['player_cards']['agent_cards']
+            del cards['db_cards']
+            self.G.c[name].add(CustomAgentBag('agent_cards', **cards))
+            for c in p.player_cards.agent_cards.db_cards:
                 data: dict = c.to_mongo().to_dict()
                 card = PlayerAgentCard(data['name'], **data)
-                self.G.c[name].c.agents.add(card)
-                self.G.c[name].c.agents.deal()
+                self.G.c[name].c.agent_cards.add(card)
+            self.G.c[name].c.agent_cards.deal()
 
-            # player groups
-            self.G.c[name].add(Bag('groups'))
+            # player group_cards
+            self.G.c[name].add(Bag('group_cards'))
             for c in p.player_cards.group_cards:
                 data: dict = c.to_mongo().to_dict()
                 card = PlayerGroupObjCard(data['name'], **data)
-                self.G.c[name].c.groups.add(card)
-                self.G.c[name].c.groups.deal()
+                self.G.c[name].c.group_cards.add(card)
+            self.G.c[name].c.group_cards.deal()
 
-            # player groups
-            self.G.c[name].add(Bag('objectives'))
+            # player objective_cards
+            self.G.c[name].add(Bag('objective_cards'))
             for c in p.player_cards.objective_cards:
                 data: dict = c.to_mongo().to_dict()
                 card = PlayerGroupObjCard(data['name'], **data)
-                self.G.c[name].c.objectives.add(card)
-                self.G.c[name].c.objectives.deal()
+                self.G.c[name].c.objective_cards.add(card)
+            self.G.c[name].c.objective_cards.deal()
 
         # init game decks
         # group deck
         data: dict = self.current_data.game_decks.group_deck.to_mongo().to_dict()
-        self.G.add(CustomDeck('groups', **data))
+        self.G.add(CustomDeck('group_deck', **data))
         for c in self.cards['group_cards']:
             card = GroupCard(c['name'], **c)
-            self.G.c.groups.add(card)
+            self.G.c.group_deck.add(card)
 
-        if self.G.c.groups.deck:
-            self.G.c.groups.deal(self.G.c.groups.deck)
-        else:
-            self.G.c.groups.clear()
+        if self.G.c.group_deck.deck:
+            self.G.c.group_deck.deal(self.G.c.group_deck.deck)
 
         # objective deck
         data: dict = self.current_data.game_decks.objective_deck.to_mongo().to_dict()
-        self.G.add(CustomDeck('objectives', **data))
+        self.G.add(CustomDeck('objective_deck', **data))
         for c in self.cards['objective_cards']:
             card = ObjectiveCard(c['name'], **c)
-            self.G.c.objectives.add(card)
+            self.G.c.objective_deck.add(card)
 
-        if self.G.c.objectives.deck:
-            self.G.c.objectives.deal(self.G.c.objectives.deck)
-        else:
-            self.G.c.objectives.clear()
+        if self.G.c.objective_deck.deck:
+            self.G.c.objective_deck.deal(self.G.c.objective_deck.deck)
 
-        # mission card
-        m = self.current_data.game_decks.mission_card
-        self.G.mission_card = m if m else None
+        # mission_card
+        if self.current_data.game_decks.mission_card:
+            self.G.c.objective_deck.last = self.G.c.objective_deck.c.by_id(
+                self.current_data.game_decks.mission_card
+                    )
 
         # init engines
         self.G.add(Dice('coin'))
 
         return self
 
-    def flusсh(self) -> model_game.CurrentGameData:
-        """Save the game data to db"""
-
-        # flusсh game steps
-        schema = schema_game.GameStepsDb(**self.G.c.steps.to_dict())
+    def flush(self) -> model_game.CurrentGameData:
+        """Make ready to save game data object"""
+        data = self.G.relocate_all().to_dict()
+        schema = schema_game.CurrentGameDataDb(**data)
         db_data = jsonable_encoder(schema)
-        self.current_data.game_steps = model_game.GameSteps(**db_data)
-
-        # flusсh players
-        for num, val in enumerate(self.G.get_players().values()):
-            schema = schema_game.Player(**val.to_dict())
-            db_data = jsonable_encoder(schema)
-            # cards
-            cards = {
-                'agent_cards': [c.to_dict() for c in val.c.agents.current],
-                'group_cards': [c.to_dict() for c in val.c.groups.current],
-                'objective_cards': [c.to_dict() for c in val.c.objectives.current],
-                }
-            schema = schema_game.PlayerCards(**cards)
-            db_data['player_cards'] = jsonable_encoder(schema)
-            self.current_data.players[num] = model_game.Player(**db_data)
-
-        # flusсh game decks
-        # objectives
-        ids = self.G.c.objectives.current_ids()
-        self.G.c.objectives.deck = ids
-        self.G.c.objectives.deck_len = len(ids)
-        schema = schema_game.GameDeckDb(**self.G.c.objectives.to_dict())
-        db_data = jsonable_encoder(schema)
-        self.current_data.game_decks.objective_deck = model_game.GameDeck(**db_data)
-
-        # groups
-        ids = self.G.c.groups.current_ids()
-        self.G.c.groups.deck = ids
-        self.G.c.groups.deck_len = len(ids)
-        schema = schema_game.GameDeckDb(**self.G.c.groups.to_dict())
-        db_data = jsonable_encoder(schema)
-        self.current_data.game_decks.group_deck = model_game.GameDeck(**db_data)
-
-        # mission card
-        self.current_data.game_decks.mission_card = self.G.mission_card
+        self.current_data.modify(**db_data)
 
         return self.current_data
 
@@ -218,8 +174,8 @@ class GameProcessor:
         Returns:
             GameProcessor
         """
-        self.G.c.groups.deal().shuffle()
-        self.G.c.objectives.deal().shuffle()
+        self.G.c.group_deck.deal().shuffle()
+        self.G.c.objective_deck.deal().shuffle()
 
         return self
 
@@ -284,7 +240,7 @@ class GameProcessor:
                     )
 
         self.G.c.steps.game_turn += 1
-        self.G.c.steps.turn_phases_left = self.G.c.steps.deal().current_ids()
+        self.G.c.steps.deal()
         self.G.c.steps.turn_phase = None
 
         return self
@@ -295,10 +251,8 @@ class GameProcessor:
         Returns:
             GameProcessor
         """
-        if not self.G.c.steps.last or self.G.c.steps.last.id != settings.phases[5]:
-            self.G.c.steps.pull()
-            self.G.c.steps.turn_phase = self.G.c.steps.last.id
-            self.G.c.steps.turn_phases_left = self.G.c.steps.current_ids()
+        if self.G.c.steps.last_id != Phases.DETENTE.value:
+            self.G.c.steps.pop()
 
         return self
 
@@ -309,7 +263,7 @@ class GameProcessor:
             GameProcessor
         """
         try:
-            self.G.mission_card = self.G.c.objectives.pop().id
+            self.G.c.objective_deck.pop()
         except IndexError:
             raise HTTPException(
                 status_code=409,
@@ -344,12 +298,12 @@ class GameProcessor:
     def _check_analyct_condition(self) -> None:
         """Check conditions for play analyst ability
         """
-        if self.G.c.steps.turn_phase != settings.phases[0]:
+        if self.G.c.steps.last_id != Phases.BRIEFING.value:
             raise HTTPException(
                 status_code=409,
                 detail="Ability can't be played in any phases except 'briefing'."
                     )
-        if not 'Analyst' in self.G.c.player.abilities:
+        if not Agents.ANALYST.value in self.G.c.player.abilities:
             raise HTTPException(
                 status_code=409,
                 detail="No access to play ability of Analyst agent card."
@@ -365,7 +319,7 @@ class GameProcessor:
 
         if len([
             card.id for card
-            in self.G.c.player.c.groups.current
+            in self.G.c.player.c.group_cards.current
             if card.pos_in_deck in [-1, -2, -3]
                 ]) == 3:
             raise HTTPException(
@@ -373,17 +327,17 @@ class GameProcessor:
                 detail="Top 3 group cards is yet revealed for player."
                     )
 
-        self.G.c.groups.temp_group = []
+        self.G.c.group_deck.temp_group = []
 
         for pos in range(-3, 0):
-            card = self.G.c.groups.current[pos]
+            card = self.G.c.group_deck.current[pos]
             try:
-                self.G.c.player.c.groups.remove(card.id)
+                self.G.c.player.c.group_cards.remove(card.id)
             except ValueError:
                 pass
-            self.G.c.player.c.groups.append(card)
-            self.G.c.player.c.groups.current[-1].pos_in_deck = pos
-            self.G.c.groups.temp_group.append(card.id)
+            self.G.c.player.c.group_cards.append(card)
+            self.G.c.player.c.group_cards.current[-1].pos_in_deck = pos
+            self.G.c.group_deck.temp_group.append(card.id)
 
         return self
 
@@ -402,14 +356,14 @@ class GameProcessor:
         current = {}
         check = set()
         for _ in range(3):
-            card = self.G.c.groups.pop()
+            card = self.G.c.group_deck.pop()
             check.add(card.id)
             current[card.id] = card
 
         if check ^ set(top):
 
             for card in reversed(current.values()):
-                self.G.c.groups.append(card)
+                self.G.c.group_deck.append(card)
 
             raise HTTPException(
                 status_code=409,
@@ -417,10 +371,34 @@ class GameProcessor:
                     )
         else:
             for card in top:
-                self.G.c.groups.append(current[card])
+                self.G.c.group_deck.append(current[card])
 
-        self.G.c.player.abilities.remove('Analyst')
+        self.G.c.player.abilities.remove(Agents.ANALYST.value)
 
+        return self
+
+    def set_agent(
+        self,
+        player: Literal['player', 'bot'],
+        agent_id: str,
+            ) -> 'GameProcessor':
+        """Set agent card
+
+        Returns:
+            GameProcessor
+        """
+        played = self.G.c[player].c.agent_cards.by_id(agent_id)
+        if played:
+            played.is_in_play = True
+            played.is_in_headquarter = False
+            if Agents.DOUBLE.value in self.G.c[player].abilities:
+                played.is_revealed = True
+                self.G.c[player].abilities.remove(Agents.DOUBLE.value)
+        else:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Agent {agent_id} not available to choice."
+                    )
         return self
 
     def chek_phase_conditions_before_next(self) -> 'GameProcessor':
@@ -436,10 +414,11 @@ class GameProcessor:
                 detail="Something can't be changed, because game is end"
                     )
 
-        phase = self.G.c.steps.turn_phase
+        # phase = self.G.c.steps.turn_phase
+        phase = self.G.c.steps.last_id
 
         # briefing
-        if phase == settings.phases[0]:
+        if phase == Phases.BRIEFING.value:
 
             # players has't priority
             if not self.G.c.player.has_priority \
@@ -450,37 +429,50 @@ class GameProcessor:
                         )
 
             # objective card not defined
-            if not self.G.mission_card:
+            if self.G.c.objective_deck.last is None:
                 raise HTTPException(
                     status_code=409,
                     detail="Mission card undefined. Cant push to next phase."
                         )
 
             # analyst not used
-            if 'Analyst' in self.G.c.player.abilities:
+            if Agents.ANALYST.value in self.G.c.player.abilities:
                 raise HTTPException(
                     status_code=409,
                     detail="Analyst ability must be used."
                         )
 
+            # agent not choosen
+            for player in ['player', 'bot']:
+                pa = [
+                    agent.is_in_play for agent
+                    in self.G.c[player].c.agent_cards.current
+                    if agent.is_in_play is True
+                        ]
+                if True not in pa:
+                    raise HTTPException(
+                        status_code=409,
+                        detail=f"Agent for {player} not choosen."
+                            )
+
         # planning
-        elif phase == settings.phases[1]:
+        elif phase == Phases.PLANNING.value:
             pass
 
         # influence_struggle
-        elif phase == settings.phases[2]:
+        elif phase == Phases.INFLUENCE.value:
             pass
 
         # ceasefire
-        elif phase == settings.phases[3]:
+        elif phase == Phases.CEASEFIRE.value:
             pass
 
         # debriefing
-        elif phase == settings.phases[4]:
+        elif phase == Phases.DEBRIFIENG.value:
             pass
 
         # detente
-        elif phase == settings.phases[5]:
+        elif phase == Phases.DETENTE.value:
             raise HTTPException(
                 status_code=409,
                 detail="This phase is last in a turn. Change turn number "
@@ -495,36 +487,56 @@ class GameProcessor:
         Returns:
             GameProcessor
         """
-        phase = self.G.c.steps.turn_phase
+        # phase = self.G.c.steps.turn_phase
+        phase = self.G.c.steps.last_id
 
         # set briefing states after next
-        if phase == settings.phases[0]:
+        if phase == Phases.BRIEFING.value:
 
             self.set_mission_card()
             self.set_turn_priority()
-            self.G.c.groups.deal()
-            self.G.c.groups.pile.clear()
-            self.G.c.player.c.groups.clear()
-            self.G.c.bot.c.groups.clear()
+            self.G.c.group_deck.deal()
+            self.G.c.group_deck.pile.clear()
+            self.G.c.player.c.group_cards.clear()
+            self.G.c.bot.c.group_cards.clear()
 
         # planning
-        elif phase == settings.phases[1]:
+        elif phase == Phases.PLANNING.value:
             pass
 
         # influence_struggle
-        elif phase == settings.phases[2]:
-            pass
+        elif phase == Phases.INFLUENCE.value:
+
+            # return all agents from vacation to headquarter
+            for player in ['player', 'bot']:
+                for agent in self.G.c[player].c.agent_cards.current:
+                    if agent.is_in_vacation == True:
+                        agent.is_in_vacation = False
+                        agent.is_revealed = False
 
         # ceasefire
-        elif phase == settings.phases[3]:
+        elif phase == Phases.CEASEFIRE.value:
             pass
 
         # debriefing
-        elif phase == settings.phases[4]:
-            pass
+        elif phase == Phases.DEBRIFIENG.value:
+
+            # open all agents in play
+            for player in ['player', 'bot']:
+                for agent in self.G.c[player].c.agent_cards.current:
+                    if agent.is_in_play == True:
+                        agent.is_revealed = True
 
         # detente
-        elif phase == settings.phases[5]:
-            pass
+        elif phase == Phases.DETENTE.value:
+
+            # put agents to vacations from play
+            for player in ['player', 'bot']:
+                for agent in self.G.c[player].c.agent_cards.current:
+                    agent.is_in_play = False
+                    if agent.id == Agents.DEPUTY.value:
+                        agent.is_revealed = False
+                    else:
+                        agent.is_in_vacation = True
 
         return self

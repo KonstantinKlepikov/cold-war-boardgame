@@ -1,5 +1,6 @@
-from typing import List, Literal, Set, Optional
+from typing import List, Set, Optional
 from pydantic import BaseModel, PositiveInt, NonNegativeInt
+from app.constructs import Agents, Groups, Objectives, Icons, GroupFactions
 
 
 class Card(BaseModel):
@@ -18,6 +19,7 @@ class Card(BaseModel):
 class AgentCard(Card):
     """Agent card schema
     """
+    name: Agents
     agenda_lose: str
     agenda_win: str
     initiative: PositiveInt
@@ -36,9 +38,8 @@ class AgentCard(Card):
 class GroupCard(Card):
     """Group card schema
     """
-    faction: Literal[
-        'Military', 'Economic', 'Political', 'Government', 'Media',
-            ]
+    name: Groups
+    faction: GroupFactions
     influence: PositiveInt
     power: str
 
@@ -57,10 +58,8 @@ class GroupCard(Card):
 class ObjectiveCard(Card):
     """Objective card schema
     """
-
-    bias_icons: Set[Literal[
-        'Economic', 'Military', 'Media', 'Political',
-            ]]
+    name: Objectives
+    bias_icons: Set[Icons]
     population: PositiveInt
     special_ability: Optional[str]
     stability: PositiveInt

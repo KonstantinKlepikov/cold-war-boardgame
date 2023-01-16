@@ -72,11 +72,5 @@ class Settings(BaseSettings):
     user2_password: Optional[str] = None
     user2_hashed_password: Optional[str] = None
 
-    # game constants
-    phases = [
-        'briefing', 'planning', 'influence_struggle',
-        'ceasefire', 'debriefing', 'detente',
-            ]
-
 
 settings = Settings()

@@ -161,7 +161,7 @@
                     "schema": {
                         "title": "Preset faction",
                         "allOf": [{
-                            "$ref": "#/components/schemas/Faction"
+                            "$ref": "#/components/schemas/Factions"
                         }]
                     },
                     "name": "q",

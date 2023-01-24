@@ -2,7 +2,7 @@ from typing import Dict, List, Union, Optional, Literal
 from fastapi import HTTPException
 from app.schemas import schema_game
 from app.models import model_game
-from app.constructs import Priority, Faction, Agents, Phases
+from app.constructs import Priority, Factions, Agents, Phases
 from app.core.engine_game import (
     CustomGame, CustomDeck, CustomPlayer, CustomSteps, PlayerAgentCard,
     PlayerGroupObjCard, GroupCard, ObjectiveCard, CustomAgentBag
@@ -179,7 +179,7 @@ class GameProcessor:
 
         return self
 
-    def set_faction(self, faction: Faction) -> 'GameProcessor':
+    def set_faction(self, faction: Factions) -> 'GameProcessor':
         """Set player and opponent faction
 
         Args:
@@ -195,7 +195,7 @@ class GameProcessor:
                     )
 
         self.G.c.player.faction = faction.value
-        self.G.c.bot.faction = 'kgb' if faction == Faction.CIA else 'cia'
+        self.G.c.bot.faction = 'kgb' if faction == Factions.CIA else 'cia'
 
         return self
 

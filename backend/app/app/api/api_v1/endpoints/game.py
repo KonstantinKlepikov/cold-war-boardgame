@@ -2,7 +2,7 @@ from fastapi import status, Depends, APIRouter, Query, HTTPException
 from app.schemas import schema_user, schema_game
 from app.crud import crud_game
 from app.core import security_user, processor_game
-from app.constructs import Faction
+from app.constructs import Factions
 from app.config import settings
 
 
@@ -36,7 +36,7 @@ def create_new_game(
     response_description="Ok. Faction is setted."
         )
 def preset_faction(
-    q: Faction = Query(
+    q: Factions = Query(
         title="Preset faction",
             ),
     user: schema_user.User = Depends(security_user.get_current_active_user),

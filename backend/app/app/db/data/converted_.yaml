@@ -1,0 +1,395 @@
+agent_cards:
+- agenda_lose: You claim the objective immediately
+  agenda_win: Your opponent claims the objective immediately
+  initiative: 1
+  id: Master Spy
+- agenda_lose: No effect. This agent can't be terminated and never goes on leave (return
+    him to your headquarters instead).
+  agenda_win: No effect. This agent can't be terminated and never goes on leave (return
+    him to your headquarters instead).
+  initiative: 2
+  id: Deputy Director
+- agenda_lose: Choose one of the agents at your opponent's headquarters and send him
+    immediately on leave, or, in next turn's Planning phase, force your opponent to
+    reveal his Agent X's identity before you choose your own Agent X.
+  agenda_win: Choose one of the agents at your opponent's headquarters and send him
+    immediately on leave, or, in next turn's Planning phase, force your opponent to
+    reveal his Agent X's identity before you choose your own Agent X.
+  initiative: 3
+  id: Double Agent
+- agenda_lose: A the end of next turn's Briefing phase, look at the top three cards
+    of the group deck and replace them in any order you choose.
+  agenda_win: A the end of next turn's Briefing phase, look at the top three cards
+    of the group deck and replace them in any order you choose.
+  initiative: 4
+  id: Analyst
+- agenda_lose: No effect.
+  agenda_win: Terminate your opponent's Agent X and put the objective facedown on
+    the bottom of the objective deck.
+  initiative: 5
+  id: Assassin
+- agenda_lose: No effect.
+  agenda_win: Immediately claim the objective on the bottom of the objective deck.
+  initiative: 6
+  id: Director
+group_cards:
+- faction: Military
+  influence: 1
+  id: Guerilla
+  power: Send any other group card, whether ready or mobilized, to the discard pile
+- faction: Military
+  influence: 2
+  id: Militia
+  power: Send any other group card, whether ready or mobilized, to the discard pile
+- faction: Military
+  influence: 3
+  id: Mercenaries
+  power: Send any other group card, whether ready or mobilized, to the discard pile
+- faction: Military
+  influence: 4
+  id: Police
+  power: Send any other group card, whether ready or mobilized, to the discard pile
+- faction: Military
+  influence: 5
+  id: Infantry
+  power: Send any other group card, whether ready or mobilized, to the discard pile
+- faction: Military
+  influence: 6
+  id: Generals
+  power: Send any other group card, whether ready or mobilized, to the discard pile
+- faction: Economic
+  influence: 1
+  id: Workers
+  power: Mobilize any ready group or ready any mobilized group. You may not affect
+    an economic card with this power
+- faction: Economic
+  influence: 2
+  id: Mafia
+  power: Mobilize any ready group or ready any mobilized group. You may not affect
+    an economic card with this power
+- faction: Economic
+  influence: 3
+  id: Food companies
+  power: Mobilize any ready group or ready any mobilized group. You may not affect
+    an economic card with this power
+- faction: Economic
+  influence: 4
+  id: Industry
+  power: Mobilize any ready group or ready any mobilized group. You may not affect
+    an economic card with this power
+- faction: Economic
+  influence: 5
+  id: Oil Tycoons
+  power: Mobilize any ready group or ready any mobilized group. You may not affect
+    an economic card with this power
+- faction: Economic
+  influence: 6
+  id: Bankers
+  power: Mobilize any ready group or ready any mobilized group. You may not affect
+    an economic card with this power
+- faction: Political
+  influence: 1
+  id: Students
+  power: Steal a group your opponent or give him one of yours. You may not make either
+    player exceed the objective's population limit, nor make your opponent exceed
+    the objective's Stability
+- faction: Political
+  influence: 2
+  id: Trade Union
+  power: Steal a group your opponent or give him one of yours. You may not make either
+    player exceed the objective's population limit, nor make your opponent exceed
+    the objective's Stability
+- faction: Political
+  influence: 3
+  id: Nationalists
+  power: Steal a group your opponent or give him one of yours. You may not make either
+    player exceed the objective's population limit, nor make your opponent exceed
+    the objective's Stability
+- faction: Political
+  influence: 4
+  id: Fundamentalists
+  power: Steal a group your opponent or give him one of yours. You may not make either
+    player exceed the objective's population limit, nor make your opponent exceed
+    the objective's Stability
+- faction: Political
+  influence: 5
+  id: Opposition
+  power: Steal a group your opponent or give him one of yours. You may not make either
+    player exceed the objective's population limit, nor make your opponent exceed
+    the objective's Stability
+- faction: Political
+  influence: 6
+  id: Government
+  power: Steal a group your opponent or give him one of yours. You may not make either
+    player exceed the objective's population limit, nor make your opponent exceed
+    the objective's Stability
+- faction: Media
+  influence: 1
+  id: Artists
+  power: Look at the top card on the group deck, then recruit it, discard it, or leave
+    it where it was
+- faction: Media
+  influence: 2
+  id: NGOs
+  power: Look at the top card on the group deck, then recruit it, discard it, or leave
+    it where it was
+- faction: Media
+  influence: 3
+  id: Phone company
+  power: Look at the top card on the group deck, then recruit it, discard it, or leave
+    it where it was
+- faction: Media
+  influence: 4
+  id: Newspapers
+  power: Look at the top card on the group deck, then recruit it, discard it, or leave
+    it where it was
+- faction: Media
+  influence: 5
+  id: Radio
+  power: Look at the top card on the group deck, then recruit it, discard it, or leave
+    it where it was
+- faction: Media
+  influence: 6
+  id: Television
+  power: Look at the top card on the group deck, then recruit it, discard it, or leave
+    it where it was
+objective_cards:
+- bias_icons:
+  - Media
+  - Political
+  - Economic
+  - Military
+  id: Nobel Peace Prize
+  population: 1
+  special_ability_phase: 'ceasefire'
+  special_ability_text: 'Upon cansing civil disorder, discard this objective
+    to prevent your Agent X from being terminated. He goes on leave instead.'
+  stability: 6
+  victory_points: 5
+- bias_icons:
+  - Media
+  - Economic
+  - Political
+  - Military
+  id: Live Benefit
+  population: 1
+  special_ability_phase: 'influence_struggle'
+  special_ability_text: 'Instead of recruiting a group normally, activating
+    a group, or passing, discard this objective to recruit the group on top of the
+    group discard pile.'
+  stability: 6
+  victory_points: 5
+- bias_icons:
+  - Media
+  - Military
+  - Political
+  - Economic
+  id: Nuclear Escalation
+  population: 1
+  special_ability_phase: 'influence_struggle'
+  special_ability_text: 'Instead of recruiting a group normally, activating
+    a group, or passing, discard this objective to send all military cards in play
+    to the group deck discard pile.'
+  stability: 6
+  victory_points: 5
+- bias_icons:
+  - Media
+  - Military
+  - Economic
+  - Political
+  id: Space Race
+  population: 1
+  special_ability_phase: 'detente'
+  special_ability_text: 'Discard this objective to look at the next three cards
+    on the objective deck and then replace them in any order you choose.'
+  stability: 6
+  victory_points: 5
+- bias_icons:
+  - Media
+  - Economic
+  - Military
+  - Political
+  id: Olympic Games
+  population: 1
+  special_ability_phase: 'detente'
+  special_ability_text: 'Discard this objective to return a terminated agent to
+    the game. It reurns on leave (i.e., not at headquarters).'
+  stability: 6
+  victory_points: 5
+- bias_icons:
+  - Media
+  - Political
+  - Military
+  - Economic
+  id: Summit Meeting
+  population: 1
+  special_ability_phase: 'influence_struggle'
+  special_ability_text: 'Discard this objective to force your opponent
+    to reveal his Agent X''s identity.'
+  stability: 6
+  victory_points: 5
+- bias_icons:
+  - Political
+  - Economic
+  - Media
+  - Military
+  id: Egypt
+  population: 4
+  special_ability_phase: null
+  special_ability_text: null
+  stability: 11
+  victory_points: 20
+- bias_icons:
+  - Economic
+  - Political
+  - Media
+  - Military
+  id: Vietnam
+  population: 5
+  special_ability_phase: null
+  special_ability_text: null
+  stability: 9
+  victory_points: 20
+- bias_icons:
+  - Economic
+  - Military
+  - Media
+  - Political
+  id: Panama
+  population: 5
+  special_ability_phase: null
+  special_ability_text: null
+  stability: 9
+  victory_points: 15
+- bias_icons:
+  - Military
+  - Political
+  - Media
+  - Economic
+  id: Angola
+  population: 5
+  special_ability_phase: null
+  special_ability_text: null
+  stability: 9
+  victory_points: 10
+- bias_icons:
+  - Economic
+  - Political
+  - Military
+  - Media
+  id: Afghanistan
+  population: 5
+  special_ability_phase: null
+  special_ability_text: null
+  stability: 9
+  victory_points: 15
+- bias_icons:
+  - Military
+  - Economic
+  - Media
+  - Political
+  id: Houndaras
+  population: 5
+  special_ability_phase: null
+  special_ability_text: null
+  stability: 9
+  victory_points: 10
+- bias_icons:
+  - Military
+  - Political
+  - Economic
+  - Media
+  id: Libya
+  population: 4
+  special_ability_phase: null
+  special_ability_text: null
+  stability: 11
+  victory_points: 15
+- bias_icons:
+  - Political
+  - Military
+  - Media
+  - Economic
+  id: Greece
+  population: 3
+  special_ability_phase: null
+  special_ability_text: null
+  stability: 13
+  victory_points: 10
+- bias_icons:
+  - Political
+  - Media
+  - Economic
+  - Military
+  id: Turkey
+  population: 3
+  special_ability_phase: null
+  special_ability_text: null
+  stability: 13
+  victory_points: 15
+- bias_icons:
+  - Political
+  - Military
+  - Economic
+  - Media
+  id: Iran
+  population: 4
+  special_ability_phase: null
+  special_ability_text: null
+  stability: 11
+  victory_points: 15
+- bias_icons:
+  - Economic
+  - Military
+  - Political
+  - Media
+  id: Cuba
+  population: 5
+  special_ability_phase: null
+  special_ability_text: null
+  stability: 9
+  victory_points: 10
+- bias_icons:
+  - Military
+  - Economic
+  - Political
+  - Media
+  id: Congo
+  population: 5
+  special_ability_phase: null
+  special_ability_text: null
+  stability: 9
+  victory_points: 10
+- bias_icons:
+  - Political
+  - Media
+  - Military
+  - Economic
+  id: Czechoslovakia
+  population: 3
+  special_ability_phase: null
+  special_ability_text: null
+  stability: 13
+  victory_points: 20
+- bias_icons:
+  - Political
+  - Economic
+  - Military
+  - Media
+  id: Chile
+  population: 4
+  special_ability_phase: null
+  special_ability_text: null
+  stability: 11
+  victory_points: 10
+- bias_icons:
+  - Military
+  - Media
+  - Political
+  - Economic
+  id: Korea
+  population: 4
+  special_ability_phase: null
+  special_ability_text: null
+  stability: 11
+  victory_points: 10

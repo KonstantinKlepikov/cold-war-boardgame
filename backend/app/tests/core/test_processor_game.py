@@ -3,7 +3,7 @@ import bgameb
 from typing import Tuple
 from fastapi import HTTPException
 from app.config import settings
-from app.constructs import Priority, Faction, Phases, Agents
+from app.constructs import Priority, Factions, Phases, Agents
 from app.core import processor_game
 
 
@@ -222,11 +222,11 @@ class TestGameProcessorLogic:
         assert len(game_proc.G.c.group_deck.current) == 24, 'wrong proc group len'
 
     @pytest.mark.parametrize("test_input,expected", [
-        (Faction.KGB, ('kgb', 'cia')), (Faction.CIA, ('cia', 'kgb')),
+        (Factions.KGB, ('kgb', 'cia')), (Factions.CIA, ('cia', 'kgb')),
             ])
     def test_set_faction(
         self,
-        test_input: Faction,
+        test_input: Factions,
         expected: Tuple[str],
         inited_game_proc: processor_game.GameProcessor,
             ) -> None:

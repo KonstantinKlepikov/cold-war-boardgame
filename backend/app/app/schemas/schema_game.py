@@ -1,7 +1,7 @@
 from typing import Optional, List, Union
 from pydantic import BaseModel, NonNegativeInt, NonPositiveInt, conint
 from app.constructs import (
-    Phases, Agents, Groups, Objectives, Faction, ObjectiveAbilities,
+    Phases, Agents, Groups, Objectives, Factions, ObjectiveAbilities,
     HiddenAgents
         )
 
@@ -213,7 +213,7 @@ class Player(BaseModel):
     has_priority: Optional[bool] = None
     is_bot: Optional[bool] = None
     score: conint(ge=0, le=100) = 0
-    faction: Optional[Faction] = None
+    faction: Optional[Factions] = None
     player_cards: PlayerCards
     login: Optional[str] = None
     abilities: List[Union[ObjectiveAbilities, Agents]] = []

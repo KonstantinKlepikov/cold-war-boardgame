@@ -22,8 +22,8 @@ class Priority(BaseEnum):
     RANDOM = 'random'
 
 
-class Faction(BaseEnum):
-    """Faction enumeration
+class Factions(BaseEnum):
+    """Factions enumeration
     """
     CIA = 'cia'
     KGB = 'kgb'
@@ -145,4 +145,11 @@ class GroupFactions(BaseEnum):
     MILITARY = 'Military'
     MEDIA = 'Media'
     POLITICAL = 'Political'
-    GOVERMENY = 'Government',
+    GOVERMENY = 'Government'
+
+
+class AwaitingAbilities(BaseEnum):
+    """Awaiting abilities of player
+    """
+    DOUBLE = 'Double Agent'
+    ANALYST = 'Analyst'

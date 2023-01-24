@@ -3,7 +3,7 @@ from mongoengine import (
     BooleanField, IntField, ListField, EmbeddedDocumentListField,
     ValidationError, queryset_manager,
         )
-from app.constructs import Phases, Agents, HiddenAgents, Faction
+from app.constructs import Phases, Agents, HiddenAgents, Factions
 
 
 def check_turn_phase(value: str) -> bool:
@@ -42,7 +42,7 @@ def check_faction(value: str) -> bool:
     Args:
         value (str): agent name
     """
-    if not Faction.has_value(value):
+    if not Factions.has_value(value):
         raise ValidationError("Faction is not allowable")
 
 

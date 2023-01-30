@@ -3,74 +3,8 @@ from mongoengine import (
     BooleanField, IntField, ListField, EmbeddedDocumentListField,
     queryset_manager, ReferenceField
         )
-from app.models import model_user, model_game_static
+from app.models import model_game_static, model_user
 from app.constructs import Phases, Factions, AwaitingAbilities, Objectives, HiddenObjectives
-
-
-# class BaseCardInPlay(EmbeddedDocument):
-#     """Base card in play
-#     """
-#     card = ReferenceField(model_game_static.BaseCard)
-#     # users = ListField(ReferenceField(model_user.User))
-#     revealed_to = ListField(StringField(choices=['player1', 'player2']))
-
-#     # @property
-#     # def revealed_to(self) -> list[str]:
-#     #     """Return logins of users, who can see card
-
-#     #     Returns:
-#     #         list[str]: logins
-#     #     """
-#     #     return [user.login for user in self.users]
-
-#     @property
-#     def id(self) -> str:
-#         """Card id
-
-#         Returns:
-#             str: id
-#         """
-#         return self.card.id
-
-
-# class AgentInPlay(BaseCardInPlay):
-#     """Agent in play
-#     """
-#     card = ReferenceField(model_game_static.Agent)
-
-
-# class GroupInPlay(BaseCardInPlay):
-#     """Group in play
-#     """
-#     card = ReferenceField(model_game_static.Group)
-#     is_active = BooleanField(default=True)
-
-
-# class ObjectiveInPlay(BaseCardInPlay):
-#     """Objective in play
-#     """
-#     card = ReferenceField(model_game_static.Objective)
-
-
-# class GameCards(EmbeddedDocument):
-#     """Game cards
-#     """
-#     objectives_deck = EmbeddedDocumentListField(ObjectiveInPlay)
-#     objectives_pile = EmbeddedDocumentListField(ObjectiveInPlay)
-#     mission = EmbeddedDocumentField(ObjectiveInPlay, null=True)
-#     groups_deck = EmbeddedDocumentListField(GroupInPlay)
-#     groups_pile = EmbeddedDocumentListField(GroupInPlay)
-
-
-# class PlayerCards(EmbeddedDocument):
-#     """Player cards
-#     """
-#     headquarter = EmbeddedDocumentListField(AgentInPlay)
-#     terminated = EmbeddedDocumentListField(AgentInPlay)
-#     agent_x = EmbeddedDocumentField(AgentInPlay, null=True)
-#     on_leave = EmbeddedDocumentListField(AgentInPlay)
-#     groups = EmbeddedDocumentListField(GroupInPlay)
-#     objectives = EmbeddedDocumentListField(ObjectiveInPlay)
 
 
 class Steps(EmbeddedDocument):
@@ -85,9 +19,10 @@ class Steps(EmbeddedDocument):
     is_game_starts = BooleanField(default=False)
 
 
-class AgentInPlay(model_game_static.Agent):
+class AgentInPlay(EmbeddedDocument):
     """Agent in play
     """
+    card = ReferenceField(model_game_static.Agent)
     is_revealed = BooleanField(default=False)
     is_in_headquarter = BooleanField(default=True)
     is_terminated = BooleanField(default=False)
@@ -96,7 +31,7 @@ class AgentInPlay(model_game_static.Agent):
 
 
 class AgentsInPlay(EmbeddedDocument):
-    deck = EmbeddedDocumentListField(AgentInPlay)
+    current = EmbeddedDocumentListField(AgentInPlay)
 
 
 class Player(EmbeddedDocument):
@@ -105,65 +40,65 @@ class Player(EmbeddedDocument):
     user = ReferenceField(model_user.User)
     score = IntField(min_value=0, max_value=100, default=0)
     faction = StringField(null=True, choices=Factions.get_values())
-    agents = AgentsInPlay
     has_balance = BooleanField(null=True)
     has_domination = BooleanField(null=True)
     awaiting_abilities = ListField(
         StringField(null=True, choices=AwaitingAbilities.get_values())
             )
+    agents = EmbeddedDocumentField(AgentsInPlay)
 
-    @property
-    def login(self) -> str:
-        """User login
+    # @property
+    # def login(self) -> str:
+    #     """User login
 
-        Returns:
-            str: login
-        """
-        return self.user.login
+    #     Returns:
+    #         str: login
+    #     """
+    #     return self.user.login
 
 
 class Players(EmbeddedDocument):
     """Players
     """
-    player1 = EmbeddedDocumentField(Player)
-    player2 = EmbeddedDocumentField(Player)
+    player = EmbeddedDocumentField(Player)
+    opponent = EmbeddedDocumentField(Player)
 
 
-class GroupInPlay(model_game_static.Group):
+class GroupInPlay(EmbeddedDocument):
     """Group in play
     """
+    card = ReferenceField(model_game_static.Group)
+    revealed_to_player = BooleanField(default=False)
+    revealed_to_opponent = BooleanField(default=False)
     is_active = BooleanField(default=True)
-    revealed_to_player1 = BooleanField(default=False)
-    revealed_to_player2 = BooleanField(default=False)
 
 
 class GroupsInPlay(EmbeddedDocument):
-    deck = EmbeddedDocumentListField(GroupInPlay)
+    current = EmbeddedDocumentListField(GroupInPlay)
     pile = EmbeddedDocumentListField(GroupInPlay)
-    owned_by_player1 = EmbeddedDocumentListField(GroupInPlay)
-    owned_by_player2 = EmbeddedDocumentListField(GroupInPlay)
+    owned_by_player1= EmbeddedDocumentListField(GroupInPlay)
+    owned_by_opponent = EmbeddedDocumentListField(GroupInPlay)
 
 
-class ObjectiveInPlay(model_game_static.Objective):
+class ObjectiveInPlay(EmbeddedDocument):
     """Objective in play
     """
-    revealed_to_player1 = BooleanField(default=False)
-    revealed_to_player2 = BooleanField(default=False)
+    card = ReferenceField(model_game_static.Agent)
+    revealed_to_player = BooleanField(default=False)
+    revealed_to_opponent = BooleanField(default=False)
 
 
 class ObjectivesInPlay(EmbeddedDocument):
     """Objective in play
     """
     current = EmbeddedDocumentListField(ObjectiveInPlay)
-    pile = ListField(StringField(choices=Objectives.get_values()))
-    deck_view_of_player1 = ListField(StringField(choices=HiddenObjectives.get_values()))
-    deck_view_of_player2 = ListField(StringField(choices=HiddenObjectives.get_values()))
-    owned_by_player1 = ListField(StringField(choices=Objectives.get_values()))
-    owned_by_player2 = ListField(StringField(choices=Objectives.get_values()))
     mission = StringField(choices=Objectives.get_values(), null=True)
+    pile = ListField(StringField(choices=Objectives.get_values()))
+    owned_by_player = ListField(StringField(choices=Objectives.get_values()))
+    owned_by_opponent = ListField(StringField(choices=Objectives.get_values()))
 
 
-class GameCards(EmbeddedDocument):
+class Decks(EmbeddedDocument):
     """Game cards
     """
     groups = EmbeddedDocumentField(GroupsInPlay)
@@ -173,9 +108,9 @@ class GameCards(EmbeddedDocument):
 class CurrentGameData(Document):
     """Summary of game data
     """
-    steps = EmbeddedDocumentField(Steps, default=Steps())
+    steps = EmbeddedDocumentField(Steps, default=Steps(), required=True)
     players = EmbeddedDocumentField(Players)
-    cards = EmbeddedDocumentField(GameCards)
+    decks = EmbeddedDocumentField(Decks)
 
     @queryset_manager
     def objects(doc_cls, queryset):

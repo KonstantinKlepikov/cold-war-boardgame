@@ -1,11 +1,11 @@
 import yaml
-from typing import Dict, Any
-from app.models import model_cards, model_user
+from typing import Any
+from app.models import model_game_static, model_user
 from app.config import settings
 from mongoengine.context_managers import switch_db
 
 
-def get_yaml(source: str) -> Dict[str, Any]:
+def get_yaml(source: str) -> dict[str, Any]:
     """Get yaml from source
     """
     with open(source, "r") as stream:
@@ -21,19 +21,19 @@ def init_db_cards(alias: str = 'default') -> None:
     """
     cards = get_yaml('app/db/data/converted.yaml')
 
-    with switch_db(model_cards.AgentCard, alias) as AgentCards:
+    with switch_db(model_game_static.Agent, alias) as Agent:
         for card in cards['agent_cards']:
-            data = AgentCards(**card)
+            data = Agent(**card)
             data.save()
 
-    with switch_db(model_cards.GroupCard, alias) as GroupCards:
+    with switch_db(model_game_static.Group, alias) as Group:
         for card in cards['group_cards']:
-            data = GroupCards(**card)
+            data = Group(**card)
             data.save()
 
-    with switch_db(model_cards.ObjectiveCard, alias) as ObjectiveCards:
+    with switch_db(model_game_static.Objective, alias) as Objective:
         for card in cards['objective_cards']:
-            data = ObjectiveCards(**card)
+            data = Objective(**card)
             data.save()
 
 
@@ -66,8 +66,8 @@ def init_db_users(alias: str = 'default') -> None:
 def check_db_cards_init(alias: str = 'default') -> bool:
     """Check is cards in db initialized
     """
-    with switch_db(model_cards.AgentCard, alias) as AgentCards:
-        count = AgentCards.objects().count()
+    with switch_db(model_game_static.Agent, alias) as Agent:
+        count = Agent.objects().count()
         if count == 6:
             return True
         return False

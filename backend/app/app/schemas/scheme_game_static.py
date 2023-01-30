@@ -6,32 +6,16 @@ from app.constructs import (
         )
 
 
-class AgentId(BaseModel):
-    """Agent card id scheme
-    """
-    id: Agents
-
-
-class GroupId(BaseModel):
-    """Group card id scheme
-    """
-    id: Groups
-
-
-class ObjectiveId(BaseModel):
-    """Objective card id scheme
-    """
-    id: Objectives
-
-
-class Agent(AgentId):
+class Agent(BaseModel):
     """Agent card scheme
     """
+    id: Agents
     agenda_lose: str
     agenda_win: str
     initiative: PositiveInt
 
     class Config:
+        fields = {'id': 'name'}
         schema_extra = {
             "example": {
                 "id": "Master Spy",
@@ -41,14 +25,16 @@ class Agent(AgentId):
                 }
             }
 
-class Group(GroupId):
+class Group(BaseModel):
     """Group card scheme
     """
+    id: Groups
     faction: GroupFactions
     influence: PositiveInt
     power: str
 
     class Config:
+        fields = {'id': 'name'}
         schema_extra = {
             "example": {
                 "id": "Guerilla",
@@ -59,10 +45,11 @@ class Group(GroupId):
                 }
             }
 
-class Objective(ObjectiveId):
+class Objective(BaseModel):
     """Objective card scheme
     """
-    bias_icons: set[Icons] #  TODO:  is a combination of 4 ids
+    id: Objectives
+    bias_icons: list[Icons] #  TODO:  is a combination of 4 ids
     population: PositiveInt
     special_ability_phase: Optional[Phases]
     special_ability_text: Optional[str]
@@ -70,6 +57,7 @@ class Objective(ObjectiveId):
     victory_points: NonNegativeInt
 
     class Config:
+        fields = {'id': 'name'}
         schema_extra = {
             "example": {
                 "id": "Egypt",
@@ -90,15 +78,16 @@ class Objective(ObjectiveId):
 class Rules(BaseModel):
     """Game rules scheme
     """
+    # TODO: fill me from yaml
 
 class StaticGameData(BaseModel):
     """Static game data scheme
     """
-    agents: list[Agent] # TODO: fill data here
+    agents: list[Agent]
     groups: list[Group]
     objectives: list[Objective]
-    rules: Rules
-    phases: list[Phases] = Phases.get_values() # TODO: init this in scheme
+    # rules: Rules # TODO: get from db
+    phases: list[Phases] = Phases.get_values()
     player_factions: list[Factions] = Factions.get_values()
     objectives_ids: list[Objectives] = Objectives.get_values()
     objectie_icons: list[Icons] = Icons.get_values()

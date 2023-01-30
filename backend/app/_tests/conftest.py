@@ -3,7 +3,7 @@ from typing import Generator, Union
 from mongoengine import disconnect, connect
 from mongoengine.context_managers import switch_db
 # from fastapi.testclient import TestClient
-from app.main import app
+# from app.main import app
 from app.config import settings
 from app.models import model_user, model_game_current, model_game_static
 # from app.crud import crud_game, crud_card, crud_user
@@ -88,9 +88,8 @@ def connection(
             host=settings.test_mongodb_url,
             name='test-db',
             alias='test-db-alias'
-                )
+            )
         conn.drop_database('test-db')
-        from mongoengine.connection import _connections
 
         init_db_cards('test-db-alias')
         init_db_users('test-db-alias')

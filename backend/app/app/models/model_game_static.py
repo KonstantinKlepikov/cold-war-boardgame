@@ -1,37 +1,30 @@
 from mongoengine import (
-    Document, StringField, IntField, ListField, EmbeddedDocument,
-    EmbeddedDocumentField, EmbeddedDocumentListField
+    Document, StringField, IntField, ListField
 )
 from app.constructs import (
-    Factions, Phases, Icons, ObjectiveAbilities, GroupFactions,
+    Phases, Icons, GroupFactions,
     Agents, Groups, Objectives
         )
 
 
-class BaseCard(EmbeddedDocument):
-    """Base class for all game cards
-    """
-    id = StringField(unique=True, required=True)
-    meta = {
-        'indexes': ['id', ],
-            }
-
-
-class Agent(BaseCard):
+class Agent(Document):
     """Agent card
     """
-    id = StringField(
+    name = StringField(
         unique=True, required=True, choices=Agents.get_values()
             )
     agenda_lose = StringField(required=True)
     agenda_win = StringField(required=True)
     initiative = IntField(min_value=0, required=True)
+    meta = {
+        'indexes': ['name', ],
+            }
 
 
-class Group(BaseCard):
+class Group(Document):
     """Group card
     """
-    id = StringField(
+    name = StringField(
         unique=True, required=True, choices=Groups.get_values()
             )
     faction = StringField(
@@ -39,12 +32,15 @@ class Group(BaseCard):
             )
     influence = IntField(min_value=0, required=True)
     power = StringField(required=True)
+    meta = {
+        'indexes': ['name', ],
+            }
 
 
-class Objective(BaseCard):
+class Objective(Document):
     """Objective card
     """
-    id = StringField(
+    name = StringField(
         unique=True, required=True, choices=Objectives.get_values()
             )
     bias_icons = ListField(
@@ -57,49 +53,11 @@ class Objective(BaseCard):
     special_ability_text = StringField(null=True)
     stability = IntField(min_value=1, required=True)
     victory_points = IntField(min_value=0, required=True)
+    meta = {
+        'indexes': ['name', ],
+            }
 
 
 class Rules(Document):
     """Rules document
     """
-
-
-class  StaticGameData(Document):
-    """Static game data
-    """
-    agents = EmbeddedDocumentListField(Agent)
-    groups = EmbeddedDocumentListField(Group)
-    objectives = EmbeddedDocumentListField(Objective)
-    rules = EmbeddedDocumentField(Rules, default=Rules())
-    phases = ListField(
-        StringField(choices=Phases.get_values()),
-        default=Phases.get_values(),
-            )
-    player_factions = ListField(
-        StringField(choices=Factions.get_values()),
-        default=Factions.get_values(),
-            )
-    objectives_ids = ListField(
-        StringField(choices=Objectives.get_values()),
-        default=Objectives.get_values(),
-            )
-    objectie_icons = ListField(
-        StringField(choices=Icons.get_values()),
-        default=Icons.get_values(),
-            )
-    objectives_ablilitues = ListField(
-        StringField(choices=ObjectiveAbilities.get_values()),
-        default= ObjectiveAbilities.get_values(),
-            )
-    groups_ids = ListField(
-        StringField(choices=Groups.get_values()),
-        default=Groups.get_values(),
-            )
-    group_factions = ListField(
-        StringField(choices=GroupFactions()),
-        default=GroupFactions(),
-            )
-    agents_ids = ListField(
-        StringField(choices=Agents.get_values()),
-        defult=Agents.get_values(),
-            )

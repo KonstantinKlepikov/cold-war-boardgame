@@ -33,6 +33,7 @@ class TestDB:
         assert isinstance(db, pymongo.database.Database), \
             'wrong type of db'
         assert db.name == "test-db", 'wrong db name'
+        assert connection['User'].objects().count() == 3, 'wrong count of test users'
 
     def test_db_init_cards(
         self,
@@ -40,11 +41,11 @@ class TestDB:
             ) -> None:
         """Test init_db_cards() cards initialisation
         """
-        assert connection['Agent'].objects().count() == 6, \
+        assert connection['AgentCard'].objects().count() == 6, \
             'wrong count of test agents cards'
-        assert connection['Group'].objects().count() == 24, \
+        assert connection['GroupCard'].objects().count() == 24, \
             'wrong count of test groups cards'
-        assert connection['Objective'].objects().count() == 21, \
+        assert connection['ObjectiveCard'].objects().count() == 21, \
             'wrong count of test objective cards'
 
     def test_db_init_users(
@@ -53,8 +54,12 @@ class TestDB:
             ) -> None:
         """Test init_db_users() users initialisation
         """
-        assert connection['User'].objects().count() == 3, \
-            'wrong number of users'
+        assert connection['AgentCard'].objects().count() == 6, \
+            'wrong count of test agents cards'
+        assert connection['GroupCard'].objects().count() == 24, \
+            'wrong count of test groups cards'
+        assert connection['ObjectiveCard'].objects().count() == 21, \
+            'wrong count of test objective cards'
 
     def test_check_db_cards_init(
         self,
@@ -64,7 +69,7 @@ class TestDB:
         """
         assert check_db_cards_init('test-db-alias'), 'db not inited'
 
-    def test_check_db_init_users_init(
+    def test_check_db_users_init(
         self,
         connection: Generator
             ) -> None:

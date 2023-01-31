@@ -1,10 +1,9 @@
 from mongoengine import (
     Document, EmbeddedDocument, EmbeddedDocumentField, StringField,
     BooleanField, IntField, ListField, EmbeddedDocumentListField,
-    queryset_manager, ReferenceField
+    queryset_manager
         )
-from app.models import model_game_static, model_user
-from app.constructs import Phases, Factions, AwaitingAbilities, Objectives, HiddenObjectives
+from app.constructs import Phases, Factions, AwaitingAbilities, Objectives, Agents, Groups
 
 
 class Steps(EmbeddedDocument):
@@ -14,7 +13,10 @@ class Steps(EmbeddedDocument):
     turn_phase = StringField(
         default=Phases.BRIEFING.value, choices=Phases.get_values()
             )
-    turn_phase_left = ListField(StringField(choices=Phases.get_values()))
+    turn_phases_left = ListField(
+        StringField(choices=Phases.get_values()),
+        default=Phases.get_values()[1:]
+            )
     is_game_ends = BooleanField(default=False)
     is_game_starts = BooleanField(default=False)
 
@@ -22,7 +24,7 @@ class Steps(EmbeddedDocument):
 class AgentInPlay(EmbeddedDocument):
     """Agent in play
     """
-    card = ReferenceField(model_game_static.Agent)
+    name = StringField(required=str, choices=Agents.get_values())
     is_revealed = BooleanField(default=False)
     is_in_headquarter = BooleanField(default=True)
     is_terminated = BooleanField(default=False)
@@ -31,30 +33,23 @@ class AgentInPlay(EmbeddedDocument):
 
 
 class AgentsInPlay(EmbeddedDocument):
+    """Agents in play
+    """
     current = EmbeddedDocumentListField(AgentInPlay)
 
 
 class Player(EmbeddedDocument):
     """Player
     """
-    user = ReferenceField(model_user.User)
+    login = StringField(required=True)
     score = IntField(min_value=0, max_value=100, default=0)
     faction = StringField(null=True, choices=Factions.get_values())
-    has_balance = BooleanField(null=True)
-    has_domination = BooleanField(null=True)
+    has_balance = BooleanField(default=False)
+    has_domination = BooleanField(default=False)
     awaiting_abilities = ListField(
-        StringField(null=True, choices=AwaitingAbilities.get_values())
+        StringField(choices=AwaitingAbilities.get_values())
             )
     agents = EmbeddedDocumentField(AgentsInPlay)
-
-    # @property
-    # def login(self) -> str:
-    #     """User login
-
-    #     Returns:
-    #         str: login
-    #     """
-    #     return self.user.login
 
 
 class Players(EmbeddedDocument):
@@ -67,29 +62,31 @@ class Players(EmbeddedDocument):
 class GroupInPlay(EmbeddedDocument):
     """Group in play
     """
-    card = ReferenceField(model_game_static.Group)
+    name = StringField(required=True, choices=Groups.get_values())
     revealed_to_player = BooleanField(default=False)
     revealed_to_opponent = BooleanField(default=False)
     is_active = BooleanField(default=True)
 
 
 class GroupsInPlay(EmbeddedDocument):
+    """Groups in play
+    """
     current = EmbeddedDocumentListField(GroupInPlay)
     pile = EmbeddedDocumentListField(GroupInPlay)
-    owned_by_player1= EmbeddedDocumentListField(GroupInPlay)
+    owned_by_player = EmbeddedDocumentListField(GroupInPlay)
     owned_by_opponent = EmbeddedDocumentListField(GroupInPlay)
 
 
 class ObjectiveInPlay(EmbeddedDocument):
     """Objective in play
     """
-    card = ReferenceField(model_game_static.Agent)
+    name = StringField(required=True, choices=Objectives.get_values())
     revealed_to_player = BooleanField(default=False)
     revealed_to_opponent = BooleanField(default=False)
 
 
 class ObjectivesInPlay(EmbeddedDocument):
-    """Objective in play
+    """Objectives in play
     """
     current = EmbeddedDocumentListField(ObjectiveInPlay)
     mission = StringField(choices=Objectives.get_values(), null=True)
@@ -99,7 +96,7 @@ class ObjectivesInPlay(EmbeddedDocument):
 
 
 class Decks(EmbeddedDocument):
-    """Game cards
+    """Game decks
     """
     groups = EmbeddedDocumentField(GroupsInPlay)
     objectives = EmbeddedDocumentField(ObjectivesInPlay)

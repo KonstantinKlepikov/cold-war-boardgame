@@ -83,9 +83,9 @@ class Rules(BaseModel):
 class StaticGameData(BaseModel):
     """Static game data scheme
     """
-    agents: list[Agent]
-    groups: list[Group]
-    objectives: list[Objective]
+    agents: dict[str, Agent]
+    groups: dict[str, Group]
+    objectives: dict[str, Objective]
     # rules: Rules # TODO: get from db
     phases: list[Phases] = Phases.get_values()
     player_factions: list[Factions] = Factions.get_values()

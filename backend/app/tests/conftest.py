@@ -6,8 +6,8 @@ from mongoengine.context_managers import switch_db
 from app.main import app
 from app.config import settings
 from app.models import model_user, model_game_current, model_game_static
-from app.crud import crud_game_static, crud_user
-from app.constructs import Agents, Groups, Objectives
+from app.crud import crud_game_static, crud_user, crud_game_current
+# from app.constructs import Agents, Groups, Objectives
 from app.db.init_db import init_db_cards, init_db_users, get_yaml
 
 
@@ -51,7 +51,6 @@ def db_user(users_data: dict[str, str]) -> dict[str, str]:
 
 @pytest.fixture(scope="session")
 def db_game_data(
-    db_user: dict[str, str],
     cards_data: dict[str, Any],
         ) -> dict[str, Any]:
     """Get game data
@@ -60,7 +59,7 @@ def db_game_data(
         'players':
             {
                 'player': {
-                    'login': db_user['login'],
+                    'login': settings.user0_login,
                     'agents':
                         {
                             'current': [
@@ -69,7 +68,7 @@ def db_game_data(
                         }
                     },
                 'opponent': {
-                    'login': db_user['login'],
+                    'login': settings.user2_login,
                     'agents':
                         {
                             'current': [
@@ -145,11 +144,11 @@ def connection(
         disconnect(alias='test-db-alias')
 
 
-# @pytest.fixture(scope="function")
-# def game(connection: Generator) -> crud_game.CRUDGame:
-#     """Get crud game object
-#     """
-#     return crud_game.CRUDGame(connection['CurrentGameData'])
+@pytest.fixture(scope="function")
+def game(connection: Generator) -> crud_game_current.CRUDGame:
+    """Get crud game object
+    """
+    return crud_game_current.CRUDGame(connection['CurrentGameData'])
 
 
 @pytest.fixture(scope="function")

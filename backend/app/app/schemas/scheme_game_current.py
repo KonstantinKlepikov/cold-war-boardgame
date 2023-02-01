@@ -9,33 +9,7 @@ from bgameb import Steps, Player, Card, Deck, Game
 
 
 class StepsProcessor(Steps):
-    """Phases and turns of game
-
-    -> send to api or db
-    'game_turn'
-    'is_game_ends'
-    'is_game_starts'
-    'turn_phase'
-    'turn_phases_left'
-
-    c.dict(
-        exclude={
-            'steps': {
-                'last_id', 'current_ids', 'current', 'last'
-                    }
-            },
-        )
-
-    >  load from db
-    data = {'turn_phases_left': [(0, {'id': 'that', 'priority': 0})],
-            'turn_phase': None,
-            'game_turn': 1,
-            'is_game_ends': False,
-            'is_game_starts': False,
-            }
-
-    e = StepsProcessor(**data)
-    e.fill()
+    """Steps turns processor
     """
     id: str = Field(exclude=True, default='steps')
     game_turn: int
@@ -44,39 +18,30 @@ class StepsProcessor(Steps):
     is_game_ends: bool
     is_game_starts: bool
 
-    @property
-    def turn_phases_left(self) -> list[Phases]:
-        return self.current_ids
 
-    @property
-    def turn_phase(self) -> Optional[Phases]:
-        return self.last_id
-
-    def fill(self):
-        """Fill steps
-        """
-        self.deal(self.turn_phases_left)
-        self.last = self.c.by_id(self.turn_phase)
-
-
-class AgentProcessor(Card):
-    # card: Agent
+class AgentInPlayProcessor(Card):
+    """Agent card processor
+    """
     id: Agents = Field(..., alias='name')
     is_in_headquarter: bool = True
     is_terminated: bool = False
     is_on_leave: bool = False
     is_agent_x: bool = False
 
-    # class Config(Deck.Config):
-    #     fields = {'id': 'name'}
+    class Config(Card.Config):
+        allow_population_by_field_name = True
+        fields = {
+            'is_active': {'exclude': True},
+            'side': {'exclude': True},
+            'count': {'exclude': True},
+                }
 
 
 class BaseAgentsProcessor(Deck):
+    """Agents deck processor
+    """
     id: str = Field(exclude=True, default='agents')
-    current: deque[AgentProcessor] = Field(default_factory=deque)
-
-    class Config(Deck.Config):
-        """"""
+    current: deque[AgentInPlayProcessor] = Field(default_factory=deque)
 
     @property
     def terminated(self) -> list[Agents]:
@@ -88,32 +53,7 @@ class BaseAgentsProcessor(Deck):
 
 
 class PlayerAgentsProcessor(BaseAgentsProcessor):
-    """
-    -> send to api
-    'in_headquarter'
-    'terminated'
-    'agent_x'
-    'on_leave'
-    return ids
-
-    c.dict(
-        exclude={
-            'agents': {
-                'last_id', 'current_ids', 'current', 'last'
-                    }
-            },
-        )
-
-    -> send to db
-    'current'
-
-    c.dict(
-        exclude={
-            'agents': {
-                'in_headquarter', 'terminated', 'agent_x', 'on_leave', 'last', 'last_id', 'current_ids'
-                    }
-            },
-        )
+    """P;ayer agents deck processor
     """
     @property
     def in_headquarter(self) -> list[Agents]:
@@ -127,32 +67,7 @@ class PlayerAgentsProcessor(BaseAgentsProcessor):
 
 
 class OpponentAgentsProcessor(BaseAgentsProcessor):
-    """
-    -> send to api
-    'in_headquarter'
-    'terminated'
-    'agent_x'
-    'on_leave'
-    return ids or _hidden
-
-    c.dict(
-        exclude={
-            'cards': {
-                'last_id', 'current_ids', 'current', 'last'
-                    }
-            },
-        )
-
-    -> send to db
-    'current'
-
-    c.dict(
-        exclude={
-            'cards': {
-                'in_headquarter', 'terminated', 'agent_x', 'on_leave', 'last', 'last_id', 'current_ids'
-                    }
-            },
-        )
+    """Opponent agents deck processor
     """
     @property
     def in_headquarter(self) -> list[HiddenAgents]:
@@ -174,94 +89,57 @@ class OpponentAgentsProcessor(BaseAgentsProcessor):
 
 
 class BaseUserProcessor(Player):
+    """Base user processor
+    """
     login: str
     score: conint(ge=0) = 0
     faction: Optional[Factions] = None
     has_balance: bool = False
     has_domination: bool = False
-    abilities: list[AwaitingAbilities] = []
+    awaiting_abilities: list[AwaitingAbilities] = []
 
 
-class UserProcessor(BaseUserProcessor):
+class PlayerProcessor(BaseUserProcessor):
+    """Player processor
+    """
     id: str = Field(exclude=True, default='player')
     agents: PlayerAgentsProcessor
 
 
 class OpponentProcessor(BaseUserProcessor):
+    """Opponent processor
+    """
     id: str = Field(exclude=True, default='opponent')
     agents: OpponentAgentsProcessor
 
 
-class PlayersProcessor(BaseModel):
+class Users(BaseModel):
+    """Users
     """
-    -> send to api
-    c.dict(
-        exclude={
-            'player': {
-                'last_id', 'current_ids', 'current', 'last', 'user'
-                    },
-            'opponent': {
-                'last_id', 'current_ids', 'current', 'last', 'user'
-                    }
-            },
-        )
-
-    -> send to db
-    c.dict(
-        exclude={
-            'player': {
-                'last_id', 'current_ids', 'current', 'last'
-                    },
-            'opponent': {
-                'last_id', 'current_ids', 'current', 'last'
-                    }
-            },
-        )
-    """
-    player: UserProcessor
+    player: PlayerProcessor
     opponent: OpponentProcessor
 
 
 class GroupInPlayProcessor(Card):
-    # card: Group
+    """Group card processor
+    """
     id: Groups = Field(..., alias='name')
     is_revealed_to_player: bool = False
     is_revealed_to_opponent: bool = False
-    is_active: bool = True
+
+    class Config(Card.Config):
+        allow_population_by_field_name = True
+        fields = {
+            'side': {'exclude': True},
+            'count': {'exclude': True},
+            'is_revealed': {'exclude': True},
+            'is_revealed_to_player': {'exclude': True},
+            'is_revealed_to_opponent': {'exclude': True},
+                }
 
 
 class GroupsInPlayProcessor(Deck):
-    """
-    -> send to api
-    'pile'
-    'owned_by_player'
-    'owned_by_opponent'
-    'deck'
-
-    c.dict(
-        exclude={
-            'groups': {
-                'last_id', 'current_ids', 'current', 'last',
-                    }
-            },
-        )
-
-    -> send to db
-    'current'
-    'pile'
-    'owned_by_player'
-    'owned_by_opponent'
-
-    c.dict(
-        exclude={
-            'groups': {
-                'deck', 'current_ids', 'last', 'last_id'
-                    }
-            },
-        )
-
-    >
-    return ids or _hidden
+    """Groups deck processor
     """
     id: str = Field(exclude=True, default='groups')
     current: deque[GroupInPlayProcessor] = Field(default_factory=deque)
@@ -277,60 +155,36 @@ class GroupsInPlayProcessor(Deck):
                 result.append(group.id)
             else:
                 result.append(HiddenGroups.HIDDEN.value)
-            return result
+        return result
 
 
 class ObjectiveInPlayProcessor(Card):
-    """"""
-    # card: Objective
+    """Objective card processor
+    """
     id: Objectives = Field(..., alias='name')
     is_revealed_to_player: bool = False
     is_revealed_to_opponent: bool = False
 
+    class Config(Card.Config):
+        allow_population_by_field_name = True
+        fields = {
+            'is_active': {'exclude': True},
+            'side': {'exclude': True},
+            'count': {'exclude': True},
+            'is_revealed': {'exclude': True},
+            'is_revealed_to_player': {'exclude': True},
+            'is_revealed_to_opponent': {'exclude': True},
+                }
+
 
 class ObjectivesInPlayProcessor(Deck):
-    """
-    -> send to api
-    'mission'
-    'pile'
-    'owned_by_player'
-    'owned_by_opponent'
-    'deck'
-
-    c.dict(
-        exclude={
-            'objectives': {
-                'last_id', 'current_ids', 'current', 'last'
-                    }
-            },
-        )
-
-    -> send to db
-    'current'
-    'mission'
-    'pile'
-    'owned_by_player'
-    'owned_by_opponent'
-
-    c.dict(
-        exclude={
-            'objectives': {
-                'deck', 'current_ids', 'last'
-                    }
-            },
-        )
-
-    >
-    return ids or _hidden
+    """Objectives deck processor
     """
     id: str = Field(exclude=True, default='objectives')
     current: deque[ObjectiveInPlayProcessor] = Field(default_factory=deque)
     pile: list[Objectives] = []
     owned_by_player: list[Objectives] = []
     owned_by_opponent: list[Objectives] = []
-
-    class Config(Deck.Config):
-        fields = {'last_id': 'mission'}
 
     @property
     def deck(self) -> list[HiddenObjectives]:
@@ -340,17 +194,36 @@ class ObjectivesInPlayProcessor(Deck):
                 result.append(objective.id)
             else:
                 result.append(HiddenObjectives.HIDDEN.value)
-            return result
+        return result
+
+    @property
+    def mission(self) -> Optional[Objectives]:
+        return self.last_id
 
 
-class DecksProcessor(BaseModel):
+class Decks(BaseModel):
+    """Current decks
+    """
     groups: GroupsInPlayProcessor
     objectives: ObjectivesInPlayProcessor
 
 
 class CurrentGameDataProcessor(Game):
-    """"""
+    """Current game processor
+    """
     id: str = Field(exclude=True, default='game')
     steps: StepsProcessor
-    players: PlayersProcessor
-    decks: DecksProcessor
+    players: Users
+    decks: Decks
+
+    def fill(self):
+        """Fill sgame constructs by current data
+        """
+        self.steps.deal(self.steps.turn_phases_left)
+        self.steps.last = self.steps.c.by_id(self.steps.turn_phase)
+
+    def flusch(self):
+        """Flusch data to fields
+        """
+        self.steps.turn_phases_left = self.steps.current_ids
+        self.steps.turn_phase = self.steps.last_id

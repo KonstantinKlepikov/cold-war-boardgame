@@ -2,7 +2,7 @@ from typing import Dict, List, Union, Optional, Literal
 from fastapi import HTTPException
 from app.schemas import schema_game
 from app.models import model_game
-from app.constructs import Priority, Factions, Agents, Phases
+from app.constructs import Balance, Factions, Agents, Phases
 from app.core.engine_game import (
     CustomGame, CustomDeck, CustomPlayer, CustomSteps, PlayerAgentCard,
     PlayerGroupObjCard, GroupCard, ObjectiveCard, CustomAgentBag
@@ -199,11 +199,11 @@ class GameProcessor:
 
         return self
 
-    def set_priority(self, priority: Priority) -> 'GameProcessor':
+    def set_priority(self, priority: Balance) -> 'GameProcessor':
         """Set priority for player
 
         Args:
-            priority (Priority): priority.
+            priority (Balance): priority.
 
         Returns:
             game_logic.GameProcessor
@@ -212,14 +212,14 @@ class GameProcessor:
                 or self.G.c.bot.has_priority:
             raise HTTPException(
                 status_code=409,
-                detail="Priority yet setted for this game"
+                detail="Balance yet setted for this game"
                     )
 
-        if priority == Priority.TRUE:
+        if priority == Balance.TRUE:
             val = True
-        elif priority == Priority.FALSE:
+        elif priority == Balance.FALSE:
             val = False
-        elif priority == Priority.RANDOM:
+        elif priority == Balance.RANDOM:
             val = True if self.G.c.coin.roll()[0] == 1 else False
 
         self.G.c.player.has_priority = val

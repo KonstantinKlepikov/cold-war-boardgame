@@ -14,8 +14,8 @@ class BaseEnum(str, Enum):
         return [e.value for e in cls]
 
 
-class Priority(BaseEnum):
-    """Priority enumeration
+class Balance(BaseEnum):
+    """Balance enumeration
     """
     TRUE = 'true'
     FALSE = 'false'

@@ -3,7 +3,7 @@ import bgameb
 from typing import Tuple
 from fastapi import HTTPException
 from app.config import settings
-from app.constructs import Priority, Factions, Phases, Agents
+from app.constructs import Balance, Factions, Phases, Agents
 from app.core import processor_game
 
 
@@ -241,12 +241,12 @@ class TestGameProcessorLogic:
             game_proc.set_faction(test_input)
 
     @pytest.mark.parametrize("test_input,expected", [
-        (Priority.TRUE.value, (True, False)),
-        (Priority.FALSE.value, (False, True)),
+        (Balance.TRUE.value, (True, False)),
+        (Balance.FALSE.value, (False, True)),
             ])
     def test_set_priority(
         self,
-        test_input: Priority,
+        test_input: Balance,
         expected: Tuple[bool],
         inited_game_proc: processor_game.GameProcessor,
             ) -> None:
@@ -266,7 +266,7 @@ class TestGameProcessorLogic:
             ) -> None:
         """Test set priority at random
         """
-        game_proc = inited_game_proc.set_priority(Priority.RANDOM.value)
+        game_proc = inited_game_proc.set_priority(Balance.RANDOM.value)
         assert isinstance(game_proc.G.c.player.has_priority, bool), 'wrong player proc priority'
         assert isinstance(game_proc.G.c.bot.has_priority, bool), 'wrong bot proc priority'
 

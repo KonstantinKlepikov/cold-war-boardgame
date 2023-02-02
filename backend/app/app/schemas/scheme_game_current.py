@@ -5,7 +5,7 @@ from app.constructs import (
     HiddenObjectives, HiddenAgents, AwaitingAbilities
         )
 from collections import deque
-from bgameb import Steps, Player, Card, Deck, Game
+from bgameb import Steps, Player, Card, Deck, Game, Dice
 
 
 class StepsProcessor(Steps):
@@ -84,7 +84,8 @@ class OpponentAgentsProcessor(BaseAgentsProcessor):
     def agent_x(self) -> Optional[Agents]:
         for agent in self.current:
             if agent.is_agent_x is True:
-                result = agent.id if agent.is_revealed is True else HiddenAgents.HIDDEN.value
+                result = agent.id if agent.is_revealed is True \
+                    else HiddenAgents.HIDDEN.value
                 return result
 
 
@@ -133,8 +134,8 @@ class GroupInPlayProcessor(Card):
             'side': {'exclude': True},
             'count': {'exclude': True},
             'is_revealed': {'exclude': True},
-            'is_revealed_to_player': {'exclude': True},
-            'is_revealed_to_opponent': {'exclude': True},
+            'is_revealed_to_player': {'exclude': True}, # TODO: cant be excluded
+            'is_revealed_to_opponent': {'exclude': True}, # TODO: cant be excluded
                 }
 
 
@@ -172,8 +173,8 @@ class ObjectiveInPlayProcessor(Card):
             'side': {'exclude': True},
             'count': {'exclude': True},
             'is_revealed': {'exclude': True},
-            'is_revealed_to_player': {'exclude': True},
-            'is_revealed_to_opponent': {'exclude': True},
+            'is_revealed_to_player': {'exclude': True}, # TODO: cant be excluded
+            'is_revealed_to_opponent': {'exclude': True}, # TODO: cant be excluded
                 }
 
 
@@ -215,10 +216,18 @@ class CurrentGameDataProcessor(Game):
     steps: StepsProcessor
     players: Users
     decks: Decks
+    coin: Optional[Dice]
+
+    class Config(Game.Config):
+        allow_population_by_field_name = True
+        fields = {
+            'coin': {'exclude': True},
+            }
 
     def fill(self):
         """Fill sgame constructs by current data
         """
+        self.coin = Dice(id='coin')
         self.steps.deal(self.steps.turn_phases_left)
         self.steps.last = self.steps.c.by_id(self.steps.turn_phase)
 

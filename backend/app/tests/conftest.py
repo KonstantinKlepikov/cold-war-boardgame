@@ -7,11 +7,10 @@ from app.main import app
 from app.config import settings
 from app.models import model_user, model_game_current, model_game_static
 from app.crud import crud_game_static, crud_user, crud_game_current
+from app.core.logic import GameLogic
 # from app.constructs import Agents, Groups, Objectives
 from app.db.init_db import init_db_cards, init_db_users, get_yaml
 
-
-# agent_cards = [{'name': agent} for agent in Agents.get_values()]
 
 
 @pytest.fixture(scope="session")
@@ -169,24 +168,15 @@ def static(connection: Generator) -> crud_game_static.CRUDStatic:
             )
 
 
-# @pytest.fixture(scope="function")
-# def game_proc(
-#     game: crud_game.CRUDGame,
-#     cards: crud_card.CRUDCards,
-#         ) -> processor_game.GameProcessor:
-#     """Get game processor object
-#     """
-#     current_data = game.get_current_game_data(settings.user0_login)
-#     return processor_game.GameProcessor(cards.get_all_cards(), current_data)
-
-
-# @pytest.fixture(scope="function")
-# def inited_game_proc(
-#     game_proc: processor_game.GameProcessor,
-#         ) -> processor_game.GameProcessor:
-#     """Fill game processor object
-#     """
-#     return game_proc.fill()
+@pytest.fixture(scope="function")
+def game_logic(
+    game: crud_game_current.CRUDGame,
+    static: crud_game_static.CRUDStatic,
+        ) -> GameLogic:
+    """Get game processor object
+    """
+    game = game.get_last_game(settings.user0_login)
+    return GameLogic(static, game)
 
 
 # @pytest.fixture(scope="function")

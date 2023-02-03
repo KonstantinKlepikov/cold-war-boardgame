@@ -154,36 +154,40 @@ class TestGameLofic:
         with pytest.raises(HTTPException):
             game_logic.set_faction(test_input)
 
-    @pytest.mark.parametrize("test_input,expected", [
-        (Balance.TRUE.value, (True, False)),
-        (Balance.FALSE.value, (False, True)),
-            ])
-    def test_set_balance(
-        self,
-        test_input: Balance,
-        expected: Tuple[bool],
-        game_logic: GameLogic,
-            ) -> None:
-        """Test set balance
-        """
-        proc = game_logic.set_balance(test_input).proc
-        assert isinstance(proc, CurrentGameDataProcessor), \
-            'wrong return'
-        assert proc.players.player.has_balance == expected[0], 'wrong player proc priority'
-        assert proc.players.opponent.has_balance == expected[1], 'wrong bot proc priority'
+    # NOTE: not used
+    # @pytest.mark.parametrize("test_input,expected", [
+    #     (Balance.TRUE.value, (True, False)),
+    #     (Balance.FALSE.value, (False, True)),
+    #         ])
+    # def test_set_balance(
+    #     self,
+    #     test_input: Balance,
+    #     expected: Tuple[bool],
+    #     game_logic: GameLogic,
+    #         ) -> None:
+    #     """Test set balance
+    #     """
+    #     proc = game_logic.set_balance(test_input).proc
+    #     assert isinstance(proc, CurrentGameDataProcessor), \
+    #         'wrong return'
+    #     assert proc.players.player.has_balance == expected[0], 'wrong player proc priority'
+    #     assert proc.players.opponent.has_balance == expected[1], 'wrong bot proc priority'
 
-        with pytest.raises(HTTPException):
-            game_logic.set_balance(test_input)
+    #     with pytest.raises(HTTPException):
+    #         game_logic.set_balance(test_input)
 
-    def test_set_balance_random(
-        self,
-        game_logic: GameLogic,
-            ) -> None:
-        """Test set balaance at random
-        """
-        proc = game_logic.set_balance(Balance.RANDOM.value).proc
-        assert proc.players.player.has_balance != proc.players.opponent.has_balance, \
-            'wrong random balance'
+    # NOTE: not used
+    # def test_set_balance_random(
+    #     self,
+    #     game_logic: GameLogic,
+    #         ) -> None:
+    #     """Test set balaance at random
+    #     """
+    #     proc = game_logic.set_balance(Balance.RANDOM.value).proc
+    #     assert isinstance(proc, CurrentGameDataProcessor), \
+    #         'wrong return'
+    #     assert proc.players.player.has_balance != proc.players.opponent.has_balance, \
+    #         'wrong random balance'
 
     def test_set_next_turn_change_the_turn(
         self,
@@ -192,7 +196,6 @@ class TestGameLofic:
         """Test set_next_turn() push turn
         """
         proc = game_logic.set_next_turn().proc
-
         assert proc.steps.game_turn == 2, 'wrong proc turn'
         assert proc.steps.last_id == Phases.BRIEFING.value, 'wrong last'
         assert len(proc.steps.current) == 5, 'wrong current'
@@ -208,58 +211,108 @@ class TestGameLofic:
         with pytest.raises(HTTPException):
             game_logic.set_next_turn()
 
-#     def test_set_next_phase_change_phase(
-#         self,
-#         inited_game_proc: processor_game.GameProcessor,
-#             ) -> None:
-#         """Test set_next_phase() push phase
-#         """
-#         game_proc = inited_game_proc.set_next_phase()
-#         assert isinstance(game_proc, processor_game.GameProcessor), 'wrong game_proce'
-#         assert game_proc.G.c.steps.last.id == Phases.BRIEFING.value, \
-#             'wrong proc phase'
-#         assert len(game_proc.G.c.steps.current) == 5, 'wrong tep len'
+    def test_set_next_phase_change_phase(
+        self,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test set_next_phase() push phase
+        """
+        proc = game_logic.set_next_phase().proc
+        assert isinstance(proc, CurrentGameDataProcessor), \
+            'wrong return'
+        assert proc.steps.last_id == Phases.PLANNING.value, \
+            'wrong proc phase'
+        assert len(proc.steps.current) == 4, 'wrong tep len'
 
-#         game_proc = inited_game_proc.set_next_phase()
-#         assert game_proc.G.c.steps.last.id == Phases.PLANNING.value, \
-#             'wrong proc phase'
-#         assert len(game_proc.G.c.steps.current) == 4, 'wrong tep len'
+        proc = game_logic.set_next_phase().proc
+        assert proc.steps.last_id == Phases.INFLUENCE.value, \
+            'wrong proc phase'
+        assert len(proc.steps.current) == 3, 'wrong tep len'
 
-#     def test_set_next_phase_cant_change_detente(
-#         self,
-#         inited_game_proc: processor_game.GameProcessor,
-#             ) -> None:
-#         """Test set_next_phase() cant change detente
-#         """
-#         inited_game_proc.G.c.steps.last = inited_game_proc.G.c.steps.c.by_id(Phases.DETENTE.value)
+    def test_set_next_phase_cant_change_detente(
+        self,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test set_next_phase() cant change detente
+        """
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.DETENTE.value)
+        proc = game_logic.set_next_phase().proc
+        assert proc.steps.last_id == Phases.DETENTE.value, \
+            'wrong proc phase'
 
-#         game_proc = inited_game_proc.set_next_phase()
-#         assert game_proc.G.c.steps.last.id == 'detente', \
-#             'phase changed if game end'
-#         assert len(game_proc.G.c.steps.current) == 6, 'wrong tep len'
+    def test_set_mission_card(
+        self,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test set mission card and change objective deck
+        """
+        proc = game_logic.set_mission_card().proc
+        assert isinstance(proc, CurrentGameDataProcessor), \
+            'wrong return'
+        assert isinstance(proc.decks.objectives.last_id, str), 'mission not set'
+        assert len(proc.decks.objectives.current) == 20, 'wrong proc current'
 
-#     def test_check_analyct_condition_raise_wrong_phase(
-#         self,
-#         inited_game_proc: processor_game.GameProcessor,
-#             ) -> None:
-#         """Test play analyst look raise 400 when wrong phase
-#         """
-#         inited_game_proc.G.c.steps.last = inited_game_proc.G.c.steps.c.by_id(Phases.DETENTE.value)
+    def test_set_balance_at_the_turn_1(
+        self,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test set turn priority at the turn 0
+        """
+        game_logic.proc.players.player.score = 30
+        game_logic.proc.players.opponent.score = 0
 
-#         with pytest.raises(HTTPException):
-#             inited_game_proc._check_analyct_condition()
+        proc = game_logic.set_balance().proc
+        assert isinstance(proc, CurrentGameDataProcessor), \
+            'wrong return'
+        assert proc.players.player.has_balance != proc.players.opponent.has_balance, \
+            'wrong balance'
 
-#     def test_check_analyct_condition_raise_wrong_access(
-#         self,
-#         inited_game_proc: processor_game.GameProcessor,
-#             ) -> None:
-#         """Test play analyst look raise 400 when player havent access
-#         to ability
-#         """
-#         inited_game_proc.G.c.steps.last = inited_game_proc.G.c.steps.c.by_id(Phases.BRIEFING.value)
+    @pytest.mark.parametrize("test_input,expected", [
+        ((30, 0), (False, True)),
+        ((0, 30), (True, False)),
+        ((0, 0), (False, False)),
+            ])
+    def test_set_balance(
+        self,
+        test_input: Tuple[int],
+        expected: Tuple[bool],
+        game_logic: GameLogic,
+            ) -> None:
+        """Test set turn priority
+        """
+        game_logic.proc.players.player.score = test_input[0]
+        game_logic.proc.players.opponent.score = test_input[1]
+        game_logic.proc.steps.game_turn = 2
 
-#         with pytest.raises(HTTPException):
-#             inited_game_proc._check_analyct_condition()
+        proc = game_logic.set_balance().proc
+
+        assert proc.players.player.has_balance == expected[0], \
+            'wrong player priority'
+        assert proc.players.opponent.has_balance == expected[1], \
+            'wrong opponent priority'
+
+    def test_check_analyct_condition_raise_wrong_phase(
+        self,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test play analyst look raise 400 when wrong phase
+        """
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.DETENTE.value)
+
+        with pytest.raises(HTTPException):
+            game_logic._check_analyct_condition()
+
+    def test_check_analyct_condition_raise_wrong_access(
+        self,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test play analyst look raise 400 when player havent access
+        to ability
+        """
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.BRIEFING.value)
+
+        with pytest.raises(HTTPException):
+            game_logic._check_analyct_condition()
 
 #     def test_play_analyst_for_look_the_top(
 #         self,
@@ -497,55 +550,6 @@ class TestGameLofic:
 # class TestGamePhaseConditions:
 #     """Test change conditions
 #     """
-
-#     def test_set_mission_card(
-#         self,
-#         started_game_proc: processor_game.GameProcessor,
-#             ) -> None:
-#         """Test set mission card and change objective deck
-#         """
-#         game_proc = started_game_proc.set_mission_card()
-
-#         assert isinstance(game_proc, processor_game.GameProcessor), 'wrong game_proce'
-#         assert isinstance(game_proc.G.c.objective_deck.last.id, str), 'mission not set'
-#         assert len(game_proc.G.c.objective_deck.current) == 20, 'wrong proc current'
-
-#     def test_set_turn_priority_at_the_turn_0(
-#         self,
-#         started_game_proc: processor_game.GameProcessor,
-#             ) -> None:
-#         """Test set turn priority at the turn 0
-#         """
-#         started_game_proc.G.c.player.score = 30
-#         started_game_proc.G.c.bot.score = 0
-
-#         game_proc = started_game_proc.set_turn_priority()
-
-#         assert isinstance(game_proc, processor_game.GameProcessor), 'wrong game_proce'
-#         assert isinstance(game_proc.G.c.player.has_priority, bool), 'wrong priority'
-#         assert isinstance(game_proc.G.c.bot.has_priority, bool), 'wrong priority'
-
-#     @pytest.mark.parametrize("test_input,expected", [
-#         ((30, 0), (False, True)),
-#         ((0, 30), (True, False)),
-#         ((0, 0), (None, None)),
-#             ])
-#     def test_set_turn_priority(
-#         self,
-#         test_input: Tuple[int],
-#         expected: Tuple[bool],
-#         started_game_proc: processor_game.GameProcessor,
-#             ) -> None:
-#         """Test set turn priority
-#         """
-#         started_game_proc.G.c.player.score = test_input[0]
-#         started_game_proc.G.c.bot.score = test_input[1]
-#         started_game_proc.G.c.steps.game_turn = 1
-
-#         game_proc = started_game_proc.set_turn_priority()
-
-#         assert game_proc.G.c.player.has_priority == expected[0], 'wrong priority'
-#         assert game_proc.G.c.bot.has_priority == expected[1], 'wrong priority'
 
 #     def test_set_phase_conditions_after_next_briefing(
 #         self,

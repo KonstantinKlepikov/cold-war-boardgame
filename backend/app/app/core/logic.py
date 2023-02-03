@@ -96,37 +96,39 @@ class GameLogic:
                     )
 
         self.proc.players.player.faction = faction.value
-        self.proc.players.opponent.faction = 'kgb' if faction == Factions.CIA else 'cia'
+        self.proc.players.opponent.faction = Factions.KGB \
+            if faction == Factions.CIA else Factions.CIA
 
         return self
 
-    def set_balance(self, balance: Balance) -> 'GameLogic':
-        """Set balance for players
+    # NOTE: not used
+    # def set_balance(self, balance: Balance) -> 'GameLogic':
+    #     """Set balance for players
 
-        Args:
-            balance (Balance): priority.
+    #     Args:
+    #         balance (Balance): priority.
 
-        Returns:
-            GameLogic
-        """
-        if self.proc.players.player.has_balance is True \
-                or self.proc.players.opponent.has_balance is True:
-            raise HTTPException(
-                status_code=409,
-                detail="Balance yet setted for this game"
-                    )
+    #     Returns:
+    #         GameLogic
+    #     """
+    #     if self.proc.players.player.has_balance is True \
+    #             or self.proc.players.opponent.has_balance is True:
+    #         raise HTTPException(
+    #             status_code=409,
+    #             detail="Balance yet setted for this game"
+    #                 )
 
-        if balance == Balance.TRUE:
-            val = True
-        elif balance == Balance.FALSE:
-            val = False
-        elif balance == Balance.RANDOM:
-            val = True if self.proc.coin.roll()[0] == 1 else False
+    #     if balance == Balance.TRUE:
+    #         val = True
+    #     elif balance == Balance.FALSE:
+    #         val = False
+    #     elif balance == Balance.RANDOM:
+    #         val = True if self.proc.coin.roll()[0] == 1 else False
 
-        self.proc.players.player.has_balance = val
-        self.proc.players.opponent.has_balance = not val
+    #     self.proc.players.player.has_balance = val
+    #     self.proc.players.opponent.has_balance = not val
 
-        return self
+    #     return self
 
     def set_next_turn(self) -> 'GameLogic':
         """Set next turn
@@ -145,81 +147,81 @@ class GameLogic:
 
         return self
 
-    # def set_next_phase(self) -> 'GameProcessor':
-    #     """Set next phase
+    def set_next_phase(self) -> 'GameLogic':
+        """Set next phase
 
-    #     Returns:
-    #         GameProcessor
-    #     """
-    #     if self.G.c.steps.last_id != Phases.DETENTE.value:
-    #         self.G.c.steps.pop()
+        Returns:
+            GameLogic
+        """
+        if self.proc.steps.last_id != Phases.DETENTE.value:
+            self.proc.steps.pop()
 
-    #     return self
+        return self
 
-    # def set_mission_card(self) -> 'GameProcessor':
-    #     """Set mission card on a turn
+    def set_mission_card(self) -> 'GameLogic':
+        """Set mission card on a turn
 
-    #     Returns:
-    #         GameProcessor
-    #     """
-    #     try:
-    #         self.G.c.objective_deck.pop()
-    #     except IndexError:
-    #         raise HTTPException(
-    #             status_code=409,
-    #             detail="Objective deck is empty."
-    #                 )
+        Returns:
+            GameLogic
+        """
+        try:
+            self.proc.decks.objectives.pop()
+        except IndexError:
+            raise HTTPException(
+                status_code=409,
+                detail="Objective deck is empty."
+                    )
 
-    #     return self
+        return self
 
-    # def set_turn_priority(self) -> 'GameProcessor':
-    #     """Set priority to the turn. It used in influence struggle.
+    def set_balance(self) -> 'GameLogic':
+        """Set balance to the turn. Balance is used in influence struggle.
 
-    #     Returns:
-    #         GameProcessor
-    #     """
-    #     if self.G.c.steps.game_turn == 0:
-    #         val = True if self.G.c.coin.roll()[0] == 1 else False
-    #     elif self.G.c.player.score < self.G.c.bot.score:
-    #         val = True
-    #     elif self.G.c.player.score > self.G.c.bot.score:
-    #         val = False
-    #     else:
-    #         # TODO: change condition:
-    #         # if loose previous seas fire phase -> True
-    #         # if both loose -> return self
-    #         return self
+        Returns:
+            GameLogic
+        """
+        if self.proc.steps.game_turn == 1:
+            val = True if self.proc.coin.roll()[0] == 1 else False
+        elif self.proc.players.player.score < self.proc.players.opponent.score:
+            val = True
+        elif self.proc.players.player.score > self.proc.players.opponent.score:
+            val = False
+        else:
+            # TODO: change condition:
+            # if loose previous seas fire phase -> True
+            # if both loose -> return self
+            return self
 
-    #     self.G.c.player.has_priority = val
-    #     self.G.c.bot.has_priority = not val
+        self.proc.players.player.has_balance = val
+        self.proc.players.opponent.has_balance = not val
 
-    #     return self
+        return self
 
-    # def _check_analyct_condition(self) -> None:
-    #     """Check conditions for play analyst ability
-    #     """
-    #     if self.G.c.steps.last_id != Phases.BRIEFING.value:
-    #         raise HTTPException(
-    #             status_code=409,
-    #             detail="Ability can't be played in any phases except 'briefing'."
-    #                 )
-    #     if not Agents.ANALYST.value in self.G.c.player.abilities:
-    #         raise HTTPException(
-    #             status_code=409,
-    #             detail="No access to play ability of Analyst agent card."
-    #                 )
+    def _check_analyct_condition(self) -> None:
+        """Check conditions for play analyst ability
+        """
+        if self.proc.steps.last_id != Phases.BRIEFING.value:
+            raise HTTPException(
+                status_code=409,
+                detail="Ability can't be played in any phases except 'briefing'."
+                    )
+        if Agents.ANALYST not in self.proc.players.player.awaiting_abilities:
+            raise HTTPException(
+                status_code=409,
+                detail="No access to play ability of Analyst agent card."
+                    )
 
-    # def play_analyst_for_look_the_top(self) -> 'GameProcessor':
+    # def play_analyst_for_look_the_top(self) -> 'GameLogic':
     #     """Play analyst abylity for look the top cards
 
     #     Returns:
-    #         GameProcessor
+    #         GameLogic
     #     """
     #     self._check_analyct_condition()
 
     #     if len([
     #         card.id for card
-    #         in self.G.c.player.c.group_cards.current
+    #         in self.proc.decks.groups
     #         if card.pos_in_deck in [-1, -2, -3]
     #             ]) == 3:
     #         raise HTTPException(

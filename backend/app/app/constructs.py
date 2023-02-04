@@ -91,6 +91,7 @@ class Groups(BaseEnum):
     RADIO = 'Radio'
     TELEVISION = 'Television'
 
+
 class HiddenGroups(BaseEnum):
     """Groups cards ids
     """

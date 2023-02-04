@@ -1,4 +1,4 @@
-from typing import Union, Optional
+from typing import Union, Optional, Literal
 from fastapi import HTTPException
 from app.crud.crud_game_static import StaticGameData
 from app.crud.crud_game_current import CurrentGameData
@@ -8,7 +8,7 @@ from app.schemas.scheme_game_current import (
     ObjectiveInPlayProcessor
         )
 from app.constructs import Balance, Factions, Agents, Groups, Objectives, Phases
-from bgameb import Step
+from bgameb import Step, errors
 
 
 class GameLogic:
@@ -211,97 +211,80 @@ class GameLogic:
                 detail="No access to play ability of Analyst agent card."
                     )
 
-    # def play_analyst_for_look_the_top(self) -> 'GameLogic':
-    #     """Play analyst abylity for look the top cards
+    def play_analyst_for_look_the_top(self) -> 'GameLogic':
+        """Play analyst abylity for look the top cards
 
-    #     Returns:
-    #         GameLogic
-    #     """
-    #     self._check_analyct_condition()
+        Returns:
+            GameLogic
+        """
+        self._check_analyct_condition()
 
-    #     if len([
-    #         card.id for card
-    #         in self.proc.decks.groups
-    #         if card.pos_in_deck in [-1, -2, -3]
-    #             ]) == 3:
-    #         raise HTTPException(
-    #             status_code=409,
-    #             detail="Top 3 group cards is yet revealed for player."
-    #                 )
+        if all([
+            card.is_revealed_to_player for card
+            in self.proc.decks.groups.current
+                ][-3:]):
+            raise HTTPException(
+                status_code=409,
+                detail="Top 3 group cards is yet revealed for player."
+                    )
 
-    #     self.G.c.group_deck.temp_group = []
+        for pos in range(-3, 0):
+            self.proc.decks.groups.current[pos].is_revealed_to_player = True
 
-    #     for pos in range(-3, 0):
-    #         card = self.G.c.group_deck.current[pos]
-    #         try:
-    #             self.G.c.player.c.group_cards.remove(card.id)
-    #         except ValueError:
-    #             pass
-    #         self.G.c.player.c.group_cards.append(card)
-    #         self.G.c.player.c.group_cards.current[-1].pos_in_deck = pos
-    #         self.G.c.group_deck.temp_group.append(card.id)
+        return self
 
-    #     return self
+    def play_analyst_for_arrange_the_top(
+        self, top: list[Groups]) -> 'GameLogic':
+        """Play analyst abylity for rearrange the top cards
 
-    # def play_analyst_for_arrange_the_top(
-    #     self, top: List[str]) -> 'GameProcessor':
-    #     """Play analyst abylity for rearrange the top cards
+        Args:
+            top (list[Groups]): arranged cards
 
-    #     Args:
-    #         top (List[str]): arranged cards
+        Returns:
+            GameLogic
+        """
+        self._check_analyct_condition()
 
-    #     Returns:
-    #         GameProcessor
-    #     """
-    #     self._check_analyct_condition()
+        try:
+            self.proc.decks.groups.reorderfrom(top, len(self.proc.decks.groups.current)-3)
+            self.proc.players.player.awaiting_abilities.remove(Agents.ANALYST.value)
 
-    #     current = {}
-    #     check = set()
-    #     for _ in range(3):
-    #         card = self.G.c.group_deck.pop()
-    #         check.add(card.id)
-    #         current[card.id] = card
+        except errors.ArrangeIndexError:
+            raise HTTPException(
+                status_code=409,
+                detail="Your list of cards and top cards not match."
+                    )
 
-    #     if check ^ set(top):
+        return self
 
-    #         for card in reversed(current.values()):
-    #             self.G.c.group_deck.append(card)
+    def set_agent(
+        self,
+        agent_id: Agents,
+        user: Literal['player', 'opponent'] = 'player',
+            ) -> 'GameLogic':
+        """Set agent card
 
-    #         raise HTTPException(
-    #             status_code=409,
-    #             detail="Your list of cards and top cards not match."
-    #                 )
-    #     else:
-    #         for card in top:
-    #             self.G.c.group_deck.append(current[card])
+        Returns:
+            GameLogic
+        """
+        if user == 'player':
+            proc = self.proc.players.player
+        else:
+            proc = self.proc.players.opponent
 
-    #     self.G.c.player.abilities.remove(Agents.ANALYST.value)
-
-    #     return self
-
-    # def set_agent(
-    #     self,
-    #     player: Literal['player', 'bot'],
-    #     agent_id: str,
-    #         ) -> 'GameProcessor':
-    #     """Set agent card
-
-    #     Returns:
-    #         GameProcessor
-    #     """
-    #     played = self.G.c[player].c.agent_cards.by_id(agent_id)
-    #     if played:
-    #         played.is_in_play = True
-    #         played.is_in_headquarter = False
-    #         if Agents.DOUBLE.value in self.G.c[player].abilities:
-    #             played.is_revealed = True
-    #             self.G.c[player].abilities.remove(Agents.DOUBLE.value)
-    #     else:
-    #         raise HTTPException(
-    #             status_code=409,
-    #             detail=f"Agent {agent_id} not available to choice."
-    #                 )
-    #     return self
+        choice = proc.agents.c.by_id(agent_id)
+        if choice:
+            played.is_in_play = True
+            played.is_in_headquarter = False
+            if Agents.DOUBLE.value in self.G.c[player].abilities:
+                played.is_revealed = True
+                self.G.c[player].abilities.remove(Agents.DOUBLE.value)
+        else:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Agent {agent_id} not available to choice."
+                    )
+        return self
 
     # def chek_phase_conditions_before_next(self) -> 'GameProcessor':
     #     """Check game conition before push to next phase

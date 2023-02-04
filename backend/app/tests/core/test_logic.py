@@ -314,121 +314,122 @@ class TestGameLofic:
         with pytest.raises(HTTPException):
             game_logic._check_analyct_condition()
 
-#     def test_play_analyst_for_look_the_top(
-#         self,
-#         started_game_proc: processor_game.GameProcessor,
-#             ) -> None:
-#         """Test play analyst look 3 cards
-#         """
-#         started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.c.by_id(Phases.BRIEFING.value)
-#         started_game_proc.G.c.player.abilities.append(Agents.ANALYST.value)
-#         game_proc = started_game_proc.play_analyst_for_look_the_top()
-#         assert len(game_proc.G.c.player.c.group_cards.current) == 3, 'wrong current'
-#         assert game_proc.G.c.player.c.group_cards.current[0].pos_in_deck == -3, \
-#             'wrong position'
-#         old = game_proc.G.c.player.c.group_cards.current[-1].id
-#         assert game_proc.G.c.group_deck.current[-1].id == old, 'wrong order'
+    def test_play_analyst_for_look_the_top(
+        self,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test play analyst look 3 cards
+        """
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.BRIEFING.value)
+        game_logic.proc.players.player.awaiting_abilities.append(Agents.ANALYST.value)
+        proc = game_logic.play_analyst_for_look_the_top().proc
+        assert len([
+            card for card
+            in proc.decks.groups.current
+            if card.is_revealed_to_player is True
+                ]) == 3, 'wrong current'
 
-#         with pytest.raises(HTTPException):
-#             game_proc.play_analyst_for_look_the_top()
+        with pytest.raises(HTTPException):
+            game_logic.play_analyst_for_look_the_top()
 
-#     def test_play_analyst_for_look_the_top_removes_old_revealed(
-#         self,
-#         started_game_proc: processor_game.GameProcessor,
-#             ) -> None:
-#         """Test play analyst look 3 cards and removes old revealed
-#         """
-#         started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.c.by_id(Phases.BRIEFING.value)
-#         started_game_proc.G.c.player.abilities.append(Agents.ANALYST.value)
-#         started_game_proc.G.c.player.c.group_cards.current.append(
-#             started_game_proc.G.c.group_deck.current[-1]
-#                 )
-#         started_game_proc.G.c.player.c.group_cards.current[-1].pos_in_deck = -10
+    # def test_play_analyst_for_look_the_top_removes_old_revealed(
+    #     self,
+    #     game_logic: GameLogic,
+    #         ) -> None:
+    #     """Test play analyst look 3 cards and removes old revealed
+    #     """
+    #     game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.BRIEFING.value)
+    #     game_logic.proc.players.player.awaiting_abilities.append(Agents.ANALYST.value)
+    #     started_game_proc.G.c.player.c.group_cards.current.append(
+    #         started_game_proc.G.c.group_deck.current[-1]
+    #             )
+    #     started_game_proc.G.c.player.c.group_cards.current[-1].pos_in_deck = -10
 
-#         game_proc = started_game_proc.play_analyst_for_look_the_top()
-#         assert len(game_proc.G.c.player.c.group_cards.current) == 3, 'wrong current'
-#         assert game_proc.G.c.player.c.group_cards.current[0].pos_in_deck == -3, \
-#             'wrong position'
+    #     game_proc = started_game_proc.play_analyst_for_look_the_top()
+    #     assert len(game_proc.G.c.player.c.group_cards.current) == 3, 'wrong current'
+    #     assert game_proc.G.c.player.c.group_cards.current[0].pos_in_deck == -3, \
+    #         'wrong position'
 
-#     def test_play_analyst_for_arrange_the_top(
-#         self,
-#         started_game_proc: processor_game.GameProcessor,
-#             ) -> None:
-#         """Test play analyst for arrange the top
-#         """
-#         started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.c.by_id(Phases.BRIEFING.value)
-#         started_game_proc.G.c.player.abilities.append(Agents.ANALYST.value)
-#         top = [
-#             started_game_proc.G.c.group_deck.current[-3].id,
-#             started_game_proc.G.c.group_deck.current[-2].id,
-#             started_game_proc.G.c.group_deck.current[-1].id,
-#                 ]
-#         rev = top[::-1]
-#         assert len(started_game_proc.G.c.group_deck.current) == 24, 'wrong current'
+    def test_play_analyst_for_arrange_the_top(
+        self,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test play analyst for arrange the top
+        """
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.BRIEFING.value)
+        game_logic.proc.players.player.awaiting_abilities.append(Agents.ANALYST.value)
+        top = [
+            game_logic.proc.decks.groups.current[-3].id,
+            game_logic.proc.decks.groups.current[-2].id,
+            game_logic.proc.decks.groups.current[-1].id,
+                ]
+        rev = top[::-1]
+        assert len(game_logic.proc.decks.groups.current) == 24, 'wrong current'
 
-#         game_proc = started_game_proc.play_analyst_for_arrange_the_top(rev)
-#         assert game_proc.G.c.player.abilities == [], 'wrong abilities'
-#         assert len(game_proc.G.c.group_deck.current) == 24, 'wrong current'
-#         top = [
-#             game_proc.G.c.group_deck.current[-3].id,
-#             game_proc.G.c.group_deck.current[-2].id,
-#             game_proc.G.c.group_deck.current[-1].id,
-#                 ]
-#         assert top == rev, 'not reordered'
+        proc = game_logic.play_analyst_for_arrange_the_top(rev).proc
+        assert proc.players.player.awaiting_abilities == [], 'wrong abilities'
+        assert len(game_logic.proc.decks.groups.current) == 24, 'wrong current'
+        top = [
+            game_logic.proc.decks.groups.current[-3].id,
+            game_logic.proc.decks.groups.current[-2].id,
+            game_logic.proc.decks.groups.current[-1].id,
+                ]
+        assert top == rev, 'not reordered'
 
-#     def test_play_analyst_for_arrange_the_top_not_match(
-#         self,
-#         started_game_proc: processor_game.GameProcessor,
-#             ) -> None:
-#         """Test play analyst for arrange the top not match the top
-#         """
-#         started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.c.by_id(Phases.BRIEFING.value)
-#         started_game_proc.G.c.player.abilities.append(Agents.ANALYST.value)
-#         old = [
-#             started_game_proc.G.c.group_deck.current[-3].id,
-#             started_game_proc.G.c.group_deck.current[-2].id,
-#             started_game_proc.G.c.group_deck.current[-1].id,
-#                 ]
-#         wrong = [
-#             started_game_proc.G.c.group_deck.current[-10].id,
-#             started_game_proc.G.c.group_deck.current[-2].id,
-#             started_game_proc.G.c.group_deck.current[-1].id,
-#                 ]
-#         wrong.reverse()
+    def test_play_analyst_for_arrange_the_top_not_match(
+        self,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test play analyst for arrange the top not match the top
+        """
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.BRIEFING.value)
+        game_logic.proc.players.player.awaiting_abilities.append(Agents.ANALYST.value)
+        old = [
+            game_logic.proc.decks.groups.current[-3].id,
+            game_logic.proc.decks.groups.current[-2].id,
+            game_logic.proc.decks.groups.current[-1].id,
+                ]
+        wrong = [
+            game_logic.proc.decks.groups.current[-10].id,
+            game_logic.proc.decks.groups.current[-2].id,
+            game_logic.proc.decks.groups.current[-1].id,
+                ]
+        wrong.reverse()
 
-#         with pytest.raises(HTTPException):
-#             started_game_proc.play_analyst_for_arrange_the_top(wrong)
+        with pytest.raises(HTTPException):
+            game_logic.play_analyst_for_arrange_the_top(wrong)
 
-#         assert started_game_proc.G.c.player.abilities == [Agents.ANALYST.value], 'wrong abilities'
-#         assert len(started_game_proc.G.c.group_deck.current) == 24, 'wrong current'
-#         new = [
-#             started_game_proc.G.c.group_deck.current[-3].id,
-#             started_game_proc.G.c.group_deck.current[-2].id,
-#             started_game_proc.G.c.group_deck.current[-1].id,
-#                 ]
-#         assert old == new, 'reordered'
+        assert game_logic.proc.players.player.awaiting_abilities == [Agents.ANALYST.value], \
+            'wrong abilities'
+        assert len(game_logic.proc.decks.groups.current) == 24, 'wrong current'
+        new = [
+            game_logic.proc.decks.groups.current[-3].id,
+            game_logic.proc.decks.groups.current[-2].id,
+            game_logic.proc.decks.groups.current[-1].id,
+                ]
+        assert old == new, 'reordered'
 
-#     @pytest.mark.parametrize("test_input", ['player', 'bot', ])
-#     def test_set_agent(
-#         self,
-#         started_game_proc: processor_game.GameProcessor,
-#         test_input: str,
-#             ) -> None:
-#         """Test set agent
-#         """
-#         game_proc = started_game_proc.set_agent(
-#             player=test_input, agent_id=Agents.DEPUTY.value
-#                 )
-#         assert game_proc.G.c[test_input].c.agent_cards.by_id(Agents.DEPUTY.value).is_in_play == True, \
-#             'agent not set'
-#         assert game_proc.G.c[test_input].c.agent_cards.by_id(Agents.DEPUTY.value).is_in_headquarter== False, \
-#             'agent is in hand'
-#         assert game_proc.G.c[test_input].c.agent_cards.by_id(Agents.DEPUTY.value).is_revealed == False, \
-#             'wrong revealed'
-#         with pytest.raises(HTTPException):
-#             game_proc = started_game_proc.set_agent(
-#                 player=test_input, agent_id='Someher wrong'
-#                     )
+    @pytest.mark.parametrize("test_input", ['player', 'bot', ])
+    def test_set_agent(
+        self,
+        started_game_proc: processor_game.GameProcessor,
+        test_input: str,
+            ) -> None:
+        """Test set agent
+        """
+        game_proc = started_game_proc.set_agent(
+            player=test_input, agent_id=Agents.DEPUTY.value
+                )
+        assert game_proc.G.c[test_input].c.agent_cards.by_id(Agents.DEPUTY.value).is_in_play == True, \
+            'agent not set'
+        assert game_proc.G.c[test_input].c.agent_cards.by_id(Agents.DEPUTY.value).is_in_headquarter== False, \
+            'agent is in hand'
+        assert game_proc.G.c[test_input].c.agent_cards.by_id(Agents.DEPUTY.value).is_revealed == False, \
+            'wrong revealed'
+        with pytest.raises(HTTPException):
+            game_proc = started_game_proc.set_agent(
+                player=test_input, agent_id='Someher wrong'
+                    )
 
 #     @pytest.mark.parametrize("test_input", ['player', 'bot', ])
 #     def test_set_agent_and_reveal(

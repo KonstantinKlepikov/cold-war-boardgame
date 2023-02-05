@@ -376,7 +376,6 @@ class GameLogic:
                 for agent in deck:
                     if agent.is_agent_x == True:
                         agent.is_revealed = True
-                        break
 
         # detente
         elif phase == Phases.DETENTE:
@@ -392,9 +391,9 @@ class GameLogic:
                         agent.is_agent_x = False
                     if agent.id == Agents.DEPUTY:
                         agent.is_in_headquarter = True
-                        break
+                        agent.is_revealed = False
                     else:
                         agent.is_on_leave = True
-                        break
+                        agent.is_revealed = True
 
         return self

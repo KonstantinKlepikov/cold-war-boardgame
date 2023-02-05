@@ -532,8 +532,8 @@ class TestGamePhaseConditions:
                 ]:
             user.agents.by_id(Agents.SPY)[0].is_on_leave = True
             user.agents.by_id(Agents.SPY)[0].is_revealed = True
-            user.agents.by_id(Agents.DIRECTOR)[0].is_on_leave = True
-            user.agents.by_id(Agents.DIRECTOR)[0].is_revealed = False
+            user.agents.by_id(Agents.DEPUTY)[0].is_on_leave = True
+            user.agents.by_id(Agents.DEPUTY)[0].is_revealed = False
 
         proc = game_logic.set_phase_conditions_after_next().proc
 
@@ -543,55 +543,64 @@ class TestGamePhaseConditions:
                 ]:
             assert user.agents.by_id(Agents.SPY)[0].is_on_leave is False, 'not changed'
             assert user.agents.by_id(Agents.SPY)[0].is_revealed is False, 'not changed'
-            assert user.agents.by_id(Agents.DIRECTOR)[0].is_on_leave is False, 'not changed'
-            assert user.agents.by_id(Agents.DIRECTOR)[0].is_revealed is False, 'changed'
+            assert user.agents.by_id(Agents.DEPUTY)[0].is_on_leave is False, 'not changed'
+            assert user.agents.by_id(Agents.DEPUTY)[0].is_revealed is False, 'changed'
 
-    # @pytest.mark.parametrize("test_input", ['player', 'bot', ])
-    # def test_set_phase_conditions_after_next_debriefing(
-    #     self,
-    #     game_logic: GameLogic,
-    #     test_input: str,
-    #         ) -> None:
-    #     """Test set phase condition after next in debriefing
-    #     reveal agents in play
-    #     """
-    #     started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.c.by_id(Phases.DEBRIFIENG)
-    #     cards = started_game_proc.G.c[test_input].c.agent_cards
-    #     cards.by_id(Agents.SPY.value).is_in_play = True
-    #     cards.by_id(Agents.SPY.value).is_revealed = True
-    #     cards.by_id(Agents.DIRECTOR.value).is_in_play = True
-    #     cards.by_id(Agents.DIRECTOR.value).is_revealed = False
+    def test_set_phase_conditions_after_next_debriefing(
+        self,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test set phase condition after next in debriefing
+        reveal agents in play
+        """
+        players = game_logic.proc.players
 
-    #     game_proc = started_game_proc.set_phase_conditions_after_next()
-    #     cards = game_proc.G.c[test_input].c.agent_cards
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.DEBRIFIENG)
 
-    #     assert cards.by_id(Agents.SPY.value).is_in_play is True, 'changed'
-    #     assert cards.by_id(Agents.SPY.value).is_revealed is True, 'changed'
-    #     assert cards.by_id(Agents.DIRECTOR.value).is_in_play is True, 'changed'
-    #     assert cards.by_id(Agents.DIRECTOR.value).is_revealed is True, 'not changed'
+        players.player.agents.by_id(Agents.SPY)[0].is_agent_x = True
+        players.player.agents.by_id(Agents.SPY)[0].is_revealed = True
+        players.opponent.agents.by_id(Agents.DEPUTY)[0].is_agent_x = True
+        players.opponent.agents.by_id(Agents.DEPUTY)[0].is_revealed = False
 
-    # @pytest.mark.parametrize("test_input", ['player', 'bot', ])
-    # def test_set_phase_conditions_after_next_detente(
-    #     self,
-    #     game_logic: GameLogic,r,
-    #     test_input: str,
-    #         ) -> None:
-    #     """Test set phase condition after next in detente
-    #     agents go to vacation and to hand
-    #     """
-    #     started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.c.by_id(Phases.DETENTE)
-    #     cards = started_game_proc.G.c[test_input].c.agent_cards
-    #     cards.by_id(Agents.SPY.value).is_in_play = True
-    #     cards.by_id(Agents.SPY.value).is_revealed = True
-    #     cards.by_id(Agents.DEPUTY.value).is_in_play = True
-    #     cards.by_id(Agents.DEPUTY.value).is_revealed = True
+        game_logic.set_phase_conditions_after_next()
 
-    #     game_proc = started_game_proc.set_phase_conditions_after_next()
-    #     cards = game_proc.G.c[test_input].c.agent_cards
+        assert players.player.agents.by_id(Agents.SPY)[0].is_agent_x is True, \
+            'changed'
+        assert players.player.agents.by_id(Agents.SPY)[0].is_revealed is True, \
+            'changed'
+        assert players.opponent.agents.by_id(Agents.DEPUTY)[0].is_agent_x is True, \
+            'changed'
+        assert players.opponent.agents.by_id(Agents.DEPUTY)[0].is_revealed is True, \
+        'not changed'
 
-    #     assert cards.by_id(Agents.SPY.value).is_in_play is False, 'not changed'
-    #     assert cards.by_id(Agents.SPY.value).is_revealed is True, 'changed'
-    #     assert cards.by_id(Agents.SPY.value).is_in_vacation is True, 'not changed'
-    #     assert cards.by_id(Agents.DEPUTY.value).is_in_play is False, 'not changed'
-    #     assert cards.by_id(Agents.DEPUTY.value).is_revealed is False, 'not changed'
-    #     assert cards.by_id(Agents.DEPUTY.value).is_in_vacation is False, 'changed'
+    def test_set_phase_conditions_after_next_detente(
+        self,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test set phase condition after next in detente
+        agents go to vacation and to hand
+        """
+        players = game_logic.proc.players
+
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.DETENTE)
+        players.player.agents.by_id(Agents.SPY)[0].is_agent_x = True
+        players.player.agents.by_id(Agents.SPY)[0].is_revealed = False
+        players.opponent.agents.by_id(Agents.DEPUTY)[0].is_agent_x = True
+        players.opponent.agents.by_id(Agents.DEPUTY)[0].is_revealed = True
+
+        game_logic.set_phase_conditions_after_next()
+
+        assert players.player.agents.by_id(Agents.SPY)[0].is_agent_x is False, \
+            'not changed'
+        assert players.player.agents.by_id(Agents.SPY)[0].is_revealed is True, \
+            'changed'
+        assert players.player.agents.by_id(Agents.SPY)[0].is_on_leave is True, \
+            'not changed'
+        assert players.opponent.agents.by_id(Agents.DEPUTY)[0].is_agent_x is False, \
+            'not changed'
+        assert players.opponent.agents.by_id(Agents.DEPUTY)[0].is_revealed is False, \
+            'not changed'
+        assert players.opponent.agents.by_id(Agents.DEPUTY)[0].is_on_leave is False, \
+            'changed'
+        assert players.opponent.agents.by_id(Agents.DEPUTY)[0].is_in_headquarter is True, \
+            'changed'

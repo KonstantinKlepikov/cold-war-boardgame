@@ -102,6 +102,9 @@ class Decks(EmbeddedDocument):
 
 class CurrentGameData(Document):
     """Summary of game data
+
+    This document have to deleted from db
+    on day 3 after its creation
     """
     steps = EmbeddedDocumentField(Steps, default=Steps())
     players = EmbeddedDocumentField(Players, required=True)
@@ -112,3 +115,7 @@ class CurrentGameData(Document):
         """Return last added object from database
         """
         return queryset.order_by('-$natural')
+
+    meta = {
+        'expireAfterSeconds': 259200,
+            }

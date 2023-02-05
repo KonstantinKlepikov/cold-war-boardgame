@@ -1,4 +1,3 @@
-from typing import Union, Optional, Literal
 from fastapi import HTTPException
 from app.crud.crud_game_static import StaticGameData
 from app.crud.crud_game_current import CurrentGameData
@@ -7,7 +6,7 @@ from app.schemas.scheme_game_current import (
     CurrentGameDataProcessor, AgentInPlayProcessor, GroupInPlayProcessor,
     ObjectiveInPlayProcessor
         )
-from app.constructs import Balance, Factions, Agents, Groups, Objectives, Phases
+from app.constructs import Factions, Agents, Groups, Objectives, Phases
 from bgameb import Step, errors
 
 
@@ -100,35 +99,6 @@ class GameLogic:
             if faction == Factions.CIA else Factions.CIA
 
         return self
-
-    # NOTE: not used
-    # def set_balance(self, balance: Balance) -> 'GameLogic':
-    #     """Set balance for players
-
-    #     Args:
-    #         balance (Balance): priority.
-
-    #     Returns:
-    #         GameLogic
-    #     """
-    #     if self.proc.players.player.has_balance is True \
-    #             or self.proc.players.opponent.has_balance is True:
-    #         raise HTTPException(
-    #             status_code=409,
-    #             detail="Balance yet setted for this game"
-    #                 )
-
-    #     if balance == Balance.TRUE:
-    #         val = True
-    #     elif balance == Balance.FALSE:
-    #         val = False
-    #     elif balance == Balance.RANDOM:
-    #         val = True if self.proc.coin.roll()[0] == 1 else False
-
-    #     self.proc.players.player.has_balance = val
-    #     self.proc.players.opponent.has_balance = not val
-
-    #     return self
 
     def set_next_turn(self) -> 'GameLogic':
         """Set next turn
@@ -260,25 +230,19 @@ class GameLogic:
     def set_agent(
         self,
         agent_id: Agents,
-        user: Literal['player', 'opponent'] = 'player',
             ) -> 'GameLogic':
         """Set agent card
 
         Returns:
             GameLogic
         """
-        if user == 'player':
-            proc = self.proc.players.player
-        else:
-            proc = self.proc.players.opponent
-
-        choice = proc.agents.c.by_id(agent_id)
-        if choice:
-            played.is_in_play = True
-            played.is_in_headquarter = False
-            if Agents.DOUBLE.value in self.G.c[player].abilities:
-                played.is_revealed = True
-                self.G.c[player].abilities.remove(Agents.DOUBLE.value)
+        choice = self.proc.players.player.agents.by_id(agent_id)
+        if choice and choice[0].is_in_headquarter is True:
+            choice[0].is_agent_x = True
+            choice[0].is_in_headquarter = False
+            if Agents.DOUBLE in self.proc.players.player.awaiting_abilities:
+                choice[0].is_revealed = True
+                self.proc.players.player.awaiting_abilities.remove(Agents.DOUBLE.value)
         else:
             raise HTTPException(
                 status_code=409,
@@ -286,142 +250,151 @@ class GameLogic:
                     )
         return self
 
-    # def chek_phase_conditions_before_next(self) -> 'GameProcessor':
-    #     """Check game conition before push to next phase
-    #     and raise exception if any check fails
+    def chek_phase_conditions_before_next(self) -> 'GameLogic':
+        """Check game conition before push to next phase
+        and raise exception if any check fails
 
-    #     Returns:
-    #         GameProcessor
-    #     """
-    #     if self.G.c.steps.is_game_end:
-    #         raise HTTPException(
-    #             status_code=409,
-    #             detail="Something can't be changed, because game is end"
-    #                 )
+        Returns:
+            GameLogic
+        """
+        if self.proc.steps.is_game_ends:
+            raise HTTPException(
+                status_code=409,
+                detail="Something can't be changed, because game is end"
+                    )
 
-    #     # phase = self.G.c.steps.turn_phase
-    #     phase = self.G.c.steps.last_id
+        # phase = self.G.c.steps.turn_phase
+        phase = self.proc.steps.last_id
 
-    #     # briefing
-    #     if phase == Phases.BRIEFING.value:
+        # briefing
+        if phase == Phases.BRIEFING:
 
-    #         # players has't priority
-    #         if not self.G.c.player.has_priority \
-    #                 and not self.G.c.bot.has_priority:
-    #             raise HTTPException(
-    #                 status_code=409,
-    #                 detail="No one player has priority. Cant push to next phase."
-    #                     )
+            # players has't priority
+            if not self.proc.players.player.has_balance \
+                    and not self.proc.players.opponent.has_balance:
+                raise HTTPException(
+                    status_code=409,
+                    detail="No one player has priority. Cant push to next phase."
+                        )
 
-    #         # objective card not defined
-    #         if self.G.c.objective_deck.last is None:
-    #             raise HTTPException(
-    #                 status_code=409,
-    #                 detail="Mission card undefined. Cant push to next phase."
-    #                     )
+            # objective card not defined
+            if self.proc.decks.objectives.last is None:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Mission card undefined. Cant push to next phase."
+                        )
 
-    #         # analyst not used
-    #         if Agents.ANALYST.value in self.G.c.player.abilities:
-    #             raise HTTPException(
-    #                 status_code=409,
-    #                 detail="Analyst ability must be used."
-    #                     )
+            # analyst not used
+            if Agents.ANALYST in self.proc.players.player.awaiting_abilities:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Analyst ability must be used."
+                        )
 
-    #         # agent not choosen
-    #         for player in ['player', 'bot']:
-    #             pa = [
-    #                 agent.is_in_play for agent
-    #                 in self.G.c[player].c.agent_cards.current
-    #                 if agent.is_in_play is True
-    #                     ]
-    #             if True not in pa:
-    #                 raise HTTPException(
-    #                     status_code=409,
-    #                     detail=f"Agent for {player} not choosen."
-    #                         )
+            # agent not choosen
+            if self.proc.players.player.agents.agent_x is None:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Agent not choosen."
+                        )
 
-    #     # planning
-    #     elif phase == Phases.PLANNING.value:
-    #         pass
+        # planning
+        elif phase == Phases.PLANNING:
+            pass
 
-    #     # influence_struggle
-    #     elif phase == Phases.INFLUENCE.value:
-    #         pass
+        # influence_struggle
+        elif phase == Phases.INFLUENCE:
+            pass
 
-    #     # ceasefire
-    #     elif phase == Phases.CEASEFIRE.value:
-    #         pass
+        # ceasefire
+        elif phase == Phases.CEASEFIRE:
+            pass
 
-    #     # debriefing
-    #     elif phase == Phases.DEBRIFIENG.value:
-    #         pass
+        # debriefing
+        elif phase == Phases.DEBRIFIENG:
+            pass
 
-    #     # detente
-    #     elif phase == Phases.DETENTE.value:
-    #         raise HTTPException(
-    #             status_code=409,
-    #             detail="This phase is last in a turn. Change turn number "
-    #                     "before get next phase"
-    #                 )
+        # detente
+        elif phase == Phases.DETENTE:
+            raise HTTPException(
+                status_code=409,
+                detail="This phase is last in a turn. Change turn number "
+                        "before get next phase"
+                    )
 
-    #     return self
+        return self
 
-    # def set_phase_conditions_after_next(self) -> 'GameProcessor':
-    #     """Set som phase conditions after push phase
+    def set_phase_conditions_after_next(self) -> 'GameLogic':
+        """Set som phase conditions after push phase
 
-    #     Returns:
-    #         GameProcessor
-    #     """
-    #     # phase = self.G.c.steps.turn_phase
-    #     phase = self.G.c.steps.last_id
+        Returns:
+            GameLogic
+        """
+        phase = self.proc.steps.last_id
 
-    #     # set briefing states after next
-    #     if phase == Phases.BRIEFING.value:
+        # set briefing states after next
+        if phase == Phases.BRIEFING:
 
-    #         self.set_mission_card()
-    #         self.set_turn_priority()
-    #         self.G.c.group_deck.deal()
-    #         self.G.c.group_deck.pile.clear()
-    #         self.G.c.player.c.group_cards.clear()
-    #         self.G.c.bot.c.group_cards.clear()
+            self.set_mission_card()
+            self.set_balance()
+            self.proc.decks.groups.deal()
+            self.proc.decks.groups.pile.clear()
+            self.proc.decks.groups.owned_by_opponent.clear()
+            self.proc.decks.groups.owned_by_player.clear()
 
-    #     # planning
-    #     elif phase == Phases.PLANNING.value:
-    #         pass
+        # planning
+        elif phase == Phases.PLANNING:
+            pass
 
-    #     # influence_struggle
-    #     elif phase == Phases.INFLUENCE.value:
 
-    #         # return all agents from vacation to headquarter
-    #         for player in ['player', 'bot']:
-    #             for agent in self.G.c[player].c.agent_cards.current:
-    #                 if agent.is_in_vacation == True:
-    #                     agent.is_in_vacation = False
-    #                     agent.is_revealed = False
+        # influence_struggle
+        elif phase == Phases.INFLUENCE:
 
-    #     # ceasefire
-    #     elif phase == Phases.CEASEFIRE.value:
-    #         pass
+            # return all agents from on_leave to headquarter
+            for deck in [
+                self.proc.players.player.agents.current,
+                self.proc.players.opponent.agents.current
+                ]:
+                for agent in deck:
+                    if agent.is_on_leave == True:
+                        agent.is_on_leave = False
+                        agent.is_in_headquarter = False
+                        agent.is_revealed = False
 
-    #     # debriefing
-    #     elif phase == Phases.DEBRIFIENG.value:
+        # ceasefire
+        elif phase == Phases.CEASEFIRE:
+            pass
 
-    #         # open all agents in play
-    #         for player in ['player', 'bot']:
-    #             for agent in self.G.c[player].c.agent_cards.current:
-    #                 if agent.is_in_play == True:
-    #                     agent.is_revealed = True
+        # debriefing
+        elif phase == Phases.DEBRIFIENG:
 
-    #     # detente
-    #     elif phase == Phases.DETENTE.value:
+            # open all agents in play
+            for deck in [
+                self.proc.players.player.agents.current,
+                self.proc.players.opponent.agents.current
+                ]:
+                for agent in deck:
+                    if agent.is_agent_x == True:
+                        agent.is_revealed = True
+                        break
 
-    #         # put agents to vacations from play
-    #         for player in ['player', 'bot']:
-    #             for agent in self.G.c[player].c.agent_cards.current:
-    #                 agent.is_in_play = False
-    #                 if agent.id == Agents.DEPUTY.value:
-    #                     agent.is_revealed = False
-    #                 else:
-    #                     agent.is_in_vacation = True
+        # detente
+        elif phase == Phases.DETENTE:
 
-    #     return self
+            # put agents to on_leave from play
+
+            for deck in [
+                self.proc.players.player.agents.current,
+                self.proc.players.opponent.agents.current
+                ]:
+                for agent in deck:
+                    if agent.is_agent_x == True:
+                        agent.is_agent_x = False
+                    if agent.id == Agents.DEPUTY:
+                        agent.is_in_headquarter = True
+                        break
+                    else:
+                        agent.is_on_leave = True
+                        break
+
+        return self

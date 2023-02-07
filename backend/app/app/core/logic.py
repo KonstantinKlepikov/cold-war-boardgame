@@ -1,5 +1,4 @@
 from fastapi import HTTPException
-from app.crud.crud_game_static import StaticGameData
 from app.crud.crud_game_current import CurrentGameData
 from app.schemas.scheme_game_current_api import CurrentGameDataApi
 from app.schemas.scheme_game_current import (
@@ -18,10 +17,8 @@ class GameLogic:
 
     def __init__(
         self,
-        static: StaticGameData,
         game: CurrentGameData,
             ) -> None:
-        self.static = static
         self.game = game
         self.proc = self._fill_process()
 

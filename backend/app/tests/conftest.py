@@ -1,8 +1,8 @@
 import pytest
-from typing import Generator, Union, Any
+from typing import Generator, Any
 from mongoengine import disconnect, connect
 from mongoengine.context_managers import switch_db
-# from fastapi.testclient import TestClient
+from fastapi.testclient import TestClient
 from app.main import app
 from app.config import settings
 from app.models import model_user, model_game_current, model_game_static
@@ -94,10 +94,10 @@ def db_game_data(
             }
 
 
-# @pytest.fixture(scope="function")
-# def client() -> Generator:
-#     with TestClient(app) as c:
-#         yield c
+@pytest.fixture(scope="function")
+def client() -> Generator:
+    with TestClient(app) as c:
+        yield c
 
 
 @pytest.fixture(scope="function")
@@ -171,12 +171,11 @@ def static(connection: Generator) -> crud_game_static.CRUDStatic:
 @pytest.fixture(scope="function")
 def game_logic(
     game: crud_game_current.CRUDGame,
-    static: crud_game_static.CRUDStatic,
         ) -> GameLogic:
     """Get game processor object
     """
     game = game.get_last_game(settings.user0_login)
-    return GameLogic(static, game)
+    return GameLogic(game)
 
 
 # @pytest.fixture(scope="function")

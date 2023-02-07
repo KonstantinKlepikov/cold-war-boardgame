@@ -6,7 +6,7 @@ from app.db.init_db import (
     check_db_cards_init, init_db_cards,
     check_db_users_init, init_db_users
         )
-# from app.api.api_v1.api import api_router
+from app.api.api_v1.api import api_router
 
 
 connect(
@@ -40,4 +40,4 @@ app.add_middleware(
 )
 
 
-# app.include_router(api_router, prefix=settings.api_v1_str)
+app.include_router(api_router, prefix=settings.api_v1_str)

@@ -93,7 +93,7 @@ class CRUDGame(
                     }
                 },
             )
-        # from pprint import pprint
+        # from pprint import pprintx
         # pprint(data)
         game_logic.game.modify(**data)
         return game_logic

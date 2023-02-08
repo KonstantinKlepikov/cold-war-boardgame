@@ -172,16 +172,20 @@ def static(connection: Generator) -> crud_game_static.CRUDStatic:
 def game_logic(
     game: crud_game_current.CRUDGame,
         ) -> GameLogic:
-    """Get game processor object
+    """Get game logic object
     """
     game = game.get_last_game(settings.user0_login)
     return GameLogic(game)
 
 
-# @pytest.fixture(scope="function")
-# def started_game_proc(
-#     inited_game_proc: processor_game.GameProcessor,
-#         ) -> processor_game.GameProcessor:
-#     """Init the game and return processor
-#     """
-#     return inited_game_proc.deal_and_shuffle_decks()
+@pytest.fixture(scope="function")
+def started_game(
+    game: crud_game_current.CRUDGame,
+    game_logic: GameLogic,
+        ) -> crud_game_current.CRUDGame:
+    """Get startet game object
+    """
+    game.save_game_processor(
+        game_logic.deal_and_shuffle_decks()
+            )
+    return game

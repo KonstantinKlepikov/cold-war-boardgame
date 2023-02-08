@@ -1,4 +1,4 @@
-from typing import Callable, Generator
+from typing import Dict, Callable, Generator
 from fastapi.testclient import TestClient
 from app.crud import crud_user
 from app.models import model_user
@@ -61,7 +61,7 @@ class TestUserLogin:
 
     def test_login_return_400_if_wrong_password(
         self,
-        db_user: dict[str, str],
+        db_user: Dict[str, str],
         monkeypatch,
         client: TestClient,
             ) -> None:

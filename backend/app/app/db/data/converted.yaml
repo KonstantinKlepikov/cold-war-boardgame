@@ -161,7 +161,8 @@ objective_cards:
   - Military
   name: Nobel Peace Prize
   population: 1
-  special_ability: 'Cease-fire: Upon cansing civil disorder, discard this objective
+  special_ability_phase: 'ceasefire'
+  special_ability_text: 'Upon cansing civil disorder, discard this objective
     to prevent your Agent X from being terminated. He goes on leave instead.'
   stability: 6
   victory_points: 5
@@ -172,7 +173,8 @@ objective_cards:
   - Military
   name: Live Benefit
   population: 1
-  special_ability: 'Influence Struggle: Instead of recruiting a group normally, activating
+  special_ability_phase: 'influence_struggle'
+  special_ability_text: 'Instead of recruiting a group normally, activating
     a group, or passing, discard this objective to recruit the group on top of the
     group discard pile.'
   stability: 6
@@ -184,7 +186,8 @@ objective_cards:
   - Economic
   name: Nuclear Escalation
   population: 1
-  special_ability: 'Influence Struggle: Instead of recruiting a group normally, activating
+  special_ability_phase: 'influence_struggle'
+  special_ability_text: 'Instead of recruiting a group normally, activating
     a group, or passing, discard this objective to send all military cards in play
     to the group deck discard pile.'
   stability: 6
@@ -196,7 +199,8 @@ objective_cards:
   - Political
   name: Space Race
   population: 1
-  special_ability: 'Detente: Discard this objective to look at the next three cards
+  special_ability_phase: 'detente'
+  special_ability_text: 'Discard this objective to look at the next three cards
     on the objective deck and then replace them in any order you choose.'
   stability: 6
   victory_points: 5
@@ -207,7 +211,8 @@ objective_cards:
   - Political
   name: Olympic Games
   population: 1
-  special_ability: 'Detente: Discard this objective to return a terminated agent to
+  special_ability_phase: 'detente'
+  special_ability_text: 'Discard this objective to return a terminated agent to
     the game. It reurns on leave (i.e., not at headquarters).'
   stability: 6
   victory_points: 5
@@ -218,7 +223,8 @@ objective_cards:
   - Economic
   name: Summit Meeting
   population: 1
-  special_ability: 'Influence Struggle: Discard this objective to force your opponent
+  special_ability_phase: 'influence_struggle'
+  special_ability_text: 'Discard this objective to force your opponent
     to reveal his Agent X''s identity.'
   stability: 6
   victory_points: 5
@@ -229,7 +235,8 @@ objective_cards:
   - Military
   name: Egypt
   population: 4
-  special_ability: null
+  special_ability_phase: null
+  special_ability_text: null
   stability: 11
   victory_points: 20
 - bias_icons:
@@ -239,7 +246,8 @@ objective_cards:
   - Military
   name: Vietnam
   population: 5
-  special_ability: null
+  special_ability_phase: null
+  special_ability_text: null
   stability: 9
   victory_points: 20
 - bias_icons:
@@ -249,7 +257,8 @@ objective_cards:
   - Political
   name: Panama
   population: 5
-  special_ability: null
+  special_ability_phase: null
+  special_ability_text: null
   stability: 9
   victory_points: 15
 - bias_icons:
@@ -259,7 +268,8 @@ objective_cards:
   - Economic
   name: Angola
   population: 5
-  special_ability: null
+  special_ability_phase: null
+  special_ability_text: null
   stability: 9
   victory_points: 10
 - bias_icons:
@@ -269,7 +279,8 @@ objective_cards:
   - Media
   name: Afghanistan
   population: 5
-  special_ability: null
+  special_ability_phase: null
+  special_ability_text: null
   stability: 9
   victory_points: 15
 - bias_icons:
@@ -279,7 +290,8 @@ objective_cards:
   - Political
   name: Houndaras
   population: 5
-  special_ability: null
+  special_ability_phase: null
+  special_ability_text: null
   stability: 9
   victory_points: 10
 - bias_icons:
@@ -289,7 +301,8 @@ objective_cards:
   - Media
   name: Libya
   population: 4
-  special_ability: null
+  special_ability_phase: null
+  special_ability_text: null
   stability: 11
   victory_points: 15
 - bias_icons:
@@ -299,7 +312,8 @@ objective_cards:
   - Economic
   name: Greece
   population: 3
-  special_ability: null
+  special_ability_phase: null
+  special_ability_text: null
   stability: 13
   victory_points: 10
 - bias_icons:
@@ -309,7 +323,8 @@ objective_cards:
   - Military
   name: Turkey
   population: 3
-  special_ability: null
+  special_ability_phase: null
+  special_ability_text: null
   stability: 13
   victory_points: 15
 - bias_icons:
@@ -319,7 +334,8 @@ objective_cards:
   - Media
   name: Iran
   population: 4
-  special_ability: null
+  special_ability_phase: null
+  special_ability_text: null
   stability: 11
   victory_points: 15
 - bias_icons:
@@ -329,7 +345,8 @@ objective_cards:
   - Media
   name: Cuba
   population: 5
-  special_ability: null
+  special_ability_phase: null
+  special_ability_text: null
   stability: 9
   victory_points: 10
 - bias_icons:
@@ -339,7 +356,8 @@ objective_cards:
   - Media
   name: Congo
   population: 5
-  special_ability: null
+  special_ability_phase: null
+  special_ability_text: null
   stability: 9
   victory_points: 10
 - bias_icons:
@@ -349,7 +367,8 @@ objective_cards:
   - Economic
   name: Czechoslovakia
   population: 3
-  special_ability: null
+  special_ability_phase: null
+  special_ability_text: null
   stability: 13
   victory_points: 20
 - bias_icons:
@@ -359,7 +378,8 @@ objective_cards:
   - Media
   name: Chile
   population: 4
-  special_ability: null
+  special_ability_phase: null
+  special_ability_text: null
   stability: 11
   victory_points: 10
 - bias_icons:
@@ -369,6 +389,7 @@ objective_cards:
   - Economic
   name: Korea
   population: 4
-  special_ability: null
+  special_ability_phase: null
+  special_ability_text: null
   stability: 11
   victory_points: 10

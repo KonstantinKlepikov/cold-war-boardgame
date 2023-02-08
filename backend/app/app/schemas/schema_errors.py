@@ -62,9 +62,7 @@ class HttpError409(HttpErrorMessage):
     class Config:
         schema_extra = {
             "example": {
-                "end game error": {
-                    "detail":
-                        "Something wrong with client or server data",
-                        },
-                    }
-                }
+                "detail":
+                    "Something wrong with client or server data",
+            }
+        }

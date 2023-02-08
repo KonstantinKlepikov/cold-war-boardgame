@@ -1,10 +1,10 @@
 import pytest
 from typing import Callable, Generator
 from fastapi.testclient import TestClient
-from app.crud import crud_game_current, crud_user
-from app.core import logic
+from app.crud import crud_game, crud_user
+from app.core import processor_game
 from app.config import settings
-from app.constructs import Objectives, Factions, Agents
+from app.constructs import Phases, Objectives
 
 
 class TestCreateNewGame:
@@ -15,7 +15,7 @@ class TestCreateNewGame:
         self,
         monkeypatch,
         user: crud_user.CRUDUser,
-        game: crud_game_current.CRUDGame,
+        game: crud_game.CRUDGame,
         connection: Generator,
         client: TestClient,
             ) -> None:
@@ -27,8 +27,12 @@ class TestCreateNewGame:
         def mock_game(*args, **kwargs) -> Callable:
             return game.create_new_game(args[0])
 
+        def mock_process(*args, **kwargs) -> Callable:
+            return game.get_game_processor(args[0])
+
         monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
-        monkeypatch.setattr(crud_game_current.game, "create_new_game", mock_game)
+        monkeypatch.setattr(crud_game.game, "create_new_game", mock_game)
+        monkeypatch.setattr(crud_game.game, "get_game_processor", mock_process)
 
         response = client.post(
             f"{settings.api_v1_str}/game/create",
@@ -45,10 +49,10 @@ class TestPresetFaction:
     """
 
     @pytest.mark.parametrize("faction", ["kgb", "cia", ])
-    def test_preset_faction_return_200_409(
+    def test_preset_faction_return_200(
         self,
         user: crud_user.CRUDUser,
-        game: crud_game_current.CRUDGame,
+        game: crud_game.CRUDGame,
         monkeypatch,
         connection: Generator,
         client: TestClient,
@@ -60,10 +64,10 @@ class TestPresetFaction:
             return user.get_by_login(settings.user0_login)
 
         def mock_process(*args, **kwargs) -> Callable:
-            return game.get_last_game(args[0])
+            return game.get_game_processor(args[0])
 
         monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
-        monkeypatch.setattr(crud_game_current.game, "get_last_game", mock_process)
+        monkeypatch.setattr(crud_game.game, "get_game_processor", mock_process)
 
         response = client.patch(
             f"{settings.api_v1_str}/game/preset/faction?q={faction}",
@@ -122,7 +126,8 @@ class TestNextTurn:
     def mock_return(
         self,
         user: crud_user.CRUDUser,
-        started_game: crud_game_current.CRUDGame,
+        game: crud_game.CRUDGame,
+        started_game_proc: processor_game.GameProcessor,
         monkeypatch,
             ) -> None:
         """Mock user and game
@@ -132,10 +137,10 @@ class TestNextTurn:
             return user.get_by_login(settings.user0_login)
 
         def mock_process(*args, **kwargs) -> Callable:
-            return started_game.get_last_game(args[0])
+            return started_game_proc
 
         monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
-        monkeypatch.setattr(crud_game_current.game, "get_last_game", mock_process)
+        monkeypatch.setattr(crud_game.game, "get_game_processor", mock_process)
 
     def test_next_turn_return_200(
         self,
@@ -155,14 +160,12 @@ class TestNextTurn:
     def test_next_turn_if_game_end_return_409(
         self,
         mock_return,
-        started_game: crud_game_current.CRUDGame,
-        game_logic: logic.GameLogic,
+        started_game_proc: processor_game.GameProcessor,
         client: TestClient,
             ) -> None:
         """Test turn can't be pushed if game end
         """
-        game_logic.proc.steps.is_game_ends = True
-        started_game.save_game_processor(game_logic)
+        started_game_proc.G.c.steps.is_game_end = True
 
         response = client.patch(
             f"{settings.api_v1_str}/game/next_turn",
@@ -181,7 +184,7 @@ class TestNextPhase:
     def mock_return(
         self,
         user: crud_user.CRUDUser,
-        started_game: crud_game_current.CRUDGame,
+        started_game_proc: processor_game.GameProcessor,
         monkeypatch,
             ) -> None:
         """Mock user and game
@@ -190,28 +193,42 @@ class TestNextPhase:
             return user.get_by_login(settings.user0_login)
 
         def mock_process(*args, **kwargs) -> Callable:
-            return started_game.get_last_game(args[0])
+            return started_game_proc
 
         monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
-        monkeypatch.setattr(crud_game_current.game, "get_last_game", mock_process)
+        monkeypatch.setattr(crud_game.game, "get_game_processor", mock_process)
+
+    def test_next_phase_return_200(
+        self,
+        mock_return,
+        client: TestClient,
+            ) -> None:
+        """Test game/next set next phase
+        """
+        response = client.patch(
+            f"{settings.api_v1_str}/game/next_phase",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 200, 'wrong status'
 
     def test_next_phase_return_200_and_get_from_briefing(
         self,
         mock_return,
         client: TestClient,
-        started_game: crud_game_current.CRUDGame,
-        game_logic: logic.GameLogic,
+        started_game_proc: processor_game.GameProcessor,
             ) -> None:
         """Test game/next set next phase from briefing
         """
-        game_logic.proc.players.player.faction = Factions.KGB
-        game_logic.proc.players.opponent.faction = Factions.CIA
-        game_logic.proc.players.player.agents.current[0].is_agent_x = True
-        game_logic.proc.players.opponent.agents.current[0].is_agent_x = True
-        game_logic.proc.players.player.has_balance = True
-        game_logic.proc.players.opponent.has_balance= False
-        game_logic.proc.decks.objectives.pop()
-        started_game.save_game_processor(game_logic)
+        started_game_proc.G.c.player.faction = 'kgb'
+        started_game_proc.G.c.bot.faction = 'cia'
+        started_game_proc.G.c.player.c.agent_cards.current[0].is_in_play = True
+        started_game_proc.G.c.bot.c.agent_cards.current[0].is_in_play = True
+        started_game_proc.G.c.player.has_priority = True
+        started_game_proc.G.c.bot.has_priority = False
+        started_game_proc.G.c.steps.last = started_game_proc.G.c.steps.by_id(Phases.BRIEFING.value)
+        started_game_proc.G.c.objective_deck.last = started_game_proc.G.c.objective_deck.by_id(Objectives.AFGHANISTAN.value)
 
         response = client.patch(
             f"{settings.api_v1_str}/game/next_phase",
@@ -226,14 +243,12 @@ class TestNextPhase:
     def test_next_phase_if_last_return_409(
         self,
         mock_return,
-        started_game: crud_game_current.CRUDGame,
-        game_logic: logic.GameLogic,
+        started_game_proc: processor_game.GameProcessor,
         client: TestClient,
             ) -> None:
         """Test last phases cant'be pushed
         """
-        game_logic.proc.steps.is_game_ends = True
-        started_game.save_game_processor(game_logic)
+        started_game_proc.G.c.steps.is_game_end = True
 
         response = client.patch(
             f"{settings.api_v1_str}/game/next_phase",
@@ -253,31 +268,33 @@ class TestAnalyst:
     def mock_return(
         self,
         user: crud_user.CRUDUser,
-        started_game: crud_game_current.CRUDGame,
+        game: crud_game.CRUDGame,
         monkeypatch,
             ) -> None:
         """Mock user and game
         """
+
         def mock_user(*args, **kwargs) -> Callable:
             return user.get_by_login(settings.user0_login)
 
         def mock_process(*args, **kwargs) -> Callable:
-            return started_game.get_last_game(args[0])
+            return game.get_game_processor(args[0])
 
         monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
-        monkeypatch.setattr(crud_game_current.game, "get_last_game", mock_process)
+        monkeypatch.setattr(crud_game.game, "get_game_processor", mock_process)
 
     def test_analyst_get_return_200(
         self,
         mock_return,
+        connection: Generator,
         client: TestClient,
-        started_game: crud_game_current.CRUDGame,
-        game_logic: logic.GameLogic,
             ) -> None:
         """Test /phase/briefing/analyst_look returns 200
         """
-        game_logic.proc.players.player.awaiting_abilities.append(Agents.ANALYST)
-        started_game.save_game_processor(game_logic)
+        current = connection['CurrentGameData'].objects().first()
+        current.game_steps.turn_phase = Phases.BRIEFING.value
+        current.players[0].abilities = ['Analyst', ]
+        current.save()
 
         response = client.patch(
             f"{settings.api_v1_str}/game/phase/briefing/analyst_look",
@@ -286,22 +303,27 @@ class TestAnalyst:
                 }
             )
         assert response.status_code == 200, f'{response.content=}'
+        assert len(response.json()["top_cards"]) == 3, 'no top cards in result'
+
+        current = connection['CurrentGameData'].objects().first()
+        assert len(current.players[0].player_cards.group_cards) == 3, \
+            'wrong player groups'
 
     # TODO: here test 409
 
     def test_analyst_arrange_return_200(
         self,
         mock_return,
+        connection: Generator,
         client: TestClient,
-        started_game: crud_game_current.CRUDGame,
-        game_logic: logic.GameLogic,
             ) -> None:
         """Test /phase/briefing/analyst_look returns 200
         """
-
-        game_logic.proc.players.player.awaiting_abilities.append(Agents.ANALYST)
-        started_game.save_game_processor(game_logic)
-        top = game_logic.proc.decks.groups.current_ids[-3:]
+        current = connection['CurrentGameData'].objects().first()
+        current.game_steps.turn_phase = Phases.BRIEFING.value
+        current.players[0].abilities = ['Analyst', ]
+        current.save()
+        top = current.game_decks.group_deck.deck[-3:]
         top.reverse()
 
         response = client.patch(
@@ -309,9 +331,13 @@ class TestAnalyst:
             headers={
                 'Authorization': f'Bearer {settings.user0_token}'
                 },
-            json=top,
+            json={"top_cards": top},
             )
         assert response.status_code == 200, f'{response.content=}'
+
+        current = connection['CurrentGameData'].objects().first()
+        assert current.game_decks.group_deck.deck[-3:] == top, \
+            'not arranged'
 
     # TODO: here test 409
 
@@ -348,11 +374,11 @@ class TestAutorizationError:
         assert response.status_code == 401, f'{response.content=}'
         assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
 
-    def test_analyst_look_return_401(self, client: TestClient) -> None:
+    def test_analyst_get_return_401(self, client: TestClient) -> None:
         """Test analyst_look return 401 for unauthorized
         """
         response = client.patch(
-            f"{settings.api_v1_str}/game/phase/briefing/analyst_look",
+            f"{settings.api_v1_str}/game/phase/briefing/analyst_arrange",
                 )
         assert response.status_code == 401, f'{response.content=}'
         assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
@@ -362,7 +388,7 @@ class TestAutorizationError:
         """
         response = client.patch(
             f"{settings.api_v1_str}/game/phase/briefing/analyst_arrange",
-            json=['one', 'two', 'three'],
+            json={"top_cards": ['one', 'two', 'three']},
                 )
         assert response.status_code == 401, f'{response.content=}'
         assert response.json()['detail'] == 'Not authenticated', 'wrong detail'

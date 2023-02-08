@@ -42,6 +42,8 @@ def get_current_data() -> None:
     else:
         show_api_error(r)
 
+
+@st.cache
 def get_static_data() -> None:
     """Request for static data
     """
@@ -52,45 +54,6 @@ def get_static_data() -> None:
     else:
         show_api_error(r)
 
-@st.cache
-def get_static_objectives() -> Dict[str, dict]:
-    """Get dict of objectives cards
-
-    Returns:
-        Dict[str, dict]: objective mapping
-    """
-    return {
-        card['name']: card for card
-        in st.session_state['static']['objective_cards']
-            }
-
-
-@st.cache
-def get_static_objectives_actions() -> Dict[str, dict]:
-    """Get dict of objectives cards
-
-    Returns:
-        Dict[str, dict]: objective mapping
-    """
-    return {
-        key: value for key, value
-        in get_static_objectives().items()
-        if value['special_ability']
-            }
-
-
-@st.cache
-def get_static_groups() -> Dict[str, dict]:
-    """Get dict of groups cards
-
-    Returns:
-        Dict[str, dict]: groups mapping
-    """
-    return {
-        card['name']: card for card
-        in st.session_state['static']['group_cards']
-            }
-
 
 def show_current_data() -> None:
     """Display important game data in right side
@@ -98,57 +61,58 @@ def show_current_data() -> None:
     current = st.session_state['current']
     st.subheader("Current game")
 
-    if current['game_steps']['is_game_end'] == True:
+    if current['steps']['is_game_ends'] == True:
         st.caption("this game is end")
 
-    if current['players'][0]['faction'] is None:
+    if current['players']['player']['faction'] is None:
 
         st.markdown(f"turn: -")
         st.markdown(f"phase: -")
         st.markdown(f"player faction: -")
-        st.markdown(f"priority: -")
+        st.markdown(f"balance: -")
 
-    elif current['players'][0]['has_priority'] is None:
+    elif current['players']['player']['has_balance'] is None:
         st.caption('Push next phase button')
         st.markdown(f"turn: -")
         st.markdown(f"phase: -")
-        st.markdown(f"player faction: **{current['players'][0]['faction']}**")
-        st.markdown(f"priority: -")
+        st.markdown(f"player faction: **{current['players']['player']['faction']}**")
+        st.markdown(f"balance: -")
 
     else:
-        st.markdown(f"turn: **{current['game_steps']['game_turn'] + 1}**")
-        st.markdown(f"phase: **{current['game_steps']['turn_phase']}**")
-        st.markdown(f"player faction: **{current['players'][0]['faction']}**")
-        priority = current['players'][0]['has_priority']
+        st.markdown(f"turn: **{current['steps']['game_turn']}**")
+        st.markdown(f"phase: **{current['steps']['turn_phase']}**")
+        st.markdown(f"player faction: **{current['players']['player']['faction']}**")
+        priority = current['players']['player']['has_balance']
         if priority == True:
             p = 'player'
         elif priority == False:
             p = 'opponent'
-        st.markdown(f"priority: **{p}**")
+        st.markdown(f"balance: **{p}**")
 
     st.markdown("---")
+
 
 def show_objectives():
     """Display objective deck and mission card
     """
-    current = st.session_state['current']['game_decks']
+    current = st.session_state['current']['decks']['objectives']
     st.subheader("Objective deck")
-    st.markdown(f"in deck now **{current['objective_deck']['deck_len']}** cards")
+    st.markdown(f"in deck now **{len(current['deck'])}** cards")
 
     with st.expander("Objectives pile"):
-        if current['objective_deck']['pile']:
-            for card in current['objective_deck']['pile']:
+        if current['pile']:
+            for card in current['pile']:
                 st.caption(card)
         else:
             st.caption('empty')
 
-    mission = current['mission_card'] if current['mission_card'] is not None else '-'
+    mission = current['mission'] if current['mission'] is not None else '-'
     st.markdown(f"Mission card: **{mission}**")
     with st.expander("Mission card data"):
-        if current['mission_card'] is None:
+        if current['mission'] is None:
             st.caption('empty')
         else:
-            m = get_static_objectives()[current['mission_card']]
+            m = st.session_state['static']['objectives'][current['mission']]
             st.caption(f"population: {m['population']}")
             st.caption(f"stability: {m['stability']}")
             st.caption(f"bias icons: {', '.join(m['bias_icons'])}")
@@ -157,12 +121,13 @@ def show_objectives():
 
     st.markdown("---")
 
+
 def show_groups():
     """Display group deck
     """
-    current = st.session_state['current']['game_decks']['group_deck']
+    current = st.session_state['current']['decks']['groups']
     st.subheader("Group deck")
-    st.markdown(f"in deck now **{current['deck_len']}** cards")
+    st.markdown(f"in deck now **{len(current['deck'])}** cards")
 
     with st.expander("Groups pile"):
         if current['pile']:
@@ -172,6 +137,7 @@ def show_groups():
             st.caption('empty')
 
     st.markdown("---")
+
 
 def start_new_game() -> None:
     """Start new game
@@ -216,6 +182,7 @@ def show_log_in(holder: DeltaGenerator) -> None:
                 holder.empty()
             else:
                 show_api_error(r)
+
 
 def show_autorized() -> None:
     """Right side autorized scenario
@@ -319,7 +286,7 @@ def next_step(
         if step == 'turn':
             text = "-> go to next turn"
         else:
-            if st.session_state['current']['game_steps']['turn_phase'] is None:
+            if st.session_state['current']['steps']['turn_phase'] is None:
                 text = "-> set priority and mission card"
             else:
                 text = "-> go to the next phase"
@@ -327,7 +294,7 @@ def next_step(
         time.sleep(2)
         holder.empty()
         get_current_data()
-        if st.session_state['current']['game_steps']['turn_phase'] is None:
+        if st.session_state['current']['steps']['turn_phase'] is None:
             next_step('phase', holder)
     else:
         show_api_error(r)
@@ -338,8 +305,8 @@ def show_next(holder: DeltaGenerator):
     """
     col1, col2, _ = st.columns([1, 1, 2])
 
-    phase = st.session_state['current']['game_steps']['turn_phase']
-    faction = st.session_state['current']['players'][0]['faction']
+    phase = st.session_state['current']['steps']['turn_phase']
+    faction = st.session_state['current']['players']['player']['faction']
 
     p = False if phase != 'detente' and faction is not None else True
     t = False if phase == 'detente' else True
@@ -359,16 +326,17 @@ def show_next(holder: DeltaGenerator):
             args=('turn', holder)
                 )
 
+
 def show_special_cards_of_opponent():
 
     buttons = zip(
         st.columns([1, 1, 1, 1, 1, 1]),
-        get_static_objectives_actions().keys()
+        st.session_state['static']['objectives_ablilities']
             )
 
-    for b in buttons:
+    for b in buttons:  # FIXME: fixme - here is another abilities
         with b[0]:
-            if b[1] in st.session_state['current']['players'][1]['abilities']:
+            if b[1] in st.session_state['current']['players']['opponent']['awaiting_abilities']:
                 st.write(b[1])
             else:
                 st.caption(b[1])
@@ -378,12 +346,12 @@ def show_special_cards_of_player():
 
     buttons = zip(
         st.columns([1, 1, 1, 1, 1, 1]),
-        get_static_objectives_actions().keys()
+        st.session_state['static']['objectives_ablilities']
             )
 
-    for b in buttons:
+    for b in buttons:  # FIXME: fixme - here is another abilities
         with b[0]:
-            p = False if b[1] in st.session_state['current']['players'][0]['abilities'] else True
+            p = False if b[1] in st.session_state['current']['players']['player']['awaiting_abilities'] else True
             st.button(b[1], disabled=p)
 
 
@@ -414,7 +382,7 @@ def main():
             show_autorized()
 
             if st.session_state.get('current') is not None \
-                    and st.session_state['current']['players'][0]['faction'] is None:
+                    and st.session_state['current']['players']['player']['faction'] is None:
                 holder2 = st.empty()
                 with holder2.container():
                     show_choose_side(holder2)

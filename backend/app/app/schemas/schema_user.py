@@ -27,11 +27,11 @@ class TokenData(BaseModel):
         }
 
 
-class UserBase(BaseModel):
+class UserBase(BaseModel): # TODO: rename to BaseUser
     login: str
 
     @validator('login')
-    def passwords_must_have_eight_or_more_characters(cls, v):
+    def passwords_must_have_eight_or_more_characters(cls, v): # TODO: fix name
         if 50 < len(v) < 5:
             raise ValueError('To long or to short login')
         return v
@@ -85,7 +85,7 @@ class User(UserBase):
         }
 
 
-class UserInDB(User):
+class UserInDB(User): # TODO: rename to UserDb
     hashed_password: str
 
     class Config:

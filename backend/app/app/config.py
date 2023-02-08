@@ -1,11 +1,11 @@
 import toml
 from pydantic import BaseSettings
-from typing import Optional, Dict, List, Type
+from typing import Optional, Type
 from app.schemas import schema_errors
 
 
 poetry_data = toml.load('pyproject.toml')['tool']['poetry']
-ErrorType = Dict[int, Dict[str, Type[schema_errors.HttpErrorMessage]]]
+ErrorType = dict[int, dict[str, Type[schema_errors.HttpErrorMessage]]]
 
 
 class Settings(BaseSettings):
@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     title: str = poetry_data['name']
     descriprion: str = poetry_data['description']
     version: str = poetry_data['version']
-    openapi_tags: List = [
+    openapi_tags: list = [
         {
             "name": "user",
             "description": "Users api",

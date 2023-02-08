@@ -1,4 +1,3 @@
-from typing import Dict
 from fastapi import HTTPException, Depends, APIRouter, status
 from fastapi.security import OAuth2PasswordRequestForm
 from app.crud import crud_user
@@ -21,7 +20,7 @@ router = APIRouter()
         )
 def login(
     user: OAuth2PasswordRequestForm = Depends(),
-        ) -> Dict[str, str]:
+        ) -> dict[str, str]:
     """Send for autorization:
 
     - **password**

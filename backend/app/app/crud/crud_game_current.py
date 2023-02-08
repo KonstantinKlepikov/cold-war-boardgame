@@ -88,7 +88,7 @@ class CRUDGame(
                         'deck', 'current_ids', 'last', 'last_id',
                         },
                     'objectives': {
-                        'deck', 'current_ids', 'last', 'last_id',
+                        'deck', 'current_ids', 'last_id', 'mission'
                         },
                     }
                 },

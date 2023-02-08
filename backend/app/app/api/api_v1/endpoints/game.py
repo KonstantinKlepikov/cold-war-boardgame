@@ -2,7 +2,7 @@ from fastapi import status, Depends, APIRouter, Query, HTTPException
 from app.schemas.schema_user import User
 from app.crud import crud_game_current
 from app.core import security_user, logic
-from app.constructs import Factions
+from app.constructs import Factions, Groups
 from app.config import settings
 
 
@@ -83,45 +83,44 @@ def next_phase(
     crud_game_current.game.save_game_processor(game_logic)
 
 
-# @router.patch(
-#     "/phase/briefing/analyst_look",
-#     status_code=status.HTTP_200_OK,
-#     responses=settings.NEXT_ERRORS,
-#     summary='Look top three cards of group deck with analist ability',
-#     response_description="Ok. Data is changed",
-#         )
-# def analyst_get(
-#     user: schema_user.User = Depends(security_user.get_current_active_user),
-#         ) -> schema_game.TopDeck:
-#     """Look top three cards of group deck and change current game data
-#     """
-#     proc = crud_game.game.get_game_processor(user.login) \
-#         .play_analyst_for_look_the_top()
-
-#     proc.flush().save()
-
-#     return { "top_cards": proc.G.c.group_deck.temp_group }
+@router.patch(
+    "/phase/briefing/analyst_look",
+    status_code=status.HTTP_200_OK,
+    responses=settings.NEXT_ERRORS,
+    summary='Look top three cards of group deck with analist ability',
+    response_description="Ok. Data is changed",
+        )
+def analyst_get(
+    user: User = Depends(security_user.get_current_active_user),
+        ) -> None:
+    """Look top three cards of group deck and change current game data
+    """
+    game_logic = logic.GameLogic(
+        crud_game_current.game.get_last_game(user.login)
+            ).play_analyst_for_look_the_top()
+    crud_game_current.game.save_game_processor(game_logic)
 
 
-# @router.patch(
-#     "/phase/briefing/analyst_arrange",
-#     status_code=status.HTTP_200_OK,
-#     responses=settings.NEXT_ERRORS,
-#     summary='Arrange top three cards of group deck with analist ability',
-#     response_description="Ok. Data is changed",
-#         )
-# def analyst_arrnge(
-#     top: schema_game.TopDeck,
-#     user: schema_user.User = Depends(security_user.get_current_active_user),
-#         ) -> None:
-#     """Arrange top three cards of group deck and change current game data
-#     """
-#     if len(top.top_cards) != 3:
-#         raise HTTPException(
-#             status_code=409,
-#             detail="You must give exactly tree cards id "
-#                    f"in list to rearrange top deck. You given {len(top.top_cards)}."
-#                 )
-#     crud_game.game.get_game_processor(user.login) \
-#         .play_analyst_for_arrange_the_top(top.top_cards) \
-#         .flush().save()
+@router.patch(
+    "/phase/briefing/analyst_arrange",
+    status_code=status.HTTP_200_OK,
+    responses=settings.NEXT_ERRORS,
+    summary='Arrange top three cards of group deck with analist ability',
+    response_description="Ok. Data is changed",
+        )
+def analyst_arrnge(
+    top: list[Groups],
+    user: User = Depends(security_user.get_current_active_user),
+        ) -> None:
+    """Arrange top three cards of group deck and change current game data
+    """
+    if len(top) != 3:
+        raise HTTPException(
+            status_code=409,
+            detail="You must give exactly tree cards id "
+                   f"in list to rearrange top deck. You given {len(top)}."
+                )
+    game_logic = logic.GameLogic(
+        crud_game_current.game.get_last_game(user.login)
+            ).play_analyst_for_arrange_the_top(top)
+    crud_game_current.game.save_game_processor(game_logic)

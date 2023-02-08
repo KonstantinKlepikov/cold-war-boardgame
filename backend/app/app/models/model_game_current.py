@@ -87,7 +87,7 @@ class ObjectivesInPlay(EmbeddedDocument):
     """Objectives in play
     """
     current = EmbeddedDocumentListField(ObjectiveInPlay)
-    mission = EnumField(Objectives, null=True)
+    last = EmbeddedDocumentField(ObjectiveInPlay, null=True)
     pile = ListField(EnumField(Objectives))
     owned_by_player = ListField(EnumField(Objectives))
     owned_by_opponent = ListField(EnumField(Objectives))

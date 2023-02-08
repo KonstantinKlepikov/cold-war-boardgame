@@ -8,7 +8,6 @@ from app.config import settings
 from app.models import model_user, model_game_current, model_game_static
 from app.crud import crud_game_static, crud_user, crud_game_current
 from app.core.logic import GameLogic
-# from app.constructs import Agents, Groups, Objectives
 from app.db.init_db import init_db_cards, init_db_users, get_yaml
 
 

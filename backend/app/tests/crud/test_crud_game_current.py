@@ -68,7 +68,7 @@ class TestCRUDGameCurrent:
         assert data['decks']['objectives']['pile'] == [], 'wrong pile'
         assert data['decks']['objectives']['owned_by_player'] == [], 'wrong objectives owned'
         assert data['decks']['objectives']['owned_by_opponent'] == [], 'wrong objectives owned'
-        assert data['decks']['objectives']['mission'] is None, 'wrong mission'
+        assert data['decks']['objectives']['last'] is None, 'wrong mission'
         assert data['decks']['objectives']['current'][0]['name'] == Objectives.NOBELPEACEPRIZE.value, \
             'wrong objective name'
         assert data['decks']['objectives']['current'][0]['revealed_to_player'] is False, \

@@ -183,6 +183,7 @@ class ObjectivesInPlayProcessor(Deck):
     """
     id: str = Field(exclude=True, default='objectives')
     current: deque[ObjectiveInPlayProcessor] = Field(default_factory=deque)
+    last: Optional[ObjectiveInPlayProcessor] = None
     pile: list[Objectives] = []
     owned_by_player: list[Objectives] = []
     owned_by_opponent: list[Objectives] = []

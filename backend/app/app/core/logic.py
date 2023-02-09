@@ -304,13 +304,6 @@ class GameLogic:
                     detail="Analyst ability must be used."
                         )
 
-            # # agent not choosen
-            # if self.proc.players.player.agents.agent_x is None:
-            #     raise HTTPException(
-            #         status_code=409,
-            #         detail=f"Agent not choosen."
-            #             )
-
         # planning
         elif phase == Phases.PLANNING:
 

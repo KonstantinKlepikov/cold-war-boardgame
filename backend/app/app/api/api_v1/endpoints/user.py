@@ -1,7 +1,7 @@
 from fastapi import HTTPException, Depends, APIRouter, status
 from fastapi.security import OAuth2PasswordRequestForm
 from app.crud import crud_user
-from app.schemas import schema_user
+from app.schemas import scheme_user
 from app.core import security
 from app.config import settings
 
@@ -11,7 +11,7 @@ router = APIRouter()
 
 @router.post(
     "/login",
-    response_model=schema_user.Token,
+    response_model=scheme_user.Token,
     status_code=status.HTTP_200_OK,
     responses=settings.AUTHENTICATE_RESPONSE_ERRORS,
     summary='Authenticate user',

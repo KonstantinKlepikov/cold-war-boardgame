@@ -1,7 +1,7 @@
 import streamlit as st
 import requests, os, time
 import streamlit_nested_layout
-from typing import Dict, Literal
+from typing import Literal
 from requests import Response
 from streamlit.delta_generator import DeltaGenerator
 
@@ -43,7 +43,6 @@ def get_current_data() -> None:
         show_api_error(r)
 
 
-@st.cache
 def get_static_data() -> None:
     """Request for static data
     """
@@ -112,12 +111,14 @@ def show_objectives():
         if current['mission'] is None:
             st.caption('empty')
         else:
-            m = st.session_state['static']['objectives'][current['mission']]
+            m = st.session_state.static['objectives'][current['mission']]
             st.caption(f"population: {m['population']}")
             st.caption(f"stability: {m['stability']}")
             st.caption(f"bias icons: {', '.join(m['bias_icons'])}")
             st.caption(f"victory points: {m['victory_points']}")
-            st.caption(f"special ability: {m['special_ability']}")
+            st.caption(
+                f"special ability: ({m['special_ability_phase']}) {m['special_ability_text']}"
+                    )
 
     st.markdown("---")
 
@@ -230,7 +231,7 @@ def show_choose_side(holder: DeltaGenerator) -> None:
 
     if push and choice:
         token = st.session_state.get('access_token')
-        url = os.path.join(API_ROOT, API_VERSION, f'game/preset/faction?q={choice}')
+        url = os.path.join(API_ROOT, API_VERSION, f'game/preset?q={choice}')
         r = requests.patch(
             url,
             headers={
@@ -331,7 +332,7 @@ def show_special_cards_of_opponent():
 
     buttons = zip(
         st.columns([1, 1, 1, 1, 1, 1]),
-        st.session_state['static']['objectives_ablilities']
+        st.session_state.static['objectives_ablilities']
             )
 
     for b in buttons:  # FIXME: fixme - here is another abilities
@@ -346,7 +347,7 @@ def show_special_cards_of_player():
 
     buttons = zip(
         st.columns([1, 1, 1, 1, 1, 1]),
-        st.session_state['static']['objectives_ablilities']
+        st.session_state.static['objectives_ablilities']
             )
 
     for b in buttons:  # FIXME: fixme - here is another abilities

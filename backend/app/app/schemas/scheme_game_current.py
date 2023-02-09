@@ -16,7 +16,6 @@ class StepsProcessor(Steps):
     turn_phase: Optional[Phases]
     turn_phases_left: list[Phases]
     is_game_ends: bool
-    is_game_starts: bool
 
 
 class AgentInPlayProcessor(Card):

@@ -109,8 +109,16 @@ class GameLogic:
                 detail="Something can't be changed, because game is end"
                     )
 
-        self.proc.steps.game_turn += 1
-        self.proc.steps.deal().pop()
+        if self.proc.steps.last_id == Phases.DETENTE.value:
+
+            self.proc.steps.game_turn += 1
+            self.proc.steps.deal().pop()
+
+        else:
+            raise HTTPException(
+                status_code=409,
+                detail="You can set next turn only from detente phase"
+                    )
 
         return self
 
@@ -167,7 +175,7 @@ class GameLogic:
     def _check_analyct_condition(self) -> None:
         """Check conditions for play analyst ability
         """
-        if self.proc.steps.last_id != Phases.BRIEFING.value:
+        if self.proc.steps.last_id != Phases.BRIEFING:
             raise HTTPException(
                 status_code=409,
                 detail="Ability can't be played in any phases except 'briefing'."
@@ -254,6 +262,7 @@ class GameLogic:
         Returns:
             GameLogic
         """
+        # game is over
         if self.proc.steps.is_game_ends:
             raise HTTPException(
                 status_code=409,
@@ -266,12 +275,12 @@ class GameLogic:
         # briefing
         if phase == Phases.BRIEFING:
 
-            # players has't priority
-            if not self.proc.players.player.has_balance \
-                    and not self.proc.players.opponent.has_balance:
+            # game is not started
+            if self.proc.players.player.faction is None \
+                    or self.proc.players.opponent.faction is None:
                 raise HTTPException(
                     status_code=409,
-                    detail="No one player has priority. Cant push to next phase."
+                    detail="Faction not choosen. Use game/reset/faction to set faction."
                         )
 
             # objective card not defined
@@ -281,6 +290,13 @@ class GameLogic:
                     detail="Mission card undefined. Cant push to next phase."
                         )
 
+            # players has't balance
+            if self.proc.players.player.has_balance is self.proc.players.opponent.has_balance:
+                raise HTTPException(
+                    status_code=409,
+                    detail="No one player has balance. Cant push to next phase."
+                        )
+
             # analyst not used
             if Agents.ANALYST in self.proc.players.player.awaiting_abilities:
                 raise HTTPException(
@@ -288,16 +304,15 @@ class GameLogic:
                     detail="Analyst ability must be used."
                         )
 
+        # planning
+        elif phase == Phases.PLANNING:
+
             # agent not choosen
             if self.proc.players.player.agents.agent_x is None:
                 raise HTTPException(
                     status_code=409,
                     detail=f"Agent not choosen."
                         )
-
-        # planning
-        elif phase == Phases.PLANNING:
-            pass
 
         # influence_struggle
         elif phase == Phases.INFLUENCE:
@@ -351,7 +366,7 @@ class GameLogic:
             for deck in [
                 self.proc.players.player.agents.current,
                 self.proc.players.opponent.agents.current
-                ]:
+                    ]:
                 for agent in deck:
                     if agent.is_on_leave == True:
                         agent.is_on_leave = False
@@ -369,7 +384,7 @@ class GameLogic:
             for deck in [
                 self.proc.players.player.agents.current,
                 self.proc.players.opponent.agents.current
-                ]:
+                    ]:
                 for agent in deck:
                     if agent.is_agent_x == True:
                         agent.is_revealed = True
@@ -382,7 +397,7 @@ class GameLogic:
             for deck in [
                 self.proc.players.player.agents.current,
                 self.proc.players.opponent.agents.current
-                ]:
+                    ]:
                 for agent in deck:
                     if agent.is_agent_x == True:
                         agent.is_agent_x = False

@@ -3,7 +3,7 @@ import pytest
 from typing import Generator, Callable
 from fastapi import HTTPException
 from app.core import security, security_user
-from app.schemas import schema_user
+from app.schemas import scheme_user
 from app.crud import crud_user
 from app.config import settings
 
@@ -67,12 +67,12 @@ class TestSecurityUser:
     def test_get_current_active_user(self, connection: Generator) -> None:
         """Test get current active user
         """
-        schema = schema_user.User(login=settings.user0_login)
+        schema = scheme_user.User(login=settings.user0_login)
         user = security_user.get_current_active_user(schema)
         assert user.login == settings.user0_login, 'wrong login'
         assert user.is_active, 'wrong is_active'
         with pytest.raises(
             HTTPException,
             ):
-            schema = schema_user.User(login=settings.user0_login, is_active=None)
+            schema = scheme_user.User(login=settings.user0_login, is_active=None)
             security_user.get_current_active_user(schema)

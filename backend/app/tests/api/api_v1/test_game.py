@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from app.crud import crud_game_current, crud_user
 from app.core import logic
 from app.config import settings
-from app.constructs import Objectives, Factions, Agents
+from app.constructs import Factions, Agents, Phases
 
 
 class TestCreateNewGame:
@@ -41,7 +41,7 @@ class TestCreateNewGame:
 
 
 class TestPresetFaction:
-    """Test game/preset/faction
+    """Test game/preset
     """
 
     @pytest.mark.parametrize("faction", ["kgb", "cia", ])
@@ -66,7 +66,7 @@ class TestPresetFaction:
         monkeypatch.setattr(crud_game_current.game, "get_last_game", mock_process)
 
         response = client.patch(
-            f"{settings.api_v1_str}/game/preset/faction?q={faction}",
+            f"{settings.api_v1_str}/game/preset?q={faction}",
             headers={
                 'Authorization': f'Bearer {settings.user0_token}'
                 }
@@ -75,7 +75,7 @@ class TestPresetFaction:
         assert connection['CurrentGameData'].objects().count() == 1, 'wrong count of data'
 
         response = client.patch(
-            f"{settings.api_v1_str}/game/preset/faction?q={faction}",
+            f"{settings.api_v1_str}/game/preset?q={faction}",
             headers={
                 'Authorization': f'Bearer {settings.user0_token}'
                 }
@@ -84,7 +84,7 @@ class TestPresetFaction:
         assert response.json()['detail'] == 'You cant change faction because is choosen yet', \
             'wrong detail'
 
-    def test_preset_faction_return_422_404(
+    def test_preset_faction_return_422(
         self,
         user: crud_user.CRUDUser,
         monkeypatch,
@@ -98,15 +98,15 @@ class TestPresetFaction:
         monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
 
         response = client.patch(
-            f"{settings.api_v1_str}/game/preset/faction/q=abc",
+            f"{settings.api_v1_str}/game/preset?q=abc",
             headers={
                 'Authorization': f'Bearer {settings.user0_token}'
                 }
             )
-        assert response.status_code == 404, f'{response.content=}'
+        assert response.status_code == 422, f'{response.content=}'
 
         response = client.patch(
-            f"{settings.api_v1_str}/game/preset/faction",
+            f"{settings.api_v1_str}/game/preset",
             headers={
                 'Authorization': f'Bearer {settings.user0_token}'
                 }
@@ -123,10 +123,13 @@ class TestNextTurn:
         self,
         user: crud_user.CRUDUser,
         started_game: crud_game_current.CRUDGame,
+        game_logic: logic.GameLogic,
         monkeypatch,
             ) -> None:
         """Mock user and game
         """
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.DETENTE)
+        started_game.save_game_logic(game_logic)
 
         def mock_user(*args, **kwargs) -> Callable:
             return user.get_by_login(settings.user0_login)
@@ -162,7 +165,7 @@ class TestNextTurn:
         """Test turn can't be pushed if game end
         """
         game_logic.proc.steps.is_game_ends = True
-        started_game.save_game_processor(game_logic)
+        started_game.save_game_logic(game_logic)
 
         response = client.patch(
             f"{settings.api_v1_str}/game/next_turn",
@@ -182,10 +185,20 @@ class TestNextPhase:
         self,
         user: crud_user.CRUDUser,
         started_game: crud_game_current.CRUDGame,
+        game_logic: logic.GameLogic,
         monkeypatch,
             ) -> None:
         """Mock user and game
         """
+        game_logic.proc.players.player.faction = Factions.KGB
+        game_logic.proc.players.opponent.faction = Factions.CIA
+        game_logic.proc.players.player.agents.current[0].is_agent_x = True
+        game_logic.proc.players.opponent.agents.current[0].is_agent_x = True
+        game_logic.proc.players.player.has_balance = True
+        game_logic.proc.players.opponent.has_balance= False
+        game_logic.proc.decks.objectives.pop()
+        started_game.save_game_logic(game_logic)
+
         def mock_user(*args, **kwargs) -> Callable:
             return user.get_by_login(settings.user0_login)
 
@@ -199,20 +212,9 @@ class TestNextPhase:
         self,
         mock_return,
         client: TestClient,
-        started_game: crud_game_current.CRUDGame,
-        game_logic: logic.GameLogic,
             ) -> None:
         """Test game/next set next phase from briefing
         """
-        game_logic.proc.players.player.faction = Factions.KGB
-        game_logic.proc.players.opponent.faction = Factions.CIA
-        game_logic.proc.players.player.agents.current[0].is_agent_x = True
-        game_logic.proc.players.opponent.agents.current[0].is_agent_x = True
-        game_logic.proc.players.player.has_balance = True
-        game_logic.proc.players.opponent.has_balance= False
-        game_logic.proc.decks.objectives.pop()
-        started_game.save_game_processor(game_logic)
-
         response = client.patch(
             f"{settings.api_v1_str}/game/next_phase",
             headers={
@@ -233,7 +235,7 @@ class TestNextPhase:
         """Test last phases cant'be pushed
         """
         game_logic.proc.steps.is_game_ends = True
-        started_game.save_game_processor(game_logic)
+        started_game.save_game_logic(game_logic)
 
         response = client.patch(
             f"{settings.api_v1_str}/game/next_phase",
@@ -254,10 +256,14 @@ class TestAnalyst:
         self,
         user: crud_user.CRUDUser,
         started_game: crud_game_current.CRUDGame,
+        game_logic: logic.GameLogic,
         monkeypatch,
             ) -> None:
         """Mock user and game
         """
+        game_logic.proc.players.player.awaiting_abilities.append(Agents.ANALYST)
+        started_game.save_game_logic(game_logic)
+
         def mock_user(*args, **kwargs) -> Callable:
             return user.get_by_login(settings.user0_login)
 
@@ -271,14 +277,9 @@ class TestAnalyst:
         self,
         mock_return,
         client: TestClient,
-        started_game: crud_game_current.CRUDGame,
-        game_logic: logic.GameLogic,
             ) -> None:
         """Test /phase/briefing/analyst_look returns 200
         """
-        game_logic.proc.players.player.awaiting_abilities.append(Agents.ANALYST)
-        started_game.save_game_processor(game_logic)
-
         response = client.patch(
             f"{settings.api_v1_str}/game/phase/briefing/analyst_look",
             headers={
@@ -293,14 +294,10 @@ class TestAnalyst:
         self,
         mock_return,
         client: TestClient,
-        started_game: crud_game_current.CRUDGame,
         game_logic: logic.GameLogic,
             ) -> None:
         """Test /phase/briefing/analyst_look returns 200
         """
-
-        game_logic.proc.players.player.awaiting_abilities.append(Agents.ANALYST)
-        started_game.save_game_processor(game_logic)
         top = game_logic.proc.decks.groups.current_ids[-3:]
         top.reverse()
 
@@ -330,7 +327,7 @@ class TestAutorizationError:
     def test_preset_faction_return_401(self, client: TestClient) -> None:
         """Test preset faction return 401
         """
-        response = client.patch(f"{settings.api_v1_str}/game/preset/faction?q=kgb")
+        response = client.patch(f"{settings.api_v1_str}/game/preset?q=kgb")
         assert response.status_code == 401, f'{response.content=}'
         assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
 

@@ -1,5 +1,5 @@
 from fastapi import status, Depends, APIRouter, Query, HTTPException
-from app.schemas.schema_user import User
+from app.schemas.scheme_user import User
 from app.crud import crud_game_current
 from app.core import security_user, logic
 from app.constructs import Factions, Groups
@@ -25,24 +25,24 @@ def create_new_game(
 
 
 @router.patch(
-    "/preset/faction",
+    "/preset",
     status_code=status.HTTP_200_OK,
     responses=settings.NEXT_ERRORS,
-    summary='Preset faction before game start',
+    summary='Preset faction before game start and deal a mission card',
     response_description="Ok. Faction is setted."
         )
-def preset_faction(
+def preset(
     q: Factions = Query(
         title="Preset faction",
             ),
     user: User = Depends(security_user.get_current_active_user),
         ) -> None:
-    """Preset faction of player
+    """Preset faction of player. Next deal a mission card.
     """
     game_logic = logic.GameLogic(
         crud_game_current.game.get_last_game(user.login)
-            ).set_faction(q)
-    crud_game_current.game.save_game_processor(game_logic)
+            ).set_faction(q).set_mission_card()
+    crud_game_current.game.save_game_logic(game_logic)
 
 
 @router.patch(
@@ -60,7 +60,7 @@ def next_turn(
     game_logic = logic.GameLogic(
         crud_game_current.game.get_last_game(user.login)
             ).set_next_turn()
-    crud_game_current.game.save_game_processor(game_logic)
+    crud_game_current.game.save_game_logic(game_logic)
 
 
 @router.patch(
@@ -80,7 +80,7 @@ def next_phase(
             ).chek_phase_conditions_before_next() \
             .set_next_phase() \
             .set_phase_conditions_after_next()
-    crud_game_current.game.save_game_processor(game_logic)
+    crud_game_current.game.save_game_logic(game_logic)
 
 
 @router.patch(
@@ -98,7 +98,7 @@ def analyst_get(
     game_logic = logic.GameLogic(
         crud_game_current.game.get_last_game(user.login)
             ).play_analyst_for_look_the_top()
-    crud_game_current.game.save_game_processor(game_logic)
+    crud_game_current.game.save_game_logic(game_logic)
 
 
 @router.patch(
@@ -123,4 +123,4 @@ def analyst_arrnge(
     game_logic = logic.GameLogic(
         crud_game_current.game.get_last_game(user.login)
             ).play_analyst_for_arrange_the_top(top)
-    crud_game_current.game.save_game_processor(game_logic)
+    crud_game_current.game.save_game_logic(game_logic)

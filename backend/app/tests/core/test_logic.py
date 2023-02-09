@@ -84,7 +84,6 @@ class TestGameLogic:
         assert data['steps']['turn_phases_left'] == Phases.get_values()[1:], \
             'wrong turn phases left'
         assert data['steps']['is_game_ends'] is False, 'wrong end'
-        assert data['steps']['is_game_starts'] is False, 'wrong start'
 
         assert data['players']['player']['login'] == settings.user0_login, \
             'wrong player login'
@@ -151,8 +150,9 @@ class TestGameLogic:
         assert proc.players.player.faction == expected[0], 'wrong player proc faction'
         assert proc.players.opponent.faction == expected[1], 'wrong bot proc faction'
 
-        with pytest.raises(HTTPException):
+        with pytest.raises(HTTPException) as e:
             game_logic.set_faction(test_input)
+        assert 'You cant change faction' in e.value.detail, 'wrong error'
 
     def test_set_next_turn_change_the_turn(
         self,
@@ -160,10 +160,21 @@ class TestGameLogic:
             ) -> None:
         """Test set_next_turn() push turn
         """
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.DETENTE)
         proc = game_logic.set_next_turn().proc
         assert proc.steps.game_turn == 2, 'wrong proc turn'
         assert proc.steps.last_id == Phases.BRIEFING.value, 'wrong last'
         assert len(proc.steps.current) == 5, 'wrong current'
+
+    def test_set_next_turn_cant_change_if_wrong_phase(
+        self,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test set_next_turn() cant change turn if wrong phase
+        """
+        with pytest.raises(HTTPException) as e:
+            game_logic.set_next_turn()
+        assert 'You can set next turn' in e.value.detail, 'wrong error'
 
     def test_set_next_turn_cant_change_if_game_ends(
         self,
@@ -172,9 +183,11 @@ class TestGameLogic:
         """Test set_next_turn() cant change turn if game end
         """
         game_logic.proc.steps.is_game_ends = True
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.DETENTE)
 
-        with pytest.raises(HTTPException):
+        with pytest.raises(HTTPException) as e:
             game_logic.set_next_turn()
+        assert "Something can't be changed" in e.value.detail, 'wrong error'
 
     def test_set_next_phase_change_phase(
         self,
@@ -262,10 +275,11 @@ class TestGameLogic:
             ) -> None:
         """Test play analyst look raise 400 when wrong phase
         """
-        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.DETENTE.value)
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.DETENTE)
 
-        with pytest.raises(HTTPException):
+        with pytest.raises(HTTPException) as e:
             game_logic._check_analyct_condition()
+        assert "any phases except 'briefing'" in e.value.detail, 'wrong error'
 
     def test_check_analyct_condition_raise_wrong_access(
         self,
@@ -274,10 +288,11 @@ class TestGameLogic:
         """Test play analyst look raise 400 when player havent access
         to ability
         """
-        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.BRIEFING.value)
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.BRIEFING)
 
-        with pytest.raises(HTTPException):
+        with pytest.raises(HTTPException) as e:
             game_logic._check_analyct_condition()
+        assert "No access to play ability" in e.value.detail, 'wrong error'
 
     def test_play_analyst_for_look_the_top(
         self,
@@ -294,8 +309,9 @@ class TestGameLogic:
             if card.is_revealed_to_player is True
                 ]) == 3, 'wrong current'
 
-        with pytest.raises(HTTPException):
+        with pytest.raises(HTTPException) as e:
             game_logic.play_analyst_for_look_the_top()
+        assert "Top 3 group cards is yet revealed" in e.value.detail, 'wrong error'
 
     def test_play_analyst_for_arrange_the_top(
         self,
@@ -343,8 +359,9 @@ class TestGameLogic:
                 ]
         wrong.reverse()
 
-        with pytest.raises(HTTPException):
+        with pytest.raises(HTTPException) as e:
             game_logic.play_analyst_for_arrange_the_top(wrong)
+        assert "cards and top cards not match" in e.value.detail, 'wrong error'
 
         assert game_logic.proc.players.player.awaiting_abilities == [Agents.ANALYST], \
             'wrong abilities'
@@ -369,8 +386,9 @@ class TestGameLogic:
             'agent is in hand'
         assert proc.players.player.agents.by_id(Agents.DEPUTY)[0].is_revealed == False, \
             'wrong revealed'
-        with pytest.raises(HTTPException):
+        with pytest.raises(HTTPException) as e:
             game_logic.set_agent(agent_id='Someher wrong')
+        assert "not available to choice" in e.value.detail, 'wrong error'
 
     def test_set_agent_and_reveal(
         self,
@@ -401,10 +419,32 @@ class TestCheckPhaseConditions:
         """
         game_logic.proc.steps.is_game_ends = True
 
-        with pytest.raises(
-            HTTPException,
-            ):
+        with pytest.raises(HTTPException)  as e:
             game_logic.chek_phase_conditions_before_next()
+        assert "Something can't be changed" in e.value.detail, 'wrong error'
+
+    def test_chek_phase_conditions_before_next_faction(
+        self,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test cant next if faction not choosen
+        """
+        with pytest.raises(HTTPException)  as e:
+            game_logic.chek_phase_conditions_before_next()
+        assert "action not choosen" in e.value.detail, 'wrong error'
+
+    def test_chek_phase_conditions_before_next_if_no_mission(
+        self,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test chek_phase_conditions_before_next() if no mission card set
+        """
+        game_logic.proc.players.player.faction = Factions.CIA
+        game_logic.proc.players.opponent.faction = Factions.KGB
+
+        with pytest.raises(HTTPException)  as e:
+            game_logic.chek_phase_conditions_before_next()
+        assert "Mission card undefined" in e.value.detail, 'wrong error'
 
     def test_chek_phase_conditions_before_next_raise_if_no_balance(
         self,
@@ -413,26 +453,12 @@ class TestCheckPhaseConditions:
         """Test chek_phase_conditions_before_next() if no player has
         balance in briefing
         """
-        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.BRIEFING)
-
-        with pytest.raises(
-            HTTPException,
-            ):
+        game_logic.proc.players.player.faction = Factions.CIA
+        game_logic.proc.players.opponent.faction = Factions.KGB
+        game_logic.proc.decks.objectives.pop()
+        with pytest.raises(HTTPException)  as e:
             game_logic.chek_phase_conditions_before_next()
-
-    def test_chek_phase_conditions_before_next_if_no_mission(
-        self,
-        game_logic: GameLogic,
-            ) -> None:
-        """Test chek_phase_conditions_before_next() if no mission card set
-        """
-        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.BRIEFING)
-        game_logic.proc.decks.objectives.last = 'some mission card'
-
-        with pytest.raises(
-            HTTPException,
-                ):
-            game_logic.chek_phase_conditions_before_next()
+        assert "No one player has balance" in e.value.detail, 'wrong error'
 
     def test_chek_phase_conditions_before_next_if_analyst_not_used(
         self,
@@ -441,16 +467,16 @@ class TestCheckPhaseConditions:
         """Test chek_phase_conditions_before_next() if analyst
         ability not used
         """
-        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.BRIEFING)
-        game_logic.proc.players.player.awaiting_abilities.append(Agents.ANALYST)
+        game_logic.proc.players.player.faction = Factions.CIA
+        game_logic.proc.players.opponent.faction = Factions.KGB
         game_logic.proc.players.player.has_balance = True
         game_logic.proc.players.opponent.has_balance = False
-        game_logic.proc.decks.objectives.last = 'some mission card'
+        game_logic.proc.decks.objectives.pop()
+        game_logic.proc.players.player.awaiting_abilities.append(Agents.ANALYST)
 
-        with pytest.raises(
-            HTTPException,
-                ):
+        with pytest.raises(HTTPException)  as e:
             game_logic.chek_phase_conditions_before_next()
+        assert "Analyst ability must be used" in e.value.detail, 'wrong error'
 
     def test_chek_phase_conditions_before_next_if_players_agent_not_set(
         self,
@@ -459,16 +485,11 @@ class TestCheckPhaseConditions:
         """Test chek_phase_conditions_before_next() if players
         agent not set
         """
-        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.BRIEFING)
-        with pytest.raises(
-            HTTPException,
-                ):
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.PLANNING)
+
+        with pytest.raises(HTTPException)  as e:
             game_logic.chek_phase_conditions_before_next()
-        game_logic.proc.players.player.agents.by_id(Agents.DEPUTY)[0].is_agent_x = True
-        with pytest.raises(
-            HTTPException,
-                ):
-            game_logic.chek_phase_conditions_before_next()
+        assert "Agent not choosen" in e.value.detail, 'wrong error'
 
     def test_chek_phase_conditions_before_next_if_last_phase(
         self,
@@ -479,10 +500,9 @@ class TestCheckPhaseConditions:
         """
         game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.DETENTE)
 
-        with pytest.raises(
-            HTTPException,
-                ):
+        with pytest.raises(HTTPException)  as e:
             game_logic.chek_phase_conditions_before_next()
+        assert "This phase is last in a turn" in e.value.detail, 'wrong error'
 
 
 class TestGamePhaseConditions:
@@ -571,7 +591,7 @@ class TestGamePhaseConditions:
         assert players.opponent.agents.by_id(Agents.DEPUTY)[0].is_agent_x is True, \
             'changed'
         assert players.opponent.agents.by_id(Agents.DEPUTY)[0].is_revealed is True, \
-        'not changed'
+            'not changed'
 
     def test_set_phase_conditions_after_next_detente(
         self,

@@ -1,7 +1,7 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
-from app.schemas import schema_user
+from app.schemas import scheme_user
 from app.crud import crud_user
 from app.config import settings
 
@@ -9,7 +9,7 @@ from app.config import settings
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.api_v1_str}/user/login")
 
 
-def get_current_user(token: str = Depends(oauth2_scheme)) -> schema_user.User:
+def get_current_user(token: str = Depends(oauth2_scheme)) -> scheme_user.User:
     """Get current verified user
     """
     credentials_exception = HTTPException(
@@ -25,7 +25,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> schema_user.User:
         login: str = payload.get("sub")
         if login is None:
             raise credentials_exception
-        token_data = schema_user.TokenData(login=login)
+        token_data = scheme_user.TokenData(login=login)
     except JWTError:
         raise credentials_exception
 
@@ -34,12 +34,12 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> schema_user.User:
     if user is None:
         raise credentials_exception
 
-    return schema_user.User.parse_obj(user.to_mongo().to_dict())
+    return scheme_user.User.parse_obj(user.to_mongo().to_dict())
 
 
 def get_current_active_user(
-    user: schema_user.User = Depends(get_current_user)
-        ) -> schema_user.User:
+    user: scheme_user.User = Depends(get_current_user)
+        ) -> scheme_user.User:
     """Get current verified active user
     """
     if not user.is_active:

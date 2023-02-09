@@ -49,11 +49,11 @@ class CRUDGame(
 
         return game
 
-    def save_game_processor(
+    def save_game_logic(
         self,
         game_logic: GameLogic,
             ) -> GameLogic:
-        """Flusch and save to db current data processor
+        """Flusch and save to db current data to db
 
         Args:
             proc (CurrentGameDataProcessor): game scheme processor

@@ -230,7 +230,7 @@ def show_choose_side(holder: DeltaGenerator) -> None:
 
     if push and choice:
         token = st.session_state.get('access_token')
-        url = os.path.join(API_ROOT, API_VERSION, f'game/preset/faction?q={choice}')
+        url = os.path.join(API_ROOT, API_VERSION, f'game/preset?q={choice}')
         r = requests.patch(
             url,
             headers={

@@ -1,5 +1,5 @@
 from fastapi import status, Depends, APIRouter, HTTPException
-from app.schemas.schema_user import User
+from app.schemas.scheme_user import User
 from app.schemas.scheme_game_current_api import CurrentGameDataApi
 from app.schemas.scheme_game_static import StaticGameData
 from app.crud import crud_game_static, crud_game_current

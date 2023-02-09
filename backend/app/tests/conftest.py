@@ -184,7 +184,7 @@ def started_game(
         ) -> crud_game_current.CRUDGame:
     """Get startet game object
     """
-    game.save_game_processor(
+    game.save_game_logic(
         game_logic.deal_and_shuffle_decks()
             )
     return game

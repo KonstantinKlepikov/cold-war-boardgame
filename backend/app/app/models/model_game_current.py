@@ -18,7 +18,7 @@ class Steps(EmbeddedDocument):
         default=Phases.get_values()[1:]
             )
     is_game_ends = BooleanField(default=False)
-    is_game_starts = BooleanField(default=False)
+    # is_game_starts = BooleanField(default=False)
 
 
 class AgentInPlay(EmbeddedDocument):

@@ -1,18 +1,19 @@
+from typing import Union
 from fastapi import HTTPException
 from app.crud.crud_game_current import CurrentGameData
 from app.schemas.scheme_game_current_api import CurrentGameDataApi
 from app.schemas.scheme_game_current import (
     CurrentGameDataProcessor, AgentInPlayProcessor, GroupInPlayProcessor,
-    ObjectiveInPlayProcessor
+    ObjectiveInPlayProcessor, PlayerProcessor, OpponentProcessor
         )
-from app.constructs import Factions, Agents, Groups, Objectives, Phases
+from app.constructs import (
+    Factions, Agents, Groups, Objectives, Phases, Sides
+        )
 from bgameb import Step, errors
 
 
 class GameLogic:
     """Create the game object to manipulation of game tools
-
-    Args:
     """
 
     def __init__(
@@ -57,7 +58,7 @@ class GameLogic:
         return proc
 
     def get_api_scheme(self) -> CurrentGameDataApi:
-        """Get redy to use api scheme
+        """Get ready to use api scheme
 
         Returns:
             CurrentGameDataApi: api scheme
@@ -66,7 +67,7 @@ class GameLogic:
         return CurrentGameDataApi(**data)
 
     def deal_and_shuffle_decks(self) -> 'GameLogic':
-        """Shuffle objective and group decks
+        """Deal and shuffle objective and group decks
 
         Returns:
             GameLogic
@@ -172,57 +173,84 @@ class GameLogic:
 
         return self
 
-    def _check_analyct_condition(self) -> None:
+    def _get_side_proc(self, side: Sides) -> Union[PlayerProcessor, OpponentProcessor]:
+        if side == Sides.PLAYER:
+            return self.proc.players.player
+        else:
+            return self.proc.players.opponent
+
+    def _check_analyct_condition(self, side: Sides = Sides.PLAYER) -> None:
         """Check conditions for play analyst ability
+
+        Args:
+            side (Sides): player or opponent, default to 'player'
         """
         if self.proc.steps.last_id != Phases.BRIEFING:
             raise HTTPException(
                 status_code=409,
                 detail="Ability can't be played in any phases except 'briefing'."
                     )
-        if Agents.ANALYST not in self.proc.players.player.awaiting_abilities:
+        if Agents.ANALYST not in self._get_side_proc(side).awaiting_abilities:
             raise HTTPException(
                 status_code=409,
                 detail="No access to play ability of Analyst agent card."
                     )
 
-    def play_analyst_for_look_the_top(self) -> 'GameLogic':
+    def play_analyst_for_look_the_top(self, side: Sides = Sides.PLAYER) -> 'GameLogic':
         """Play analyst abylity for look the top cards
+
+        Args:
+            side (Sides): player or opponent, default to 'player'
 
         Returns:
             GameLogic
         """
-        self._check_analyct_condition()
+        self._check_analyct_condition(side)
 
-        if all([
-            card.is_revealed_to_player for card
-            in self.proc.decks.groups.current
-                ][-3:]):
+        if side == Sides.PLAYER:
+            rev =  all([
+                card.is_revealed_to_player for card
+                in self.proc.decks.groups.current
+                    ][-3:])
+        else:
+            rev =  all([
+                card.is_revealed_to_opponent for card
+                in self.proc.decks.groups.current
+                    ][-3:])
+        if rev:
             raise HTTPException(
                 status_code=409,
-                detail="Top 3 group cards is yet revealed for player."
+                detail="Top 3 group cards is yet revealed."
                     )
 
-        for pos in range(-3, 0):
-            self.proc.decks.groups.current[pos].is_revealed_to_player = True
+        if side == Sides.PLAYER:
+            for pos in range(-3, 0):
+                self.proc.decks.groups.current[pos].is_revealed_to_player = True
+        else:
+            for pos in range(-3, 0):
+                self.proc.decks.groups.current[pos].is_revealed_to_opponent = True
 
         return self
 
     def play_analyst_for_arrange_the_top(
-        self, top: list[Groups]) -> 'GameLogic':
+        self,
+        top: list[Groups],
+        side: Sides = Sides.PLAYER
+            ) -> 'GameLogic':
         """Play analyst abylity for rearrange the top cards
 
         Args:
             top (list[Groups]): arranged cards
+            side (Sides): player or opponent, default to 'player'
 
         Returns:
             GameLogic
         """
-        self._check_analyct_condition()
+        self._check_analyct_condition(side)
 
         try:
             self.proc.decks.groups.reorderfrom(top, len(self.proc.decks.groups.current)-3)
-            self.proc.players.player.awaiting_abilities.remove(Agents.ANALYST.value)
+            self._get_side_proc(side).awaiting_abilities.remove(Agents.ANALYST.value)
 
         except errors.ArrangeIndexError:
             raise HTTPException(
@@ -235,19 +263,24 @@ class GameLogic:
     def set_agent(
         self,
         agent_id: Agents,
+        side: Sides = Sides.PLAYER
             ) -> 'GameLogic':
         """Set agent card
+
+        Args:
+            side (Sides): player or opponent, default to 'player'
 
         Returns:
             GameLogic
         """
-        choice = self.proc.players.player.agents.by_id(agent_id)
+        user = self._get_side_proc(side)
+        choice = user.agents.by_id(agent_id)
         if choice and choice[0].is_in_headquarter is True:
             choice[0].is_agent_x = True
             choice[0].is_in_headquarter = False
-            if Agents.DOUBLE in self.proc.players.player.awaiting_abilities:
+            if Agents.DOUBLE in user.awaiting_abilities:
                 choice[0].is_revealed = True
-                self.proc.players.player.awaiting_abilities.remove(Agents.DOUBLE.value)
+                user.awaiting_abilities.remove(Agents.DOUBLE)
         else:
             raise HTTPException(
                 status_code=409,
@@ -294,14 +327,20 @@ class GameLogic:
             if self.proc.players.player.has_balance is self.proc.players.opponent.has_balance:
                 raise HTTPException(
                     status_code=409,
-                    detail="No one player has balance. Cant push to next phase."
+                    detail="No one side has balance. Cant push to next phase."
                         )
 
             # analyst not used
             if Agents.ANALYST in self.proc.players.player.awaiting_abilities:
                 raise HTTPException(
                     status_code=409,
-                    detail="Analyst ability must be used."
+                    detail="Analyst ability must be used by player."
+                        )
+
+            if Agents.ANALYST in self.proc.players.opponent.awaiting_abilities:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Analyst ability must be used by opponent."
                         )
 
         # planning
@@ -311,7 +350,13 @@ class GameLogic:
             if self.proc.players.player.agents.agent_x is None:
                 raise HTTPException(
                     status_code=409,
-                    detail=f"Agent not choosen."
+                    detail=f"Agent for player not choosen."
+                        )
+
+            if self.proc.players.opponent.agents.agent_x is None:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Agent for opponent not choosen."
                         )
 
         # influence_struggle
@@ -393,7 +438,6 @@ class GameLogic:
         elif phase == Phases.DETENTE:
 
             # put agents to on_leave from play
-
             for deck in [
                 self.proc.players.player.agents.current,
                 self.proc.players.opponent.agents.current

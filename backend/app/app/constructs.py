@@ -14,6 +14,13 @@ class BaseEnum(str, Enum):
         return [e.value for e in cls]
 
 
+class Sides(BaseEnum):
+    """Players of game
+    """
+    PLAYER = 'player'
+    OPPONENT = 'opponent'
+
+
 class Balance(BaseEnum):
     """Balance enumeration
     """

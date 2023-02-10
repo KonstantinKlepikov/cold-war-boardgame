@@ -1,13 +1,15 @@
 import pytest
-from typing import Tuple
+from typing import Tuple, Union
 from collections import deque
 from fastapi import HTTPException
 from app.core.logic import GameLogic
-from app.schemas.scheme_game_current import CurrentGameDataProcessor
+from app.schemas.scheme_game_current import (
+    CurrentGameDataProcessor, PlayerProcessor, OpponentProcessor
+        )
 from app.config import settings
 from app.constructs import (
     Phases, Agents, Groups, Objectives, HiddenAgents,
-    HiddenGroups, HiddenObjectives, Factions, Balance
+    HiddenGroups, HiddenObjectives, Factions, Sides
         )
 
 
@@ -85,28 +87,28 @@ class TestGameLogic:
             'wrong turn phases left'
         assert data['steps']['is_game_ends'] is False, 'wrong end'
 
-        assert data['players']['player']['login'] == settings.user0_login, \
+        assert data['players'][Sides.PLAYER.value]['login'] == settings.user0_login, \
             'wrong player login'
-        assert data['players']['opponent']['login'] == settings.user2_login, \
+        assert data['players'][Sides.OPPONENT.value]['login'] == settings.user2_login, \
             'wrong opponent login'
-        for player in ['player', 'opponent']:
-            assert data['players'][player]['score'] == 0, 'wrong score'
-            assert data['players'][player]['faction'] is None, 'wrong faction'
-            assert data['players'][player]['has_balance'] is False, 'wrong balance'
-            assert data['players'][player]['has_domination'] is False, 'wrong domination'
-            assert data['players'][player]['awaiting_abilities'] == [], \
+        for side in Sides.get_values():
+            assert data['players'][side]['score'] == 0, 'wrong score'
+            assert data['players'][side]['faction'] is None, 'wrong faction'
+            assert data['players'][side]['has_balance'] is False, 'wrong balance'
+            assert data['players'][side]['has_domination'] is False, 'wrong domination'
+            assert data['players'][side]['awaiting_abilities'] == [], \
                'wrong abilities'
-            assert data['players'][player]['agents']['agent_x'] is None, \
+            assert data['players'][side]['agents']['agent_x'] is None, \
                 'wrong agent x'
-            assert len(data['players'][player]['agents']['in_headquarter']) == 6, \
+            assert len(data['players'][side]['agents']['in_headquarter']) == 6, \
                 'wrong headquarter'
-            assert data['players'][player]['agents']['on_leave'] == [], \
+            assert data['players'][side]['agents']['on_leave'] == [], \
                 'wrong on_leave'
-            assert data['players'][player]['agents']['terminated'] == [], \
+            assert data['players'][side]['agents']['terminated'] == [], \
                 'wrong terminated'
-        assert data['players']['player']['agents']['in_headquarter'][0] == Agents.SPY.value, \
+        assert data['players'][Sides.PLAYER.value]['agents']['in_headquarter'][0] == Agents.SPY.value, \
                 'wrong headquarter value'
-        assert data['players']['opponent']['agents']['in_headquarter'][0] == HiddenAgents.HIDDEN.value, \
+        assert data['players'][Sides.OPPONENT.value]['agents']['in_headquarter'][0] == HiddenAgents.HIDDEN.value, \
                 'wrong headquarter value'
 
         assert len(data['decks']['groups']['deck']) == 24, 'wrong groups'
@@ -269,8 +271,25 @@ class TestGameLogic:
         assert proc.players.opponent.has_balance == expected[1], \
             'wrong opponent priority'
 
+    @pytest.mark.parametrize("test_input,expected", [
+        (Sides.PLAYER, PlayerProcessor),
+        (Sides.OPPONENT, OpponentProcessor)
+            ])
+    def test_get_side_proc(
+        self,
+        test_input: Sides,
+        expected: Union[PlayerProcessor, OpponentProcessor],
+        game_logic: GameLogic,
+            ) -> None:
+        """Test _get_side_proc() returns right process
+        """
+        proc = game_logic._get_side_proc(test_input)
+        assert isinstance(proc, expected), 'wrong proc type'
+
+    @pytest.mark.parametrize("test_input", [Sides.PLAYER, Sides.OPPONENT])
     def test_check_analyct_condition_raise_wrong_phase(
         self,
+        test_input: Sides,
         game_logic: GameLogic,
             ) -> None:
         """Test play analyst look raise 400 when wrong phase
@@ -278,11 +297,13 @@ class TestGameLogic:
         game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.DETENTE)
 
         with pytest.raises(HTTPException) as e:
-            game_logic._check_analyct_condition()
+            game_logic._check_analyct_condition(test_input)
         assert "any phases except 'briefing'" in e.value.detail, 'wrong error'
 
+    @pytest.mark.parametrize("test_input", [Sides.PLAYER, Sides.OPPONENT])
     def test_check_analyct_condition_raise_wrong_access(
         self,
+        test_input: Sides,
         game_logic: GameLogic,
             ) -> None:
         """Test play analyst look raise 400 when player havent access
@@ -291,18 +312,18 @@ class TestGameLogic:
         game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.BRIEFING)
 
         with pytest.raises(HTTPException) as e:
-            game_logic._check_analyct_condition()
+            game_logic._check_analyct_condition(test_input)
         assert "No access to play ability" in e.value.detail, 'wrong error'
 
-    def test_play_analyst_for_look_the_top(
+    def test_play_analyst_for_look_the_top_of_player(
         self,
         game_logic: GameLogic,
             ) -> None:
-        """Test play analyst look 3 cards
+        """Test play analyst look 3 cards of player
         """
-        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.BRIEFING.value)
-        game_logic.proc.players.player.awaiting_abilities.append(Agents.ANALYST.value)
-        proc = game_logic.play_analyst_for_look_the_top().proc
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.BRIEFING)
+        game_logic.proc.players.player.awaiting_abilities.append(Agents.ANALYST)
+        proc = game_logic.play_analyst_for_look_the_top(Sides.PLAYER).proc
         assert len([
             card for card
             in proc.decks.groups.current
@@ -310,17 +331,36 @@ class TestGameLogic:
                 ]) == 3, 'wrong current'
 
         with pytest.raises(HTTPException) as e:
-            game_logic.play_analyst_for_look_the_top()
+            game_logic.play_analyst_for_look_the_top(Sides.PLAYER)
         assert "Top 3 group cards is yet revealed" in e.value.detail, 'wrong error'
 
-    def test_play_analyst_for_arrange_the_top(
+    def test_play_analyst_for_look_the_top_of_opponent(
         self,
         game_logic: GameLogic,
             ) -> None:
-        """Test play analyst for arrange the top
+        """Test play analyst look 3 cards of opponent
         """
-        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.BRIEFING.value)
-        game_logic.proc.players.player.awaiting_abilities.append(Agents.ANALYST.value)
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.BRIEFING)
+        game_logic.proc.players.opponent.awaiting_abilities.append(Agents.ANALYST)
+        proc = game_logic.play_analyst_for_look_the_top(Sides.OPPONENT).proc
+        assert len([
+            card for card
+            in proc.decks.groups.current
+            if card.is_revealed_to_opponent is True
+                ]) == 3, 'wrong current'
+
+        with pytest.raises(HTTPException) as e:
+            game_logic.play_analyst_for_look_the_top(Sides.OPPONENT)
+        assert "Top 3 group cards is yet revealed" in e.value.detail, 'wrong error'
+
+    def test_play_analyst_for_arrange_the_top_for_player(
+        self,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test play analyst for arrange the top for player
+        """
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.BRIEFING)
+        game_logic.proc.players.player.awaiting_abilities.append(Agents.ANALYST)
         top = [
             game_logic.proc.decks.groups.current[-3].id,
             game_logic.proc.decks.groups.current[-2].id,
@@ -329,8 +369,34 @@ class TestGameLogic:
         rev = top[::-1]
         assert len(game_logic.proc.decks.groups.current) == 24, 'wrong current'
 
-        proc = game_logic.play_analyst_for_arrange_the_top(rev).proc
+        proc = game_logic.play_analyst_for_arrange_the_top(rev, Sides.PLAYER).proc
         assert proc.players.player.awaiting_abilities == [], 'wrong abilities'
+        assert len(game_logic.proc.decks.groups.current) == 24, 'wrong current'
+        top = [
+            game_logic.proc.decks.groups.current[-3].id,
+            game_logic.proc.decks.groups.current[-2].id,
+            game_logic.proc.decks.groups.current[-1].id,
+                ]
+        assert top == rev, 'not reordered'
+
+    def test_play_analyst_for_arrange_the_top_for_opponent(
+        self,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test play analyst for arrange the top for opponent
+        """
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.BRIEFING)
+        game_logic.proc.players.opponent.awaiting_abilities.append(Agents.ANALYST)
+        top = [
+            game_logic.proc.decks.groups.current[-3].id,
+            game_logic.proc.decks.groups.current[-2].id,
+            game_logic.proc.decks.groups.current[-1].id,
+                ]
+        rev = top[::-1]
+        assert len(game_logic.proc.decks.groups.current) == 24, 'wrong current'
+
+        proc = game_logic.play_analyst_for_arrange_the_top(rev, Sides.OPPONENT).proc
+        assert proc.players.opponent.awaiting_abilities == [], 'wrong abilities'
         assert len(game_logic.proc.decks.groups.current) == 24, 'wrong current'
         top = [
             game_logic.proc.decks.groups.current[-3].id,
@@ -373,38 +439,48 @@ class TestGameLogic:
                 ]
         assert old == new, 'reordered'
 
+    @pytest.mark.parametrize("test_input", [Sides.PLAYER, Sides.OPPONENT])
     def test_set_agent(
         self,
+        test_input: Sides,
         game_logic: GameLogic,
             ) -> None:
         """Test set agent
         """
-        proc = game_logic.set_agent(agent_id=Agents.DEPUTY).proc
-        assert proc.players.player.agents.by_id(Agents.DEPUTY)[0].is_agent_x == True, \
+        game_logic.set_agent(Agents.DEPUTY, test_input)
+        user = game_logic.proc.players.player if test_input == Sides.PLAYER \
+            else game_logic.proc.players.opponent
+
+        assert user.agents.by_id(Agents.DEPUTY)[0].is_agent_x == True, \
             'agent not set'
-        assert proc.players.player.agents.by_id(Agents.DEPUTY)[0].is_in_headquarter== False, \
+        assert user.agents.by_id(Agents.DEPUTY)[0].is_in_headquarter== False, \
             'agent is in hand'
-        assert proc.players.player.agents.by_id(Agents.DEPUTY)[0].is_revealed == False, \
+        assert user.agents.by_id(Agents.DEPUTY)[0].is_revealed == False, \
             'wrong revealed'
         with pytest.raises(HTTPException) as e:
-            game_logic.set_agent(agent_id='Someher wrong')
+            game_logic.set_agent('Someher wrong', test_input)
         assert "not available to choice" in e.value.detail, 'wrong error'
 
+    @pytest.mark.parametrize("test_input", [Sides.PLAYER, Sides.OPPONENT])
     def test_set_agent_and_reveal(
         self,
+        test_input: Sides,
         game_logic: GameLogic,
             ) -> None:
         """Test get agent and reveal it
         """
-        game_logic.proc.players.player.awaiting_abilities.append(Agents.DOUBLE)
-        proc = game_logic.set_agent(agent_id=Agents.DEPUTY).proc
-        assert proc.players.player.agents.by_id(Agents.DEPUTY)[0].is_agent_x == True, \
+        user = game_logic.proc.players.player if test_input == Sides.PLAYER else \
+            game_logic.proc.players.opponent
+        user.awaiting_abilities.append(Agents.DOUBLE)
+        game_logic.set_agent(Agents.DEPUTY, test_input)
+
+        assert user.agents.by_id(Agents.DEPUTY)[0].is_agent_x == True, \
             'agent not set'
-        assert proc.players.player.agents.by_id(Agents.DEPUTY)[0].is_in_headquarter== False, \
+        assert user.agents.by_id(Agents.DEPUTY)[0].is_in_headquarter== False, \
             'agent is in hand'
-        assert proc.players.player.agents.by_id(Agents.DEPUTY)[0].is_revealed == True, \
+        assert user.agents.by_id(Agents.DEPUTY)[0].is_revealed == True, \
             'wrong revealed'
-        assert proc.players.player.awaiting_abilities == [], 'abilities not clear'
+        assert user.awaiting_abilities == [], 'abilities not clear'
 
 
 class TestCheckPhaseConditions:
@@ -458,38 +534,47 @@ class TestCheckPhaseConditions:
         game_logic.proc.decks.objectives.pop()
         with pytest.raises(HTTPException)  as e:
             game_logic.chek_phase_conditions_before_next()
-        assert "No one player has balance" in e.value.detail, 'wrong error'
+        assert "No one side has balance" in e.value.detail, 'wrong error'
 
+    @pytest.mark.parametrize("test_input", [Sides.PLAYER, Sides.OPPONENT])
     def test_chek_phase_conditions_before_next_if_analyst_not_used(
         self,
+        test_input: Sides,
         game_logic: GameLogic,
             ) -> None:
         """Test chek_phase_conditions_before_next() if analyst
         ability not used
         """
+        user = game_logic.proc.players.player if test_input == Sides.PLAYER else \
+            game_logic.proc.players.opponent
         game_logic.proc.players.player.faction = Factions.CIA
         game_logic.proc.players.opponent.faction = Factions.KGB
         game_logic.proc.players.player.has_balance = True
         game_logic.proc.players.opponent.has_balance = False
         game_logic.proc.decks.objectives.pop()
-        game_logic.proc.players.player.awaiting_abilities.append(Agents.ANALYST)
+        user.awaiting_abilities.append(Agents.ANALYST)
 
         with pytest.raises(HTTPException)  as e:
             game_logic.chek_phase_conditions_before_next()
         assert "Analyst ability must be used" in e.value.detail, 'wrong error'
 
+    @pytest.mark.parametrize("test_input", [Sides.PLAYER, Sides.OPPONENT])
     def test_chek_phase_conditions_before_next_if_players_agent_not_set(
         self,
+        test_input: Sides,
         game_logic: GameLogic,
             ) -> None:
         """Test chek_phase_conditions_before_next() if players
         agent not set
         """
         game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.PLANNING)
+        user = game_logic.proc.players.player if test_input == Sides.PLAYER else \
+            game_logic.proc.players.opponent
+        user.agents.current[0].is_agent_x = True
 
         with pytest.raises(HTTPException)  as e:
             game_logic.chek_phase_conditions_before_next()
-        assert "Agent not choosen" in e.value.detail, 'wrong error'
+        assert "not choosen" in e.value.detail, 'wrong error'
 
     def test_chek_phase_conditions_before_next_if_last_phase(
         self,

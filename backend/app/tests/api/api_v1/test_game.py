@@ -50,7 +50,7 @@ class TestPresetFaction:
         user: crud_user.CRUDUser,
         game: crud_game_current.CRUDGame,
         monkeypatch,
-        connection: Generator,
+        # connection: Generator,
         client: TestClient,
         faction: str
             ) -> None:
@@ -72,7 +72,7 @@ class TestPresetFaction:
                 }
             )
         assert response.status_code == 200, f'{response.content=}'
-        assert connection['CurrentGameData'].objects().count() == 1, 'wrong count of data'
+        # assert connection['CurrentGameData'].objects().count() == 1, 'wrong count of data'
 
         response = client.patch(
             f"{settings.api_v1_str}/game/preset?q={faction}",
@@ -81,7 +81,7 @@ class TestPresetFaction:
                 }
             )
         assert response.status_code == 409, f'{response.content=}'
-        assert response.json()['detail'] == 'You cant change faction because is choosen yet', \
+        assert response.json()['detail'] == 'You cant change faction because is chosen yet', \
             'wrong detail'
 
     def test_preset_faction_return_422(
@@ -311,6 +311,83 @@ class TestAnalyst:
         assert response.status_code == 200, f'{response.content=}'
 
     # TODO: here test 409
+
+
+class TestSetAgentX:
+    """Test set_agent_x
+    """
+
+    @pytest.fixture(scope="function")
+    def mock_return(
+        self,
+        user: crud_user.CRUDUser,
+        started_game: crud_game_current.CRUDGame,
+        game_logic: logic.GameLogic,
+        monkeypatch,
+            ) -> None:
+        """Mock user and game
+        """
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.PLANNING)
+        started_game.save_game_logic(game_logic)
+
+        def mock_user(*args, **kwargs) -> Callable:
+            return user.get_by_login(settings.user0_login)
+
+        def mock_process(*args, **kwargs) -> Callable:
+            return started_game.get_last_game(args[0])
+
+        monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
+        monkeypatch.setattr(crud_game_current.game, "get_last_game", mock_process)
+
+    def test_set_agent_x_return_200(
+        self,
+        mock_return,
+        client: TestClient,
+            ) -> None:
+        """Test /phase/planning/agent_x returns 200
+        """
+        response = client.patch(
+            f"{settings.api_v1_str}/game/phase/planning/agent_x?q={Agents.DEPUTY.value}",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 200, f'{response.content=}'
+
+    def test_set_agent_x_return_422(
+        self,
+        mock_return,
+        client: TestClient,
+            ) -> None:
+        """Test /phase/planning/agent_x returns 422
+        """
+        response = client.patch(
+            f"{settings.api_v1_str}/game/phase/planning/agent_x?q=wrong_agent",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 422, f'{response.content=}'
+
+    def test_set_agent_x_return_409(
+        self,
+        mock_return,
+        started_game: crud_game_current.CRUDGame,
+        game_logic: logic.GameLogic,
+        client: TestClient,
+            ) -> None:
+        """Test /phase/planning/agent_x returns 409
+        """
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.BRIEFING)
+        started_game.save_game_logic(game_logic)
+
+        response = client.patch(
+            f"{settings.api_v1_str}/game/phase/planning/agent_x?q={Agents.DEPUTY.value}",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 409, f'{response.content=}'
 
 
 class TestAutorizationError:

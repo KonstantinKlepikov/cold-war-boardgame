@@ -298,7 +298,7 @@ class TestGameLogic:
 
         with pytest.raises(HTTPException) as e:
             game_logic._check_analyct_condition(test_input)
-        assert "any phases except 'briefing'" in e.value.detail, 'wrong error'
+        assert "Analyst ability can be played" in e.value.detail, 'wrong error'
 
     @pytest.mark.parametrize("test_input", [Sides.PLAYER, Sides.OPPONENT])
     def test_check_analyct_condition_raise_wrong_access(
@@ -440,14 +440,15 @@ class TestGameLogic:
         assert old == new, 'reordered'
 
     @pytest.mark.parametrize("test_input", [Sides.PLAYER, Sides.OPPONENT])
-    def test_set_agent(
+    def test_set_agent_x(
         self,
         test_input: Sides,
         game_logic: GameLogic,
             ) -> None:
         """Test set agent
         """
-        game_logic.set_agent(Agents.DEPUTY, test_input)
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.PLANNING)
+        game_logic.set_agent_x(Agents.DEPUTY, test_input)
         user = game_logic.proc.players.player if test_input == Sides.PLAYER \
             else game_logic.proc.players.opponent
 
@@ -458,7 +459,7 @@ class TestGameLogic:
         assert user.agents.by_id(Agents.DEPUTY)[0].is_revealed == False, \
             'wrong revealed'
         with pytest.raises(HTTPException) as e:
-            game_logic.set_agent('Someher wrong', test_input)
+            game_logic.set_agent_x('Someher wrong', test_input)
         assert "not available to choice" in e.value.detail, 'wrong error'
 
     @pytest.mark.parametrize("test_input", [Sides.PLAYER, Sides.OPPONENT])
@@ -469,10 +470,11 @@ class TestGameLogic:
             ) -> None:
         """Test get agent and reveal it
         """
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.PLANNING)
         user = game_logic.proc.players.player if test_input == Sides.PLAYER else \
             game_logic.proc.players.opponent
         user.awaiting_abilities.append(Agents.DOUBLE)
-        game_logic.set_agent(Agents.DEPUTY, test_input)
+        game_logic.set_agent_x(Agents.DEPUTY, test_input)
 
         assert user.agents.by_id(Agents.DEPUTY)[0].is_agent_x == True, \
             'agent not set'
@@ -481,6 +483,20 @@ class TestGameLogic:
         assert user.agents.by_id(Agents.DEPUTY)[0].is_revealed == True, \
             'wrong revealed'
         assert user.awaiting_abilities == [], 'abilities not clear'
+
+    @pytest.mark.parametrize("test_input", [Sides.PLAYER, Sides.OPPONENT])
+    def test_set_agent_x_raise_409_if_not_a_briefing(
+        self,
+        test_input: Sides,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test set agent x raise 409
+        """
+        user = game_logic.proc.players.player if test_input == Sides.PLAYER \
+            else game_logic.proc.players.opponent
+        with pytest.raises(HTTPException) as e:
+            game_logic.set_agent_x(Agents.DEPUTY, test_input)
+        assert "Agent can be set" in e.value.detail, 'wrong error'
 
 
 class TestCheckPhaseConditions:

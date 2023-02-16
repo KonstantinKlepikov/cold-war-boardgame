@@ -89,7 +89,7 @@ class GameLogic:
         if isinstance(self.proc.players.player.faction, str):
             raise HTTPException(
                 status_code=409,
-                detail="You cant change faction because is choosen yet"
+                detail="You cant change faction because is chosen yet"
                     )
 
         self.proc.players.player.faction = faction.value
@@ -188,7 +188,7 @@ class GameLogic:
         if self.proc.steps.last_id != Phases.BRIEFING:
             raise HTTPException(
                 status_code=409,
-                detail="Ability can't be played in any phases except 'briefing'."
+                detail="Analyst ability can be played only in 'briefing' phase."
                     )
         if Agents.ANALYST not in self._get_side_proc(side).awaiting_abilities:
             raise HTTPException(
@@ -260,21 +260,29 @@ class GameLogic:
 
         return self
 
-    def set_agent(
+    def set_agent_x(
         self,
-        agent_id: Agents,
+        agent: Agents,
         side: Sides = Sides.PLAYER
             ) -> 'GameLogic':
         """Set agent card
 
         Args:
+            agent (Agents): agent for current turn
             side (Sides): player or opponent, default to 'player'
 
         Returns:
             GameLogic
         """
+        if self.proc.steps.last_id != Phases.PLANNING:
+            raise HTTPException(
+                status_code=409,
+                detail="Agent can be set only in 'planning' phase."
+                    )
+
         user = self._get_side_proc(side)
-        choice = user.agents.by_id(agent_id)
+        choice = user.agents.by_id(agent)
+
         if choice and choice[0].is_in_headquarter is True:
             choice[0].is_agent_x = True
             choice[0].is_in_headquarter = False
@@ -284,8 +292,9 @@ class GameLogic:
         else:
             raise HTTPException(
                 status_code=409,
-                detail=f"Agent {agent_id} not available to choice."
+                detail=f"Agent {agent} not available to choice."
                     )
+
         return self
 
     def chek_phase_conditions_before_next(self) -> 'GameLogic':

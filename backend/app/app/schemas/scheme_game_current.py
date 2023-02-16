@@ -232,7 +232,7 @@ class CurrentGameDataProcessor(Game):
         self.steps.last = self.steps.c.by_id(self.steps.turn_phase)
 
     def flusch(self):
-        """Flusch data to fields
+        """Flush data to fields
         """
         self.steps.turn_phases_left = self.steps.current_ids
         self.steps.turn_phase = self.steps.last_id

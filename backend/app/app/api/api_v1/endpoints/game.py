@@ -2,7 +2,7 @@ from fastapi import status, Depends, APIRouter, Query, HTTPException
 from app.schemas.scheme_user import User
 from app.crud import crud_game_current
 from app.core import security_user, logic
-from app.constructs import Factions, Groups
+from app.constructs import Factions, Groups, Agents
 from app.config import settings
 
 
@@ -29,7 +29,7 @@ def create_new_game(
     status_code=status.HTTP_200_OK,
     responses=settings.NEXT_ERRORS,
     summary='Preset faction before game start and deal a mission card',
-    response_description="Ok. Faction is setted."
+    response_description="Ok. Faction is set."
         )
 def preset(
     q: Factions = Query(
@@ -87,7 +87,7 @@ def next_phase(
     "/phase/briefing/analyst_look",
     status_code=status.HTTP_200_OK,
     responses=settings.NEXT_ERRORS,
-    summary='Look top three cards of group deck with analist ability',
+    summary='Look top three cards of group deck with analyst ability',
     response_description="Ok. Data is changed",
         )
 def analyst_get(
@@ -105,10 +105,10 @@ def analyst_get(
     "/phase/briefing/analyst_arrange",
     status_code=status.HTTP_200_OK,
     responses=settings.NEXT_ERRORS,
-    summary='Arrange top three cards of group deck with analist ability',
+    summary='Arrange top three cards of group deck with analyst ability',
     response_description="Ok. Data is changed",
         )
-def analyst_arrnge(
+def analyst_arrange(
     top: list[Groups],
     user: User = Depends(security_user.get_current_active_user),
         ) -> None:
@@ -123,4 +123,25 @@ def analyst_arrnge(
     game_logic = logic.GameLogic(
         crud_game_current.game.get_last_game(user.login)
             ).play_analyst_for_arrange_the_top(top)
+    crud_game_current.game.save_game_logic(game_logic)
+
+
+@router.patch(
+    "/phase/planning/agent_x",
+    status_code=status.HTTP_200_OK,
+    responses=settings.NEXT_ERRORS,
+    summary='Set agent X for current turn',
+    response_description="Ok. Agent X is set",
+        )
+def agent_x(
+    q: Agents = Query(title="Agent X id"),
+    user: User = Depends(security_user.get_current_active_user),
+        ) -> None:
+    """Set agent X
+    Args:
+        q (Agents): agent for current turn
+    """
+    game_logic = logic.GameLogic(
+        crud_game_current.game.get_last_game(user.login)
+            ).set_agent_x(q)
     crud_game_current.game.save_game_logic(game_logic)

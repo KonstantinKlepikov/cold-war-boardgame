@@ -98,6 +98,8 @@ class TestGameLogic:
             assert data['players'][side]['has_domination'] is False, 'wrong domination'
             assert data['players'][side]['awaiting_abilities'] == [], \
                'wrong abilities'
+            assert data['players'][side]['influence_pass'] is False, \
+                'wrong influence pass'
             assert data['players'][side]['agents']['agent_x'] is None, \
                 'wrong agent x'
             assert len(data['players'][side]['agents']['in_headquarter']) == 6, \
@@ -498,6 +500,81 @@ class TestGameLogic:
             game_logic.set_agent_x(Agents.DEPUTY, test_input)
         assert "Agent can be set" in e.value.detail, 'wrong error'
 
+    def test_check_influence_condition_wrong_phase(
+        self,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test _check_influence_condition raises 409 if wrong phase
+        """
+        with pytest.raises(HTTPException) as e:
+            game_logic._check_influence_condition()
+        assert "Group can be recruited" in e.value.detail, 'wrong error'
+
+    def test_check_influence_condition_both_pass(
+        self,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test _check_influence_condition raises 409 if both pass
+        """
+        game_logic.proc.players.player.influence_pass = True
+        game_logic.proc.players.opponent.influence_pass = True
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.INFLUENCE)
+        with pytest.raises(HTTPException) as e:
+            game_logic._check_influence_condition()
+        assert "Both sides are pass" in e.value.detail, 'wrong error'
+
+    @pytest.mark.parametrize("test_input", [Sides.PLAYER, Sides.OPPONENT])
+    def test_recruit_group(
+        self,
+        test_input: Sides,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test recruit_group
+        """
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.INFLUENCE)
+        game_logic.recruit_group(test_input)
+        if test_input == Sides.PLAYER:
+            owned = game_logic.proc.decks.groups.owned_by_player
+        else:
+            owned = game_logic.proc.decks.groups.owned_by_opponent
+
+        assert len(owned) == 1, 'wrong owned'
+        assert owned[0].is_revealed_to_player is True, 'wrong revealed to player'
+        assert owned[0].is_revealed_to_opponent is True, 'wrong revealed to opponent'
+
+    @pytest.mark.parametrize("test_input", [Sides.PLAYER, Sides.OPPONENT])
+    def test_pass_influence_cant_pass_if_no_group_own(
+        self,
+        test_input: Sides,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test influence pass raises 409
+        """
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.INFLUENCE)
+        with pytest.raises(HTTPException) as e:
+            game_logic.pass_influence(test_input)
+        assert "You cant pass while" in e.value.detail, 'wrong error'
+
+    @pytest.mark.parametrize("test_input", [Sides.PLAYER, Sides.OPPONENT])
+    def test_pass_influence(
+        self,
+        test_input: Sides,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test influence pass
+        """
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.INFLUENCE)
+        user = game_logic.proc.players.player if test_input == Sides.PLAYER \
+            else game_logic.proc.players.opponent
+        if test_input == Sides.PLAYER:
+            owned = game_logic.proc.decks.groups.owned_by_player
+        else:
+            owned = game_logic.proc.decks.groups.owned_by_opponent
+        owned.append(game_logic.proc.decks.groups.pop())
+        game_logic.pass_influence(test_input)
+        assert user.influence_pass is True, 'wrong influence pass'
+
+
 
 class TestCheckPhaseConditions:
     """Test chek_phase_conditions_before_next()
@@ -592,6 +669,28 @@ class TestCheckPhaseConditions:
             game_logic.chek_phase_conditions_before_next()
         assert "not choosen" in e.value.detail, 'wrong error'
 
+    @pytest.mark.parametrize("test_input", [Sides.PLAYER, Sides.OPPONENT])
+    def test_chek_phase_conditions_before_next_if_both_players_not_pass(
+        self,
+        test_input: Sides,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test chek_phase_conditions_before_next() if players
+        not pass
+        """
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.INFLUENCE)
+        user = game_logic.proc.players.player if test_input == Sides.PLAYER else \
+            game_logic.proc.players.opponent
+
+        with pytest.raises(HTTPException)  as e:
+            game_logic.chek_phase_conditions_before_next()
+        assert "Both side must pass" in e.value.detail, 'wrong error'
+
+        user.influence_pass = True
+        with pytest.raises(HTTPException)  as e:
+            game_logic.chek_phase_conditions_before_next()
+        assert "Both side must pass" in e.value.detail, 'wrong error'
+
     def test_chek_phase_conditions_before_next_if_last_phase(
         self,
         game_logic: GameLogic,
@@ -606,7 +705,7 @@ class TestCheckPhaseConditions:
         assert "This phase is last in a turn" in e.value.detail, 'wrong error'
 
 
-class TestGamePhaseConditions:
+class TestSetPhaseConditions:
     """Test change conditions
     """
 
@@ -666,6 +765,21 @@ class TestGamePhaseConditions:
             assert user.agents.by_id(Agents.SPY)[0].is_revealed is False, 'not changed'
             assert user.agents.by_id(Agents.DEPUTY)[0].is_on_leave is False, 'not changed'
             assert user.agents.by_id(Agents.DEPUTY)[0].is_revealed is False, 'changed'
+
+    def test_set_phase_conditions_after_next_ceasfire(
+        self,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test set phase condition after next in ceasfire
+        """
+        game_logic.proc.players.player.influence_pass = True
+        game_logic.proc.players.opponent.influence_pass = True
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.CEASEFIRE)
+
+        proc = game_logic.set_phase_conditions_after_next().proc
+
+        assert proc.players.player.influence_pass is False, 'wrong pass'
+        assert proc.players.opponent.influence_pass is False, 'wrong pass'
 
     def test_set_phase_conditions_after_next_debriefing(
         self,

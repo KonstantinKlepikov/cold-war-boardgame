@@ -1,4 +1,5 @@
 from fastapi import status, Depends, APIRouter, Query, HTTPException
+from typing import Optional
 from app.schemas.scheme_user import User
 from app.crud import crud_game_current
 from app.core import security_user, logic
@@ -144,4 +145,67 @@ def agent_x(
     game_logic = logic.GameLogic(
         crud_game_current.game.get_last_game(user.login)
             ).set_agent_x(q)
+    crud_game_current.game.save_game_logic(game_logic)
+
+
+@router.patch(
+    "/influence_struggle/recruit",
+    status_code=status.HTTP_200_OK,
+    responses=settings.NEXT_ERRORS,
+    summary='Recruit a group in a influence-struggle subgame',
+    response_description="Ok. Group is recruited",
+        )
+def recruit(user: User = Depends(security_user.get_current_active_user),
+    ) -> None:
+    """The player draw a group card from top of group deck.
+    This group is recruited by this player.
+    """
+    game_logic = logic.GameLogic(
+        crud_game_current.game.get_last_game(user.login)
+            ).recruit_group()
+    crud_game_current.game.save_game_logic(game_logic)
+
+
+@router.patch(
+    "/influence_struggle/activate",
+    status_code=status.HTTP_200_OK,
+    responses=settings.NEXT_ERRORS,
+    summary='Activate a group in a influence-struggle subgame',
+    response_description="Ok. Abilitie is activated",
+        )
+def activate(
+    source: Groups,
+    target: Optional[Groups],
+    user: User = Depends(security_user.get_current_active_user),
+    ) -> None:
+    """Activate abilitie of choosen group card.
+
+    Args:
+        source (Groups): Id of source group.
+                         Group must be owned by player and must be active.
+        target (Optional[Groups]): Id of target group.
+                                   Not all group requred targeting of
+                                   another groups in action.
+    """
+    raise HTTPException(
+        status_code=409,
+        detail="Not implemented."
+            )
+
+
+@router.patch(
+    "/influence_struggle/pass",
+    status_code=status.HTTP_200_OK,
+    responses=settings.NEXT_ERRORS,
+    summary='Pass in a influence-struggle subgame',
+    response_description="Ok. Abilitie is activated",
+        )
+def passing(
+    user: User = Depends(security_user.get_current_active_user),
+    ) -> None:
+    """Pass in a influence-struggle subgame.
+    """
+    game_logic = logic.GameLogic(
+        crud_game_current.game.get_last_game(user.login)
+            ).pass_influence()
     crud_game_current.game.save_game_logic(game_logic)

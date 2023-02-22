@@ -42,6 +42,7 @@ class BaseUser(BaseModel):
     has_balance: bool
     has_domination: bool
     awaiting_abilities: list[AwaitingAbilities]
+    influence_pass: bool
 
 
 class Player(BaseUser):

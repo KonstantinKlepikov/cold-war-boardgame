@@ -47,6 +47,7 @@ class Player(EmbeddedDocument):
     has_domination = BooleanField(default=False)
     awaiting_abilities = ListField(EnumField(AwaitingAbilities))
     agents = EmbeddedDocumentField(AgentsInPlay, default=AgentsInPlay())
+    influence_pass = BooleanField(default=False)
 
 
 class Players(EmbeddedDocument):

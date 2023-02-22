@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from app.crud import crud_game_current, crud_user
 from app.core import logic
 from app.config import settings
-from app.constructs import Factions, Agents, Phases
+from app.constructs import Factions, Agents, Phases, Groups
 
 
 class TestCreateNewGame:
@@ -390,44 +390,108 @@ class TestSetAgentX:
         assert response.status_code == 409, f'{response.content=}'
 
 
+class TestInfluenceStruggleGroupsResources:
+    """Test influence struggle groups subgame
+    """
+
+    @pytest.fixture(scope="function")
+    def mock_return(
+        self,
+        user: crud_user.CRUDUser,
+        started_game: crud_game_current.CRUDGame,
+        game_logic: logic.GameLogic,
+        monkeypatch,
+            ) -> None:
+        """Mock user and game
+        """
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.INFLUENCE)
+        game_logic.proc.decks.groups.owned_by_player.append(game_logic.proc.decks.groups.pop())
+        started_game.save_game_logic(game_logic)
+
+        def mock_user(*args, **kwargs) -> Callable:
+            return user.get_by_login(settings.user0_login)
+
+        def mock_process(*args, **kwargs) -> Callable:
+            return started_game.get_last_game(args[0])
+
+        monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
+        monkeypatch.setattr(crud_game_current.game, "get_last_game", mock_process)
+
+    def test_recruit_return_200(
+        self,
+        mock_return,
+        client: TestClient,
+            ) -> None:
+        """Test /game/influence_struggle/recruit returns 200
+        """
+        response = client.patch(
+            f"{settings.api_v1_str}/game/influence_struggle/recruit",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 200, f'{response.content=}'
+
+    def test_pass_return_200(
+        self,
+        mock_return,
+        client: TestClient,
+            ) -> None:
+        """Test /game/influence_struggle/pass returns 200
+        """
+        response = client.patch(
+            f"{settings.api_v1_str}/game/influence_struggle/pass",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 200, f'{response.content=}'
+
+    def test_activate_return_200(
+        self,
+        mock_return,
+        client: TestClient,
+            ) -> None:
+        """Test /game/influence_struggle/pass returns 200
+        """
+        response = client.patch(
+            f"{settings.api_v1_str}/game/influence_struggle/activate?source{Groups.ARTISTS}",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 200, f'{response.content=}'
+
+
+
 class TestAutorizationError:
     """Test not acessed unautorized user
     """
 
-    def test_game_create_return_401(self, client: TestClient) -> None:
-        """Test game create return 401 for unauthorized
+    @pytest.mark.parametrize("test_input", [
+        '/game/preset?q=kgb',
+        '/game/next_turn',
+        '/game/next_phase',
+        '/game/phase/briefing/analyst_look',
+        '/game/influence_struggle/recruit',
+        '/game/influence_struggle/pass',
+        f'/game/influence_struggle/activate?source{Groups.ARTISTS}',
+            ])
+    def test_resource_return_401(
+        self,
+        test_input: str,
+        client: TestClient
+            ) -> None:
+        """Test resource return 401 for unauthorized
+        """
+        response = client.patch(f"{settings.api_v1_str}{test_input}")
+        assert response.status_code == 401, f'{test_input=}, {response.content=}'
+        assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
+
+    def test_create_the_game_return_401(self, client: TestClient) -> None:
+        """Test create game return 401
         """
         response = client.post(f"{settings.api_v1_str}/game/create")
-        assert response.status_code == 401, f'{response.content=}'
-        assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
-
-    def test_preset_faction_return_401(self, client: TestClient) -> None:
-        """Test preset faction return 401
-        """
-        response = client.patch(f"{settings.api_v1_str}/game/preset?q=kgb")
-        assert response.status_code == 401, f'{response.content=}'
-        assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
-
-    def test_next_turn_return_401(self, client: TestClient) -> None:
-        """Test next turn return 401 for unauthorized
-        """
-        response = client.patch(f"{settings.api_v1_str}/game/next_turn")
-        assert response.status_code == 401, f'{response.content=}'
-        assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
-
-    def test_next_turn_return_401(self, client: TestClient) -> None:
-        """Test next phase return 401 for unauthorized
-        """
-        response = client.patch(f"{settings.api_v1_str}/game/next_phase")
-        assert response.status_code == 401, f'{response.content=}'
-        assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
-
-    def test_analyst_look_return_401(self, client: TestClient) -> None:
-        """Test analyst_look return 401 for unauthorized
-        """
-        response = client.patch(
-            f"{settings.api_v1_str}/game/phase/briefing/analyst_look",
-                )
         assert response.status_code == 401, f'{response.content=}'
         assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
 

@@ -97,6 +97,7 @@ class BaseUserProcessor(Player):
     has_balance: bool = False
     has_domination: bool = False
     awaiting_abilities: list[AwaitingAbilities] = []
+    influence_pass: bool = False
 
 
 class PlayerProcessor(BaseUserProcessor):

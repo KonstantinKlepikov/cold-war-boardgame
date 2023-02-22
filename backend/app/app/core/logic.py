@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, Optional
 from fastapi import HTTPException
 from app.crud.crud_game_current import CurrentGameData
 from app.schemas.scheme_game_current_api import CurrentGameDataApi
@@ -297,6 +297,94 @@ class GameLogic:
 
         return self
 
+    def _check_influence_condition(self) -> None:
+        """Check influence struggle conditions
+        """
+        if self.proc.steps.last_id != Phases.INFLUENCE:
+            raise HTTPException(
+                status_code=409,
+                detail="Group can be recruited only in 'influence struggle' phase."
+                    )
+
+        if self.proc.players.player.influence_pass is True and \
+                self.proc.players.opponent.influence_pass is True:
+            raise HTTPException(
+                status_code=409,
+                detail="Both sides are pass. You cant do anithing."
+                    )
+
+    def recruit_group(self, side: Sides = Sides.PLAYER) -> 'GameLogic':
+        """Recruit group
+
+        Args:
+            side (Sides): player or opponent, default to 'player'
+
+        Returns:
+            GameLogic
+        """
+        self._check_influence_condition()
+
+        if side == Sides.PLAYER:
+            owned = self.proc.decks.groups.owned_by_player
+        else:
+            owned = self.proc.decks.groups.owned_by_opponent
+
+        draw = self.proc.decks.groups.pop()
+        draw.is_revealed_to_player = True
+        draw.is_revealed_to_opponent = True
+        owned.append(draw)
+
+        return self
+
+    def activate_group(
+        self,
+        source: Groups,
+        target: Optional[Groups] = None,
+        side: Sides = Sides.PLAYER,
+            ) -> 'GameLogic':
+        """Activate group
+
+        Args:
+            source (Groups): group, owned by player. Must be active
+            source (Groups, optioanl): Targetgroup. Must be active. Default to None
+            side (Sides): player or opponent, default to 'player'
+
+        Returns:
+            GameLogic
+        """
+        self._check_influence_condition()
+
+        return self
+
+
+    def pass_influence(self, side: Sides = Sides.PLAYER) -> 'GameLogic':
+        """Pass in influence phase
+
+        Args:
+            side (Sides): player or opponent, default to 'player'
+
+        Returns:
+            GameLogic
+        """
+        self._check_influence_condition()
+
+        if side == Sides.PLAYER:
+            owned = self.proc.decks.groups.owned_by_player
+        else:
+            owned = self.proc.decks.groups.owned_by_opponent
+
+        if len(owned) == 0:
+            raise HTTPException(
+                status_code=409,
+                detail="You cant pass while you no control any group."
+                    )
+
+        user = self._get_side_proc(side)
+        user.influence_pass = True
+
+        return self
+
+
     def chek_phase_conditions_before_next(self) -> 'GameLogic':
         """Check game conition before push to next phase
         and raise exception if any check fails
@@ -370,7 +458,14 @@ class GameLogic:
 
         # influence_struggle
         elif phase == Phases.INFLUENCE:
-            pass
+
+            # Both players must pass in group subgame
+            if self.proc.players.player.influence_pass is not True or \
+                self.proc.players.opponent.influence_pass is not True:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Both side must pass in group subgame before next phase."
+                        )
 
         # ceasefire
         elif phase == Phases.CEASEFIRE:
@@ -429,7 +524,10 @@ class GameLogic:
 
         # ceasefire
         elif phase == Phases.CEASEFIRE:
-            pass
+
+            # clear influence struggle pass
+            self.proc.players.player.influence_pass = False
+            self.proc.players.opponent.influence_pass = False
 
         # debriefing
         elif phase == Phases.DEBRIFIENG:

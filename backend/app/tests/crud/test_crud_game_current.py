@@ -36,6 +36,7 @@ class TestCRUDGameCurrent:
             assert data['players'][player]['has_domination'] is False, 'wrong domination'
             assert data['players'][player]['awaiting_abilities'] == [], \
                'wrong abilities'
+            assert data['players'][player]['influence_pass'] is False, 'wrong influence pass'
             assert len(data['players'][player]['agents']['current']) == 6, 'wrong agents'
             assert data['players'][player]['agents']['current'][0]['name'] == Agents.SPY.value, \
                 'wrong agent name'

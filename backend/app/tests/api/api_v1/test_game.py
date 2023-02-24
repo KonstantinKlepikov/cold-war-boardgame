@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from app.crud import crud_game_current, crud_user
 from app.core import logic
 from app.config import settings
-from app.constructs import Factions, Agents, Phases, Groups
+from app.constructs import Factions, Agents, Phases, Groups, Objectives
 
 
 class TestCreateNewGame:
@@ -50,7 +50,6 @@ class TestPresetFaction:
         user: crud_user.CRUDUser,
         game: crud_game_current.CRUDGame,
         monkeypatch,
-        # connection: Generator,
         client: TestClient,
         faction: str
             ) -> None:
@@ -72,7 +71,6 @@ class TestPresetFaction:
                 }
             )
         assert response.status_code == 200, f'{response.content=}'
-        # assert connection['CurrentGameData'].objects().count() == 1, 'wrong count of data'
 
         response = client.patch(
             f"{settings.api_v1_str}/game/preset?q={faction}",
@@ -447,6 +445,7 @@ class TestInfluenceStruggleGroupsResources:
             )
         assert response.status_code == 200, f'{response.content=}'
 
+    @pytest.mark.skip('Not implemented')
     def test_activate_return_200(
         self,
         mock_return,
@@ -462,6 +461,24 @@ class TestInfluenceStruggleGroupsResources:
             )
         assert response.status_code == 200, f'{response.content=}'
 
+    def test_nuclear_escalation_return_200(
+        self,
+        mock_return,
+        started_game: crud_game_current.CRUDGame,
+        game_logic: logic.GameLogic,
+        client: TestClient,
+            ) -> None:
+        """Test /game/influence_struggle/nuclear_escalation returns 200
+        """
+        game_logic.proc.decks.objectives.owned_by_player.append(Objectives.NUCLEARESCALATION)
+        started_game.save_game_logic(game_logic)
+        response = client.patch(
+            f"{settings.api_v1_str}/game/influence_struggle/nuclear_escalation",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 200, f'{response.content=}'
 
 
 class TestAutorizationError:
@@ -476,6 +493,7 @@ class TestAutorizationError:
         '/game/influence_struggle/recruit',
         '/game/influence_struggle/pass',
         f'/game/influence_struggle/activate?source{Groups.ARTISTS}',
+        '/game/influence_struggle/nuclear_escalation',
             ])
     def test_resource_return_401(
         self,

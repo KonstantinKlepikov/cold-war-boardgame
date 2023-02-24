@@ -98,6 +98,17 @@ class Groups(BaseEnum):
     TELEVISION = 'Television'
 
 
+class MilitaryGroups(BaseEnum):
+    """Military groups cards ids
+    """
+    GUERILLA = 'Guerilla'
+    MILITIA = 'Militia'
+    MERCENARIES = 'Mercenaries'
+    POLICE = 'Police'
+    INFANTRY = 'Infantry'
+    GENERALS = 'Generals'
+
+
 class HiddenGroups(BaseEnum):
     """Groups cards ids
     """

@@ -209,3 +209,21 @@ def passing(
         crud_game_current.game.get_last_game(user.login)
             ).pass_influence()
     crud_game_current.game.save_game_logic(game_logic)
+
+
+@router.patch(
+    "/influence_struggle/nuclear_escalation",
+    status_code=status.HTTP_200_OK,
+    responses=settings.NEXT_ERRORS,
+    summary='Play nuclear escalation abilitie',
+    response_description="Ok. Abilitie is used",
+        )
+def nuclear_escalation(
+    user: User = Depends(security_user.get_current_active_user),
+    ) -> None:
+    """Activate nuclear escalation abilitie.
+    """
+    game_logic = logic.GameLogic(
+        crud_game_current.game.get_last_game(user.login)
+            ).nuclear_escalation()
+    crud_game_current.game.save_game_logic(game_logic)

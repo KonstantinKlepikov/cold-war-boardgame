@@ -4,7 +4,8 @@ from collections import deque
 from fastapi import HTTPException
 from app.core.logic import GameLogic
 from app.schemas.scheme_game_current import (
-    CurrentGameDataProcessor, PlayerProcessor, OpponentProcessor
+    CurrentGameDataProcessor, PlayerProcessor, OpponentProcessor,
+    GroupInPlayProcessor,
         )
 from app.config import settings
 from app.constructs import (
@@ -574,6 +575,85 @@ class TestGameLogic:
         game_logic.pass_influence(test_input)
         assert user.influence_pass is True, 'wrong influence pass'
 
+    @staticmethod
+    def owned_groups(
+        test_input: Sides,
+        game_logic: GameLogic,
+            ) -> list[GroupInPlayProcessor]:
+        if test_input == Sides.PLAYER:
+            return game_logic.proc.decks.groups.owned_by_player
+        else:
+            return game_logic.proc.decks.groups.owned_by_opponent
+
+    @pytest.mark.parametrize("test_input", [Sides.PLAYER, Sides.OPPONENT])
+    def test_discard_all_military_groups(
+        self,
+        test_input: Sides,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test discard all military groups
+        """
+        owned_gr = self.owned_groups(test_input, game_logic)
+
+        owned_gr.append(game_logic.proc.decks.groups.by_id(Groups.ARTISTS)[0])
+        owned_gr.append(game_logic.proc.decks.groups.by_id(Groups.MILITIA)[0])
+
+        owned_gr = game_logic._discard_all_military_groups(owned_gr)
+
+        assert len(owned_gr) == 1, 'wrong owned'
+        assert owned_gr[0].id == Groups.ARTISTS, 'wrong owned id'
+        assert len(game_logic.proc.decks.groups.pile) == 1, 'wrong group pile'
+        assert game_logic.proc.decks.groups.pile[0].id == Groups.MILITIA, \
+            'wrong pile id'
+
+    @pytest.mark.parametrize("test_input", [Sides.PLAYER, Sides.OPPONENT])
+    def test_nuclear_escalation_discards_military(
+        self,
+        test_input: Sides,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test discard all military groups by nuclear_escalation
+        """
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.INFLUENCE)
+        owned_gr = self.owned_groups(test_input, game_logic)
+        if test_input == Sides.PLAYER:
+            owned_ob = game_logic.proc.decks.objectives.owned_by_player
+        else:
+            owned_ob = game_logic.proc.decks.objectives.owned_by_opponent
+
+        owned_gr.append(game_logic.proc.decks.groups.by_id(Groups.ARTISTS)[0])
+        owned_gr.append(game_logic.proc.decks.groups.by_id(Groups.MILITIA)[0])
+        owned_ob.append(Objectives.NUCLEARESCALATION)
+
+        game_logic.nuclear_escalation(test_input)
+        owned_gr = self.owned_groups(test_input, game_logic)
+        assert len(owned_gr) == 1, 'wrong owned'
+        assert owned_gr[0].id == Groups.ARTISTS, 'wrong owned id'
+        assert len(game_logic.proc.decks.groups.pile) == 1, 'wrong group pile'
+        assert game_logic.proc.decks.groups.pile[0].id == Groups.MILITIA, \
+            'wrong pile id'
+        assert len(owned_ob) == 0, 'wrong owned objectives'
+
+    @pytest.mark.parametrize("test_input", [Sides.PLAYER, Sides.OPPONENT])
+    def test_nuclear_escalation_raise_409_if_ability_not_available(
+        self,
+        test_input: Sides,
+        game_logic: GameLogic,
+            ) -> None:
+        """Test nuclear_escalation raise 409 if not available ability
+        """
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.INFLUENCE)
+        owned_gr = self.owned_groups(test_input, game_logic)
+        owned_gr.append(game_logic.proc.decks.groups.by_id(Groups.ARTISTS)[0])
+        owned_gr.append(game_logic.proc.decks.groups.by_id(Groups.MILITIA)[0])
+
+        with pytest.raises(HTTPException) as e:
+                    game_logic.nuclear_escalation(test_input)
+        assert "Nuclear escalation not" in e.value.detail, 'wrong error'
+
+        owned_gr = self.owned_groups(test_input, game_logic)
+        assert len(owned_gr) == 2, 'wrong owned'
+        assert len(game_logic.proc.decks.groups.pile) == 0, 'wrong group pile'
 
 
 class TestCheckPhaseConditions:

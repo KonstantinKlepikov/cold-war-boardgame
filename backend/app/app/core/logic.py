@@ -7,7 +7,7 @@ from app.schemas.scheme_game_current import (
     ObjectiveInPlayProcessor, PlayerProcessor, OpponentProcessor
         )
 from app.constructs import (
-    Factions, Agents, Groups, Objectives, Phases, Sides
+    Factions, Agents, Groups, Objectives, Phases, Sides, MilitaryGroups
         )
 from bgameb import Step, errors
 
@@ -384,6 +384,62 @@ class GameLogic:
 
         return self
 
+    def _discard_all_military_groups(
+        self,
+        play: list[GroupInPlayProcessor]
+            ) -> list[GroupInPlayProcessor]:
+        """Discard all military group from play of given side
+
+        Args:
+            play (list[Groups]): given side play before discard
+
+        Returns:
+            list[Groups]: given side play after discard
+        """
+        result = []
+        for group in play:
+            if group.id.value not in MilitaryGroups.get_values():
+                result.append(group)
+            else:
+                self.proc.decks.groups.pile.append(group)
+
+        return result
+
+    def nuclear_escalation(self, side: Sides = Sides.PLAYER) -> 'GameLogic':
+        """Pass in influence phase
+
+        Args:
+            side (Sides): player or opponent, default to 'player'
+
+        Returns:
+            GameLogic
+        """
+        self._check_influence_condition()
+
+        if side == Sides.PLAYER:
+            owned_ob = self.proc.decks.objectives.owned_by_player
+        else:
+            owned_ob = self.proc.decks.objectives.owned_by_opponent
+
+        for ind, objective in enumerate(owned_ob):
+            if objective is Objectives.NUCLEARESCALATION:
+
+                self.proc.decks.groups.owned_by_player = self._discard_all_military_groups(
+                    self.proc.decks.groups.owned_by_player
+                        )
+                self.proc.decks.groups.owned_by_opponent = self._discard_all_military_groups(
+                    self.proc.decks.groups.owned_by_opponent
+                        )
+
+                self.proc.decks.objectives.pile.append(objective)
+                del owned_ob[ind]
+
+                return self
+
+        raise HTTPException(
+            status_code=409,
+            detail="Nuclear escalation not available for this player."
+                )
 
     def chek_phase_conditions_before_next(self) -> 'GameLogic':
         """Check game conition before push to next phase

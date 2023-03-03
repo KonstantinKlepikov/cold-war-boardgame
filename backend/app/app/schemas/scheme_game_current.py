@@ -16,7 +16,6 @@ class StepsProcessor(Steps):
     turn_phase: Optional[Phases]
     turn_phases_left: list[Phases]
     is_game_ends: bool
-    is_game_starts: bool
 
 
 class AgentInPlayProcessor(Card):
@@ -98,6 +97,7 @@ class BaseUserProcessor(Player):
     has_balance: bool = False
     has_domination: bool = False
     awaiting_abilities: list[AwaitingAbilities] = []
+    influence_pass: bool = False
 
 
 class PlayerProcessor(BaseUserProcessor):
@@ -233,7 +233,7 @@ class CurrentGameDataProcessor(Game):
         self.steps.last = self.steps.c.by_id(self.steps.turn_phase)
 
     def flusch(self):
-        """Flusch data to fields
+        """Flush data to fields
         """
         self.steps.turn_phases_left = self.steps.current_ids
         self.steps.turn_phase = self.steps.last_id

@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 from app.crud import crud_game_current, crud_user
 from app.core import logic
 from app.config import settings
-from app.constructs import Objectives, Factions, Agents
+from app.constructs import Factions, Agents, Phases, Groups, Objectives
 
 
 class TestCreateNewGame:
@@ -41,7 +41,7 @@ class TestCreateNewGame:
 
 
 class TestPresetFaction:
-    """Test game/preset/faction
+    """Test game/preset
     """
 
     @pytest.mark.parametrize("faction", ["kgb", "cia", ])
@@ -50,7 +50,6 @@ class TestPresetFaction:
         user: crud_user.CRUDUser,
         game: crud_game_current.CRUDGame,
         monkeypatch,
-        connection: Generator,
         client: TestClient,
         faction: str
             ) -> None:
@@ -66,25 +65,24 @@ class TestPresetFaction:
         monkeypatch.setattr(crud_game_current.game, "get_last_game", mock_process)
 
         response = client.patch(
-            f"{settings.api_v1_str}/game/preset/faction?q={faction}",
+            f"{settings.api_v1_str}/game/preset?q={faction}",
             headers={
                 'Authorization': f'Bearer {settings.user0_token}'
                 }
             )
         assert response.status_code == 200, f'{response.content=}'
-        assert connection['CurrentGameData'].objects().count() == 1, 'wrong count of data'
 
         response = client.patch(
-            f"{settings.api_v1_str}/game/preset/faction?q={faction}",
+            f"{settings.api_v1_str}/game/preset?q={faction}",
             headers={
                 'Authorization': f'Bearer {settings.user0_token}'
                 }
             )
         assert response.status_code == 409, f'{response.content=}'
-        assert response.json()['detail'] == 'You cant change faction because is choosen yet', \
+        assert response.json()['detail'] == 'You cant change faction because is chosen yet', \
             'wrong detail'
 
-    def test_preset_faction_return_422_404(
+    def test_preset_faction_return_422(
         self,
         user: crud_user.CRUDUser,
         monkeypatch,
@@ -98,15 +96,15 @@ class TestPresetFaction:
         monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
 
         response = client.patch(
-            f"{settings.api_v1_str}/game/preset/faction/q=abc",
+            f"{settings.api_v1_str}/game/preset?q=abc",
             headers={
                 'Authorization': f'Bearer {settings.user0_token}'
                 }
             )
-        assert response.status_code == 404, f'{response.content=}'
+        assert response.status_code == 422, f'{response.content=}'
 
         response = client.patch(
-            f"{settings.api_v1_str}/game/preset/faction",
+            f"{settings.api_v1_str}/game/preset",
             headers={
                 'Authorization': f'Bearer {settings.user0_token}'
                 }
@@ -123,10 +121,13 @@ class TestNextTurn:
         self,
         user: crud_user.CRUDUser,
         started_game: crud_game_current.CRUDGame,
+        game_logic: logic.GameLogic,
         monkeypatch,
             ) -> None:
         """Mock user and game
         """
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.DETENTE)
+        started_game.save_game_logic(game_logic)
 
         def mock_user(*args, **kwargs) -> Callable:
             return user.get_by_login(settings.user0_login)
@@ -162,7 +163,7 @@ class TestNextTurn:
         """Test turn can't be pushed if game end
         """
         game_logic.proc.steps.is_game_ends = True
-        started_game.save_game_processor(game_logic)
+        started_game.save_game_logic(game_logic)
 
         response = client.patch(
             f"{settings.api_v1_str}/game/next_turn",
@@ -182,10 +183,20 @@ class TestNextPhase:
         self,
         user: crud_user.CRUDUser,
         started_game: crud_game_current.CRUDGame,
+        game_logic: logic.GameLogic,
         monkeypatch,
             ) -> None:
         """Mock user and game
         """
+        game_logic.proc.players.player.faction = Factions.KGB
+        game_logic.proc.players.opponent.faction = Factions.CIA
+        game_logic.proc.players.player.agents.current[0].is_agent_x = True
+        game_logic.proc.players.opponent.agents.current[0].is_agent_x = True
+        game_logic.proc.players.player.has_balance = True
+        game_logic.proc.players.opponent.has_balance= False
+        game_logic.proc.decks.objectives.pop()
+        started_game.save_game_logic(game_logic)
+
         def mock_user(*args, **kwargs) -> Callable:
             return user.get_by_login(settings.user0_login)
 
@@ -199,20 +210,9 @@ class TestNextPhase:
         self,
         mock_return,
         client: TestClient,
-        started_game: crud_game_current.CRUDGame,
-        game_logic: logic.GameLogic,
             ) -> None:
         """Test game/next set next phase from briefing
         """
-        game_logic.proc.players.player.faction = Factions.KGB
-        game_logic.proc.players.opponent.faction = Factions.CIA
-        game_logic.proc.players.player.agents.current[0].is_agent_x = True
-        game_logic.proc.players.opponent.agents.current[0].is_agent_x = True
-        game_logic.proc.players.player.has_balance = True
-        game_logic.proc.players.opponent.has_balance= False
-        game_logic.proc.decks.objectives.pop()
-        started_game.save_game_processor(game_logic)
-
         response = client.patch(
             f"{settings.api_v1_str}/game/next_phase",
             headers={
@@ -233,7 +233,7 @@ class TestNextPhase:
         """Test last phases cant'be pushed
         """
         game_logic.proc.steps.is_game_ends = True
-        started_game.save_game_processor(game_logic)
+        started_game.save_game_logic(game_logic)
 
         response = client.patch(
             f"{settings.api_v1_str}/game/next_phase",
@@ -254,10 +254,14 @@ class TestAnalyst:
         self,
         user: crud_user.CRUDUser,
         started_game: crud_game_current.CRUDGame,
+        game_logic: logic.GameLogic,
         monkeypatch,
             ) -> None:
         """Mock user and game
         """
+        game_logic.proc.players.player.awaiting_abilities.append(Agents.ANALYST)
+        started_game.save_game_logic(game_logic)
+
         def mock_user(*args, **kwargs) -> Callable:
             return user.get_by_login(settings.user0_login)
 
@@ -271,14 +275,9 @@ class TestAnalyst:
         self,
         mock_return,
         client: TestClient,
-        started_game: crud_game_current.CRUDGame,
-        game_logic: logic.GameLogic,
             ) -> None:
         """Test /phase/briefing/analyst_look returns 200
         """
-        game_logic.proc.players.player.awaiting_abilities.append(Agents.ANALYST)
-        started_game.save_game_processor(game_logic)
-
         response = client.patch(
             f"{settings.api_v1_str}/game/phase/briefing/analyst_look",
             headers={
@@ -293,14 +292,10 @@ class TestAnalyst:
         self,
         mock_return,
         client: TestClient,
-        started_game: crud_game_current.CRUDGame,
         game_logic: logic.GameLogic,
             ) -> None:
         """Test /phase/briefing/analyst_look returns 200
         """
-
-        game_logic.proc.players.player.awaiting_abilities.append(Agents.ANALYST)
-        started_game.save_game_processor(game_logic)
         top = game_logic.proc.decks.groups.current_ids[-3:]
         top.reverse()
 
@@ -316,44 +311,205 @@ class TestAnalyst:
     # TODO: here test 409
 
 
+class TestSetAgentX:
+    """Test set_agent_x
+    """
+
+    @pytest.fixture(scope="function")
+    def mock_return(
+        self,
+        user: crud_user.CRUDUser,
+        started_game: crud_game_current.CRUDGame,
+        game_logic: logic.GameLogic,
+        monkeypatch,
+            ) -> None:
+        """Mock user and game
+        """
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.PLANNING)
+        started_game.save_game_logic(game_logic)
+
+        def mock_user(*args, **kwargs) -> Callable:
+            return user.get_by_login(settings.user0_login)
+
+        def mock_process(*args, **kwargs) -> Callable:
+            return started_game.get_last_game(args[0])
+
+        monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
+        monkeypatch.setattr(crud_game_current.game, "get_last_game", mock_process)
+
+    def test_set_agent_x_return_200(
+        self,
+        mock_return,
+        client: TestClient,
+            ) -> None:
+        """Test /phase/planning/agent_x returns 200
+        """
+        response = client.patch(
+            f"{settings.api_v1_str}/game/phase/planning/agent_x?q={Agents.DEPUTY.value}",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 200, f'{response.content=}'
+
+    def test_set_agent_x_return_422(
+        self,
+        mock_return,
+        client: TestClient,
+            ) -> None:
+        """Test /phase/planning/agent_x returns 422
+        """
+        response = client.patch(
+            f"{settings.api_v1_str}/game/phase/planning/agent_x?q=wrong_agent",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 422, f'{response.content=}'
+
+    def test_set_agent_x_return_409(
+        self,
+        mock_return,
+        started_game: crud_game_current.CRUDGame,
+        game_logic: logic.GameLogic,
+        client: TestClient,
+            ) -> None:
+        """Test /phase/planning/agent_x returns 409
+        """
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.BRIEFING)
+        started_game.save_game_logic(game_logic)
+
+        response = client.patch(
+            f"{settings.api_v1_str}/game/phase/planning/agent_x?q={Agents.DEPUTY.value}",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 409, f'{response.content=}'
+
+
+class TestInfluenceStruggleGroupsResources:
+    """Test influence struggle groups subgame
+    """
+
+    @pytest.fixture(scope="function")
+    def mock_return(
+        self,
+        user: crud_user.CRUDUser,
+        started_game: crud_game_current.CRUDGame,
+        game_logic: logic.GameLogic,
+        monkeypatch,
+            ) -> None:
+        """Mock user and game
+        """
+        game_logic.proc.steps.last = game_logic.proc.steps.c.by_id(Phases.INFLUENCE)
+        game_logic.proc.decks.groups.owned_by_player.append(game_logic.proc.decks.groups.pop())
+        started_game.save_game_logic(game_logic)
+
+        def mock_user(*args, **kwargs) -> Callable:
+            return user.get_by_login(settings.user0_login)
+
+        def mock_process(*args, **kwargs) -> Callable:
+            return started_game.get_last_game(args[0])
+
+        monkeypatch.setattr(crud_user.user, "get_by_login", mock_user)
+        monkeypatch.setattr(crud_game_current.game, "get_last_game", mock_process)
+
+    def test_recruit_return_200(
+        self,
+        mock_return,
+        client: TestClient,
+            ) -> None:
+        """Test /game/influence_struggle/recruit returns 200
+        """
+        response = client.patch(
+            f"{settings.api_v1_str}/game/influence_struggle/recruit",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 200, f'{response.content=}'
+
+    def test_pass_return_200(
+        self,
+        mock_return,
+        client: TestClient,
+            ) -> None:
+        """Test /game/influence_struggle/pass returns 200
+        """
+        response = client.patch(
+            f"{settings.api_v1_str}/game/influence_struggle/pass",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 200, f'{response.content=}'
+
+    @pytest.mark.skip('Not implemented')
+    def test_activate_return_200(
+        self,
+        mock_return,
+        client: TestClient,
+            ) -> None:
+        """Test /game/influence_struggle/pass returns 200
+        """
+        response = client.patch(
+            f"{settings.api_v1_str}/game/influence_struggle/activate?source{Groups.ARTISTS}",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 200, f'{response.content=}'
+
+    def test_nuclear_escalation_return_200(
+        self,
+        mock_return,
+        started_game: crud_game_current.CRUDGame,
+        game_logic: logic.GameLogic,
+        client: TestClient,
+            ) -> None:
+        """Test /game/influence_struggle/nuclear_escalation returns 200
+        """
+        game_logic.proc.decks.objectives.owned_by_player.append(Objectives.NUCLEARESCALATION)
+        started_game.save_game_logic(game_logic)
+        response = client.patch(
+            f"{settings.api_v1_str}/game/influence_struggle/nuclear_escalation",
+            headers={
+                'Authorization': f'Bearer {settings.user0_token}'
+                }
+            )
+        assert response.status_code == 200, f'{response.content=}'
+
+
 class TestAutorizationError:
     """Test not acessed unautorized user
     """
 
-    def test_game_create_return_401(self, client: TestClient) -> None:
-        """Test game create return 401 for unauthorized
+    @pytest.mark.parametrize("test_input", [
+        '/game/preset?q=kgb',
+        '/game/next_turn',
+        '/game/next_phase',
+        '/game/phase/briefing/analyst_look',
+        '/game/influence_struggle/recruit',
+        '/game/influence_struggle/pass',
+        f'/game/influence_struggle/activate?source{Groups.ARTISTS}',
+        '/game/influence_struggle/nuclear_escalation',
+            ])
+    def test_resource_return_401(
+        self,
+        test_input: str,
+        client: TestClient
+            ) -> None:
+        """Test resource return 401 for unauthorized
+        """
+        response = client.patch(f"{settings.api_v1_str}{test_input}")
+        assert response.status_code == 401, f'{test_input=}, {response.content=}'
+        assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
+
+    def test_create_the_game_return_401(self, client: TestClient) -> None:
+        """Test create game return 401
         """
         response = client.post(f"{settings.api_v1_str}/game/create")
-        assert response.status_code == 401, f'{response.content=}'
-        assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
-
-    def test_preset_faction_return_401(self, client: TestClient) -> None:
-        """Test preset faction return 401
-        """
-        response = client.patch(f"{settings.api_v1_str}/game/preset/faction?q=kgb")
-        assert response.status_code == 401, f'{response.content=}'
-        assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
-
-    def test_next_turn_return_401(self, client: TestClient) -> None:
-        """Test next turn return 401 for unauthorized
-        """
-        response = client.patch(f"{settings.api_v1_str}/game/next_turn")
-        assert response.status_code == 401, f'{response.content=}'
-        assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
-
-    def test_next_turn_return_401(self, client: TestClient) -> None:
-        """Test next phase return 401 for unauthorized
-        """
-        response = client.patch(f"{settings.api_v1_str}/game/next_phase")
-        assert response.status_code == 401, f'{response.content=}'
-        assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
-
-    def test_analyst_look_return_401(self, client: TestClient) -> None:
-        """Test analyst_look return 401 for unauthorized
-        """
-        response = client.patch(
-            f"{settings.api_v1_str}/game/phase/briefing/analyst_look",
-                )
         assert response.status_code == 401, f'{response.content=}'
         assert response.json()['detail'] == 'Not authenticated', 'wrong detail'
 

@@ -26,34 +26,11 @@ class CRUDGame(
         """
         return self.model.objects(players__player__login=login).first()
 
-    def create_new_game(
-        self,
-        login: str,
-            ) -> CurrentGameData:
-        """Create new game processor
-
-        Args:
-            login (str): player login
-
-        Returns:
-            CurrentGameData, optional: bd data object
-        """
-        data = {
-            'players': {
-                'player': {'login': login},
-                'opponent': {'login': settings.user2_login},
-                    }
-                }
-        game = self.model(**data)
-        game.save()
-
-        return game
-
-    def save_game_processor(
+    def save_game_logic(
         self,
         game_logic: GameLogic,
             ) -> GameLogic:
-        """Flusch and save to db current data processor
+        """Flusch and save to db current data t0o db
 
         Args:
             proc (CurrentGameDataProcessor): game scheme processor
@@ -97,6 +74,32 @@ class CRUDGame(
         # pprint(data)
         game_logic.game.modify(**data)
         return game_logic
+
+    def create_new_game(
+        self,
+        login: str,
+            ) -> CurrentGameData:
+        """Create new game processor
+
+        Args:
+            login (str): player login
+
+        Returns:
+            CurrentGameData, optional: bd data object
+        """
+        data = {
+            'players': {
+                'player': {'login': login},
+                'opponent': {'login': settings.user2_login},
+                    }
+                }
+        game = self.model(**data)
+        game.save()
+        game_logic = GameLogic(game)
+        game_logic.proc.decks.objectives.deal().shuffle()
+        self.save_game_logic(game_logic)
+
+        return game
 
 
 game = CRUDGame(CurrentGameData)

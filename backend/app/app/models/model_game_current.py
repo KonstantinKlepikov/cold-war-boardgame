@@ -18,7 +18,6 @@ class Steps(EmbeddedDocument):
         default=Phases.get_values()[1:]
             )
     is_game_ends = BooleanField(default=False)
-    is_game_starts = BooleanField(default=False)
 
 
 class AgentInPlay(EmbeddedDocument):
@@ -48,6 +47,7 @@ class Player(EmbeddedDocument):
     has_domination = BooleanField(default=False)
     awaiting_abilities = ListField(EnumField(AwaitingAbilities))
     agents = EmbeddedDocumentField(AgentsInPlay, default=AgentsInPlay())
+    influence_pass = BooleanField(default=False)
 
 
 class Players(EmbeddedDocument):

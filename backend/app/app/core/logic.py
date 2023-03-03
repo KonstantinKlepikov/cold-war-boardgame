@@ -1,18 +1,19 @@
+from typing import Union, Optional
 from fastapi import HTTPException
 from app.crud.crud_game_current import CurrentGameData
 from app.schemas.scheme_game_current_api import CurrentGameDataApi
 from app.schemas.scheme_game_current import (
     CurrentGameDataProcessor, AgentInPlayProcessor, GroupInPlayProcessor,
-    ObjectiveInPlayProcessor
+    ObjectiveInPlayProcessor, PlayerProcessor, OpponentProcessor
         )
-from app.constructs import Factions, Agents, Groups, Objectives, Phases
+from app.constructs import (
+    Factions, Agents, Groups, Objectives, Phases, Sides, MilitaryGroups
+        )
 from bgameb import Step, errors
 
 
 class GameLogic:
     """Create the game object to manipulation of game tools
-
-    Args:
     """
 
     def __init__(
@@ -57,7 +58,7 @@ class GameLogic:
         return proc
 
     def get_api_scheme(self) -> CurrentGameDataApi:
-        """Get redy to use api scheme
+        """Get ready to use api scheme
 
         Returns:
             CurrentGameDataApi: api scheme
@@ -66,7 +67,7 @@ class GameLogic:
         return CurrentGameDataApi(**data)
 
     def deal_and_shuffle_decks(self) -> 'GameLogic':
-        """Shuffle objective and group decks
+        """Deal and shuffle objective and group decks
 
         Returns:
             GameLogic
@@ -88,7 +89,7 @@ class GameLogic:
         if isinstance(self.proc.players.player.faction, str):
             raise HTTPException(
                 status_code=409,
-                detail="You cant change faction because is choosen yet"
+                detail="You cant change faction because is chosen yet"
                     )
 
         self.proc.players.player.faction = faction.value
@@ -109,8 +110,16 @@ class GameLogic:
                 detail="Something can't be changed, because game is end"
                     )
 
-        self.proc.steps.game_turn += 1
-        self.proc.steps.deal().pop()
+        if self.proc.steps.last_id == Phases.DETENTE.value:
+
+            self.proc.steps.game_turn += 1
+            self.proc.steps.deal().pop()
+
+        else:
+            raise HTTPException(
+                status_code=409,
+                detail="You can set next turn only from detente phase"
+                    )
 
         return self
 
@@ -164,57 +173,84 @@ class GameLogic:
 
         return self
 
-    def _check_analyct_condition(self) -> None:
+    def _get_side_proc(self, side: Sides) -> Union[PlayerProcessor, OpponentProcessor]:
+        if side == Sides.PLAYER:
+            return self.proc.players.player
+        else:
+            return self.proc.players.opponent
+
+    def _check_analyct_condition(self, side: Sides = Sides.PLAYER) -> None:
         """Check conditions for play analyst ability
+
+        Args:
+            side (Sides): player or opponent, default to 'player'
         """
-        if self.proc.steps.last_id != Phases.BRIEFING.value:
+        if self.proc.steps.last_id != Phases.BRIEFING:
             raise HTTPException(
                 status_code=409,
-                detail="Ability can't be played in any phases except 'briefing'."
+                detail="Analyst ability can be played only in 'briefing' phase."
                     )
-        if Agents.ANALYST not in self.proc.players.player.awaiting_abilities:
+        if Agents.ANALYST not in self._get_side_proc(side).awaiting_abilities:
             raise HTTPException(
                 status_code=409,
                 detail="No access to play ability of Analyst agent card."
                     )
 
-    def play_analyst_for_look_the_top(self) -> 'GameLogic':
+    def play_analyst_for_look_the_top(self, side: Sides = Sides.PLAYER) -> 'GameLogic':
         """Play analyst abylity for look the top cards
+
+        Args:
+            side (Sides): player or opponent, default to 'player'
 
         Returns:
             GameLogic
         """
-        self._check_analyct_condition()
+        self._check_analyct_condition(side)
 
-        if all([
-            card.is_revealed_to_player for card
-            in self.proc.decks.groups.current
-                ][-3:]):
+        if side == Sides.PLAYER:
+            rev =  all([
+                card.is_revealed_to_player for card
+                in self.proc.decks.groups.current
+                    ][-3:])
+        else:
+            rev =  all([
+                card.is_revealed_to_opponent for card
+                in self.proc.decks.groups.current
+                    ][-3:])
+        if rev:
             raise HTTPException(
                 status_code=409,
-                detail="Top 3 group cards is yet revealed for player."
+                detail="Top 3 group cards is yet revealed."
                     )
 
-        for pos in range(-3, 0):
-            self.proc.decks.groups.current[pos].is_revealed_to_player = True
+        if side == Sides.PLAYER:
+            for pos in range(-3, 0):
+                self.proc.decks.groups.current[pos].is_revealed_to_player = True
+        else:
+            for pos in range(-3, 0):
+                self.proc.decks.groups.current[pos].is_revealed_to_opponent = True
 
         return self
 
     def play_analyst_for_arrange_the_top(
-        self, top: list[Groups]) -> 'GameLogic':
+        self,
+        top: list[Groups],
+        side: Sides = Sides.PLAYER
+            ) -> 'GameLogic':
         """Play analyst abylity for rearrange the top cards
 
         Args:
             top (list[Groups]): arranged cards
+            side (Sides): player or opponent, default to 'player'
 
         Returns:
             GameLogic
         """
-        self._check_analyct_condition()
+        self._check_analyct_condition(side)
 
         try:
             self.proc.decks.groups.reorderfrom(top, len(self.proc.decks.groups.current)-3)
-            self.proc.players.player.awaiting_abilities.remove(Agents.ANALYST.value)
+            self._get_side_proc(side).awaiting_abilities.remove(Agents.ANALYST.value)
 
         except errors.ArrangeIndexError:
             raise HTTPException(
@@ -224,28 +260,186 @@ class GameLogic:
 
         return self
 
-    def set_agent(
+    def set_agent_x(
         self,
-        agent_id: Agents,
+        agent: Agents,
+        side: Sides = Sides.PLAYER
             ) -> 'GameLogic':
         """Set agent card
+
+        Args:
+            agent (Agents): agent for current turn
+            side (Sides): player or opponent, default to 'player'
 
         Returns:
             GameLogic
         """
-        choice = self.proc.players.player.agents.by_id(agent_id)
+        if self.proc.steps.last_id != Phases.PLANNING:
+            raise HTTPException(
+                status_code=409,
+                detail="Agent can be set only in 'planning' phase."
+                    )
+
+        user = self._get_side_proc(side)
+        choice = user.agents.by_id(agent)
+
         if choice and choice[0].is_in_headquarter is True:
             choice[0].is_agent_x = True
             choice[0].is_in_headquarter = False
-            if Agents.DOUBLE in self.proc.players.player.awaiting_abilities:
+            if Agents.DOUBLE in user.awaiting_abilities:
                 choice[0].is_revealed = True
-                self.proc.players.player.awaiting_abilities.remove(Agents.DOUBLE.value)
+                user.awaiting_abilities.remove(Agents.DOUBLE)
         else:
             raise HTTPException(
                 status_code=409,
-                detail=f"Agent {agent_id} not available to choice."
+                detail=f"Agent {agent} not available to choice."
                     )
+
         return self
+
+    def _check_influence_condition(self) -> None:
+        """Check influence struggle conditions
+        """
+        if self.proc.steps.last_id != Phases.INFLUENCE:
+            raise HTTPException(
+                status_code=409,
+                detail="Group can be recruited only in 'influence struggle' phase."
+                    )
+
+        if self.proc.players.player.influence_pass is True and \
+                self.proc.players.opponent.influence_pass is True:
+            raise HTTPException(
+                status_code=409,
+                detail="Both sides are pass. You cant do anithing."
+                    )
+
+    def recruit_group(self, side: Sides = Sides.PLAYER) -> 'GameLogic':
+        """Recruit group
+
+        Args:
+            side (Sides): player or opponent, default to 'player'
+
+        Returns:
+            GameLogic
+        """
+        self._check_influence_condition()
+
+        if side == Sides.PLAYER:
+            owned = self.proc.decks.groups.owned_by_player
+        else:
+            owned = self.proc.decks.groups.owned_by_opponent
+
+        draw = self.proc.decks.groups.pop()
+        draw.is_revealed_to_player = True
+        draw.is_revealed_to_opponent = True
+        owned.append(draw)
+
+        return self
+
+    def activate_group(
+        self,
+        source: Groups,
+        target: Optional[Groups] = None,
+        side: Sides = Sides.PLAYER,
+            ) -> 'GameLogic':
+        """Activate group
+
+        Args:
+            source (Groups): group, owned by player. Must be active
+            source (Groups, optioanl): Targetgroup. Must be active. Default to None
+            side (Sides): player or opponent, default to 'player'
+
+        Returns:
+            GameLogic
+        """
+        self._check_influence_condition()
+
+        return self
+
+
+    def pass_influence(self, side: Sides = Sides.PLAYER) -> 'GameLogic':
+        """Pass in influence phase
+
+        Args:
+            side (Sides): player or opponent, default to 'player'
+
+        Returns:
+            GameLogic
+        """
+        self._check_influence_condition()
+
+        if side == Sides.PLAYER:
+            owned = self.proc.decks.groups.owned_by_player
+        else:
+            owned = self.proc.decks.groups.owned_by_opponent
+
+        if len(owned) == 0:
+            raise HTTPException(
+                status_code=409,
+                detail="You cant pass while you no control any group."
+                    )
+
+        user = self._get_side_proc(side)
+        user.influence_pass = True
+
+        return self
+
+    def _discard_all_military_groups(
+        self,
+        play: list[GroupInPlayProcessor]
+            ) -> list[GroupInPlayProcessor]:
+        """Discard all military group from play of given side
+
+        Args:
+            play (list[Groups]): given side play before discard
+
+        Returns:
+            list[Groups]: given side play after discard
+        """
+        result = []
+        for group in play:
+            if group.id.value not in MilitaryGroups.get_values():
+                result.append(group)
+            else:
+                self.proc.decks.groups.pile.append(group)
+
+        return result
+
+    def nuclear_escalation(self, side: Sides = Sides.PLAYER) -> 'GameLogic':
+        """Pass in influence phase
+
+        Args:
+            side (Sides): player or opponent, default to 'player'
+
+        Returns:
+            GameLogic
+        """
+        self._check_influence_condition()
+
+        if side == Sides.PLAYER:
+            owned_ob = self.proc.decks.objectives.owned_by_player
+        else:
+            owned_ob = self.proc.decks.objectives.owned_by_opponent
+
+        for ind, objective in enumerate(owned_ob):
+            if objective is Objectives.NUCLEARESCALATION:
+
+                self.proc.decks.groups.owned_by_player = self._discard_all_military_groups(
+                    self.proc.decks.groups.owned_by_player
+                        )
+                self.proc.decks.groups.owned_by_opponent = self._discard_all_military_groups(
+                    self.proc.decks.groups.owned_by_opponent
+                        )
+
+                self.proc.decks.objectives.pile.append(objective)
+                del owned_ob[ind]
+
+                return self
+
+        raise HTTPException(
+            status_code=409,
+            detail="Nuclear escalation not available for this player."
+                )
 
     def chek_phase_conditions_before_next(self) -> 'GameLogic':
         """Check game conition before push to next phase
@@ -254,6 +448,7 @@ class GameLogic:
         Returns:
             GameLogic
         """
+        # game is over
         if self.proc.steps.is_game_ends:
             raise HTTPException(
                 status_code=409,
@@ -266,12 +461,12 @@ class GameLogic:
         # briefing
         if phase == Phases.BRIEFING:
 
-            # players has't priority
-            if not self.proc.players.player.has_balance \
-                    and not self.proc.players.opponent.has_balance:
+            # game is not started
+            if self.proc.players.player.faction is None \
+                    or self.proc.players.opponent.faction is None:
                 raise HTTPException(
                     status_code=409,
-                    detail="No one player has priority. Cant push to next phase."
+                    detail="Faction not choosen. Use game/reset/faction to set faction."
                         )
 
             # objective card not defined
@@ -281,27 +476,52 @@ class GameLogic:
                     detail="Mission card undefined. Cant push to next phase."
                         )
 
+            # players has't balance
+            if self.proc.players.player.has_balance is self.proc.players.opponent.has_balance:
+                raise HTTPException(
+                    status_code=409,
+                    detail="No one side has balance. Cant push to next phase."
+                        )
+
             # analyst not used
             if Agents.ANALYST in self.proc.players.player.awaiting_abilities:
                 raise HTTPException(
                     status_code=409,
-                    detail="Analyst ability must be used."
+                    detail="Analyst ability must be used by player."
                         )
+
+            if Agents.ANALYST in self.proc.players.opponent.awaiting_abilities:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Analyst ability must be used by opponent."
+                        )
+
+        # planning
+        elif phase == Phases.PLANNING:
 
             # agent not choosen
             if self.proc.players.player.agents.agent_x is None:
                 raise HTTPException(
                     status_code=409,
-                    detail=f"Agent not choosen."
+                    detail=f"Agent for player not choosen."
                         )
 
-        # planning
-        elif phase == Phases.PLANNING:
-            pass
+            if self.proc.players.opponent.agents.agent_x is None:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Agent for opponent not choosen."
+                        )
 
         # influence_struggle
         elif phase == Phases.INFLUENCE:
-            pass
+
+            # Both players must pass in group subgame
+            if self.proc.players.player.influence_pass is not True or \
+                self.proc.players.opponent.influence_pass is not True:
+                raise HTTPException(
+                    status_code=409,
+                    detail="Both side must pass in group subgame before next phase."
+                        )
 
         # ceasefire
         elif phase == Phases.CEASEFIRE:
@@ -351,7 +571,7 @@ class GameLogic:
             for deck in [
                 self.proc.players.player.agents.current,
                 self.proc.players.opponent.agents.current
-                ]:
+                    ]:
                 for agent in deck:
                     if agent.is_on_leave == True:
                         agent.is_on_leave = False
@@ -360,7 +580,10 @@ class GameLogic:
 
         # ceasefire
         elif phase == Phases.CEASEFIRE:
-            pass
+
+            # clear influence struggle pass
+            self.proc.players.player.influence_pass = False
+            self.proc.players.opponent.influence_pass = False
 
         # debriefing
         elif phase == Phases.DEBRIFIENG:
@@ -369,7 +592,7 @@ class GameLogic:
             for deck in [
                 self.proc.players.player.agents.current,
                 self.proc.players.opponent.agents.current
-                ]:
+                    ]:
                 for agent in deck:
                     if agent.is_agent_x == True:
                         agent.is_revealed = True
@@ -378,11 +601,10 @@ class GameLogic:
         elif phase == Phases.DETENTE:
 
             # put agents to on_leave from play
-
             for deck in [
                 self.proc.players.player.agents.current,
                 self.proc.players.opponent.agents.current
-                ]:
+                    ]:
                 for agent in deck:
                     if agent.is_agent_x == True:
                         agent.is_agent_x = False
